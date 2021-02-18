@@ -1,0 +1,20 @@
+{
+  "files.associations": {
+    "*.xml": "html",
+    "*.CEA": "asm",
+    "*.cea": "cea",
+    "vector": "cpp",
+    "fstream": "cpp",
+    "functional": "cpp",
+    "list": "cpp",
+    "regex": "cpp",
+    "system_error": "cpp",
+    "type_traits": "cpp",
+    "xhash": "cpp",
+    "xlocale": "cpp",
+    "xstring": "cpp",
+    "xutility": "cpp",
+    "thread": "cpp"
+  },
+  "C_Cpp.errorSquiggles": "Disabled"
+}

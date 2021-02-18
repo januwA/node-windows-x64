@@ -1,0 +1,31 @@
+{
+  "name": "node-windows-x64",
+  "version": "0.0.1",
+  "description": "node windows x64",
+  "private": false,
+  "main": "./index.js",
+  "types": "./types/index.d.ts",
+  "scripts": {
+    "c": "node-gyp configure",
+    "b": "node-gyp build",
+    "bt": "node-gyp build && npm t",
+    "test": "node test/test.js",
+    "install": "node-gyp rebuild"
+  },
+  "keywords": [
+    "windows x64",
+    "memory",
+    "Ajanuw"
+  ],
+  "author": "Ajanuw",
+  "license": "MIT",
+  "homepage": "https://github.com/januwA/node-windows-x64",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/januwA/node-windows-x64.git"
+  },
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "node-addon-api": "^3.1.0"
+  }
+}

@@ -1,0 +1,48 @@
+dynamic call x64 intel
+asd - 55                    - push rbp
+05D90001- 48 8B EC              - mov rbp,rsp
+05D90004- 48 81 EC 90010000     - sub rsp,00000190
+
+05D9000B- 48 B9 0000000000000000 - mov rcx,0000000000000000 {p1}
+05D90015- 48 BA 0000000000000000 - mov rdx,0000000000000000 {p2}
+05D9001F- 49 B8 0000000000000000 - mov r8,0000000000000000 {p3}
+05D90029- 49 B9 0200000000000000 - mov r9,0000000000000000 {p4}
+
+05D90033- 48 B8 F0ACAB14FE7F0000 - mov rax,0000000000000000 {p5}
+05D9003D- 48 89 44 24 20        - mov [rsp+20],rax
+05D90042- 48 B8 F0ACAB14FE7F0000 - mov rax,0000000000000000 {p6}
+05D9004C- 48 89 44 24 28        - mov [rsp+38],rax
+
+05D90051- 48 B8 F0ACAB14FE7F0000 - mov rax,user32.MessageBoxA {method}
+05D9005B- FF D0                 - call rax
+05D9005D- 48 B9 0000000000000000 - mov rcx,0000000000000000 {result}
+05D90067- 48 89 01              - mov [rcx],rax
+
+05D9006A- 48 81 C4 90010000     - add rsp,00000190
+05D90071- 48 8B E5              - mov rsp,rbp
+05D90074- 5D                    - pop rbp
+05D90075- C3                    - ret 
+
+
+callback get args x64 intel
+t_cb - 55                    - push rbp
+014F0001- 48 8B EC              - mov rbp,rsp
+014F0004- 48 81 EC 90010000     - sub rsp,00000190
+
+014F000B- 48 89 4C 24 08        - mov [rsp+08],rcx
+014F0010- 48 89 54 24 10        - mov [rsp+10],rdx
+014F0015- 4C 89 44 24 18        - mov [rsp+18],r8
+014F001A- 4C 89 4C 24 20        - mov [rsp+20],r9
+
+014F001F- 48 B9 0000000000000000 - mov rcx,0000000000000000 {备用}
+014F0029- 48 BA 0000000000000000 - mov rdx,0000000000000000 {index}
+014F0033- 4C 8D 44 24 08        - lea r8,[rsp+08] {前4个参数指针}
+014F0038- 4C 8D 4D 30           - lea r9,[rbp+10+20] {之后的参数指针}
+
+014F003C- 48 B8 F0ACAB14FE7F0000 - mov rax,user32.MessageBoxA
+014F0046- FF D0                 - call rax
+
+014F0048- 48 81 C4 90010000     - add rsp,00000190
+014F004F- 48 8B E5              - mov rsp,rbp
+014F0052- 5D                    - pop rbp
+014F0053- C3                    - ret
