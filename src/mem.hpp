@@ -6,10 +6,11 @@
 #include <fstream>
 #include <napi.h>
 #include "_napi_macro.h"
-#include "_utils.h"
+#include "ajanuw.h"
 
 using namespace std;
 using namespace Napi;
+using namespace ajanuw;
 
 Value mem_alloc(const CallbackInfo &info)
 {

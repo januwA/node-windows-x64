@@ -1,12 +1,12 @@
-const nw = require("../build/Release/node-windows-x64");
 
+## Use Win32 gui example
+```js
 WS_OVERLAPPEDWINDOW =
   0x00000000 | 0x00c00000 | 0x00080000 | 0x00040000 | 0x00020000 | 0x00010000;
 BS_PUSHBUTTON = 0x00000000;
 WS_CHILD = 0x40000000;
 WS_VISIBLE = 0x10000000;
 WM_COMMAND = 0x0111;
-
 
 const className = "Node Win32 Gui";
 const windowName = "window caption";
@@ -28,9 +28,9 @@ if (wui.initRegisterClass() && wui.initWindow()) {
   wui.createWindow("button", "click me", buttonStyle, 0, 0, 100, 50, btnid);
 
   wui.messageLoop((hWnd, message, wParam, lParam) => {
+    const wmId = wParam & 0xffff;
     switch (message) {
       case WM_COMMAND:
-        const wmId = wParam & 0xffff;
         if (wmId === btnid) {
           console.log("click button.");
         }
@@ -41,3 +41,4 @@ if (wui.initRegisterClass() && wui.initWindow()) {
     }
   });
 }
+```

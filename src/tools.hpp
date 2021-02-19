@@ -47,7 +47,8 @@ Value getMousePos(const CallbackInfo &info)
 
 Value setMousePos(const CallbackInfo &info)
 {
-  nm_init_cal(2) int x, y;
+  nm_init_cal(2);
+  int x, y;
   if (info[0].IsObject())
   {
     x = nm_int(nm_obj(info[0]).Get("x"));
@@ -63,28 +64,28 @@ Value setMousePos(const CallbackInfo &info)
 
 Value isKeyPressed(const CallbackInfo &info)
 {
-  nm_init_cal(1)
-      nm_retb(GetKeyState(nm_int(info[0])));
+  nm_init_cal(1);
+  nm_retb(GetKeyState(nm_int(info[0])));
 }
 
 Value keyDown(const CallbackInfo &info)
 {
-  nm_init_cal(1)
-      keybd_event(nm_dword(info[0]), 0, 0, 0);
+  nm_init_cal(1);
+  keybd_event(nm_dword(info[0]), 0, 0, 0);
   nm_retu;
 }
 
 Value keyUp(const CallbackInfo &info)
 {
-  nm_init_cal(1)
-      keybd_event(nm_dword(info[0]), 0, KEYEVENTF_KEYUP, 0);
+  nm_init_cal(1);
+  keybd_event(nm_dword(info[0]), 0, KEYEVENTF_KEYUP, 0);
   nm_retu;
 }
 
 Value doKeyPress(const CallbackInfo &info)
 {
-  nm_init_cal(1)
-      keyDown(info);
+  nm_init_cal(1);
+  keyDown(info);
   keyUp(info);
   nm_retu;
 }
@@ -314,4 +315,13 @@ Value sendMessage(const CallbackInfo &info)
   uint32_t wParam = nm_dword(info[2]);
   uint32_t lParam = nm_dword(info[3]);
   nm_ret((uintptr_t)SendMessageA((HWND)hWnd, Msg, (WPARAM)wParam, (LPARAM)lParam));
+}
+
+// https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/setlocale-wsetlocale?view=msvc-160&viewFallbackFrom=vs-2019
+Value e_setlocale(const CallbackInfo &info)
+{
+  nm_init;
+  int _Category = nmi_IsNullishOr(0, nm_dword, LC_ALL);
+  string _Locale = nmi_IsNullishOr(1, nm_str, "chs");
+  nm_rets(ajanuw::SSString::setLocale(_Category, _Locale.c_str()));
 }

@@ -1,5 +1,6 @@
 #include "va_manage.h"
 
+using namespace ajanuw;
 Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(env, "VAManage",

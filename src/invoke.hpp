@@ -1,9 +1,10 @@
 #include <iostream>
 #include <napi.h>
-#include "_utils.h"
+#include "ajanuw.h"
 #include "_napi_macro.h"
 
 using namespace Napi;
+using namespace ajanuw;
 
 typedef void *(CALLBACK *asm_fun_t)();
 

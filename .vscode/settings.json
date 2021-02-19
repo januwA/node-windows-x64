@@ -16,7 +16,9 @@
     "xutility": "cpp",
     "thread": "cpp",
     "memory": "cpp",
-    "new": "cpp"
+    "new": "cpp",
+    "string": "cpp",
+    "xloctime": "cpp"
   },
-  "C_Cpp.errorSquiggles": "Disabled"
+  "C_Cpp.intelliSenseEngineFallback": "Enabled"
 }

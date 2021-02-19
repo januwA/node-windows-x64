@@ -3,17 +3,18 @@
 #include <Windows.h>
 #include <napi.h>
 #include "_napi_macro.h"
-#include "_utils.h"
+#include "ajanuw.h"
 
 using namespace Napi;
 using namespace std;
+using namespace ajanuw;
 
 Array _toTable(Env env, void* lpData, size_t size)
 {
   auto r = Array::New(env, size);
   for (size_t i = 0; i < size; i++)
     r.Set(i, Number::New(env, *(uint8_t*)((uintptr_t)lpData + i)));
-  return r;
+   return r;
 }
 Value word_to_byte_table(const CallbackInfo& info)
 {

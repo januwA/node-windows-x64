@@ -7,12 +7,15 @@
 #include "invoke.hpp"
 #include "byte_table.hpp"
 #include "va_manage.h"
+#include "win32_gui.h"
 
 #define __EXPORT(name, func) exports.Set(Napi::String::New(env, name), Napi::Function::New(env, func))
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
   VAManage::Init(env, exports);
+  Win32Gui::Init(env, exports);
+
   __EXPORT("invoke", invoke);
   __EXPORT("test", test);
 
@@ -44,6 +47,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   __EXPORT("getWindowProcessID", getWindowProcessID);
   __EXPORT("getForegroundWindow", getForegroundWindow);
   __EXPORT("sendMessage", sendMessage);
+  __EXPORT("setlocale", e_setlocale);
 
   __EXPORT("mem_alloc", mem_alloc);
   __EXPORT("mem_free", mem_free);
