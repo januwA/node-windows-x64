@@ -14,7 +14,9 @@
     "xlocale": "cpp",
     "xstring": "cpp",
     "xutility": "cpp",
-    "thread": "cpp"
+    "thread": "cpp",
+    "memory": "cpp",
+    "new": "cpp"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

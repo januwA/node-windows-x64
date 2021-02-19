@@ -1,31 +1,12 @@
 #include "va_manage.h"
 
-Napi::Value VAManage::GetSize(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  nm_ret(this->size_);
-}
-Napi::Value VAManage::GetMemory(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  nm_ret((uintptr_t)this->memory_);
-}
-Napi::Value VAManage::GetPosition(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  nm_ret((uintptr_t)this->position_);
-}
-void VAManage::SetPosition(const Napi::CallbackInfo& info, const Napi::Value& value)
-{
-  nm_init;
-  this->position_ = nm_qword(value);
-}
 Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(env, "VAManage",
     {
       InstanceAccessor<&VAManage::GetSize>("size"),
       InstanceAccessor<&VAManage::GetMemory>("memory"),
+      InstanceAccessor<&VAManage::GetPtr>("ptr"),
       InstanceAccessor<&VAManage::GetPosition,&VAManage::SetPosition>("position"),
 
       InstanceMethod<&VAManage::read>("read"),
@@ -60,6 +41,28 @@ Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
   exports.Set("VAManage", func);
   return exports;
 }
+
+Napi::Value VAManage::GetSize(const Napi::CallbackInfo& info)
+{
+  nm_init;
+  nm_ret(this->size_);
+}
+Napi::Value VAManage::GetMemory(const Napi::CallbackInfo& info)
+{
+  nm_init;
+  nm_ret((uintptr_t)this->memory_);
+}
+Napi::Value VAManage::GetPosition(const Napi::CallbackInfo& info)
+{
+  nm_init;
+  nm_ret((uintptr_t)this->position_);
+}
+void VAManage::SetPosition(const Napi::CallbackInfo& info, const Napi::Value& value)
+{
+  nm_init;
+  this->position_ = nm_qword(value);
+}
+
 VAManage::VAManage(const CallbackInfo& info) : ObjectWrap<VAManage>(info), size_(nm_IsNullishOr(info[0], nm_qword, 1024)), position_(0)
 {
   memory_ = VirtualAlloc(0, size_, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
@@ -69,7 +72,7 @@ VAManage::~VAManage()
 {
 }
 
-void* VAManage::ptr()
+void* VAManage::ptr_()
 {
   return (BYTE*)this->memory_ + this->position_;
 }
@@ -79,13 +82,13 @@ Napi::Value VAManage::read(const Napi::CallbackInfo& info)
   nm_init;
   size_t size = nm_qword(info[0]);
   Array r = Array::New(env, size);
-  for (size_t i = 0; i < size; i++) r.Set(i, Mem::read_byte( (void*)((uintptr_t)this->ptr() + i)) );
+  for (size_t i = 0; i < size; i++) r.Set(i, Mem::read_byte( (void*)((uintptr_t)this->ptr_() + i)) );
   return r;
 }
 
 #define WRITE_TYPE_FORM(type)\
 nm_init; \
-nm_ret( Mem::read_##type(this->ptr()) ); \
+nm_ret( Mem::read_##type(this->ptr_()) ); \
 
 Napi::Value VAManage::readByte(const Napi::CallbackInfo& info)
 {
@@ -121,14 +124,14 @@ Napi::Value VAManage::readStr(const Napi::CallbackInfo& info)
 {
   nm_init;
   size_t maxSize = nm_IsNullishOr(info[0], nm_qword, -1);
-  nm_rets(SSString::strFormMem(this->ptr(), maxSize));
+  nm_rets(SSString::strFormMem(this->ptr_(), maxSize));
 }
 
 Napi::Value VAManage::readWstr(const Napi::CallbackInfo& info)
 {
   nm_init;
   size_t maxSize = nm_IsNullishOr(info[0], nm_qword, -1);
-  nm_rets(SSString::ustrFormMem(this->ptr(), maxSize));
+  nm_rets(SSString::ustrFormMem(this->ptr_(), maxSize));
 }
 
 void VAManage::write(const Napi::CallbackInfo& info)
@@ -141,7 +144,7 @@ void VAManage::write(const Napi::CallbackInfo& info)
   for (size_t i = 0; i < count; i++)
     vect.push_back(nm_dword(table.Get(i)));
 
-  Mem::write_bytes(this->ptr(), vect);
+  Mem::write_bytes(this->ptr_(), vect);
   this->position_ += count;
 }
 
@@ -149,7 +152,7 @@ void VAManage::writeByte(const Napi::CallbackInfo& info)
 {
   nm_init;
   uint32_t v = nm_dword(info[0]);
-  memset(this->ptr(), v, sizeof(BYTE));
+  memset(this->ptr_(), v, sizeof(BYTE));
   this->position_ += sizeof(BYTE);
 }
 
@@ -157,7 +160,7 @@ void VAManage::writeWord(const Napi::CallbackInfo& info)
 {
   nm_init;
   uint32_t v = nm_dword(info[0]);
-  Mem::write_word(this->ptr(), v);
+  Mem::write_word(this->ptr_(), v);
   this->position_ += sizeof(WORD);
 }
 
@@ -165,7 +168,7 @@ void VAManage::writeDword(const Napi::CallbackInfo& info)
 {
   nm_init;
   uint32_t v = nm_dword(info[0]);
-  Mem::write_dword(this->ptr(), v);
+  Mem::write_dword(this->ptr_(), v);
   this->position_ += sizeof(DWORD);
 }
 
@@ -173,14 +176,14 @@ void VAManage::writeQword(const Napi::CallbackInfo& info)
 {
   nm_init;
   uintptr_t v = nm_qword(info[0]);
-  Mem::write_qword(this->ptr(), v);
+  Mem::write_qword(this->ptr_(), v);
   this->position_ += sizeof(ULONGLONG);
 }
 void VAManage::writeFloat(const Napi::CallbackInfo& info)
 {
   nm_init;
   float v = nm_float(info[0]);
-  Mem::write_float(this->ptr(), v);
+  Mem::write_float(this->ptr_(), v);
   this->position_ += sizeof(float);
 }
 
@@ -188,7 +191,7 @@ void VAManage::writeDouble(const Napi::CallbackInfo& info)
 {
   nm_init;
   double v = nm_double(info[0]);
-  Mem::write_double(this->ptr(), v);
+  Mem::write_double(this->ptr_(), v);
   this->position_ += sizeof(double);
 }
 
@@ -197,7 +200,7 @@ void VAManage::writeStr(const Napi::CallbackInfo& info)
   nm_init;
   String text = info[0].As<String>();
   string str = text.Utf8Value();
-  Mem::write_str(this->ptr(), str);
+  Mem::write_str(this->ptr_(), str);
   this->position_ += SSString::count(str);
 }
 
@@ -206,24 +209,30 @@ void VAManage::writeWstr(const Napi::CallbackInfo& info)
   nm_init;
   String text = info[0].As<String>();
   u16string ustr = text.Utf16Value();
-  Mem::write_str(this->ptr(), ustr);
+  Mem::write_str(this->ptr_(), ustr);
   this->position_ += SSString::count(ustr);
 }
 
 void VAManage::loadFromFile(const Napi::CallbackInfo& info)
 {
   string filename = nm_str(info[0]);
-  Mem::read_region_from_file(filename, this->ptr(), &this->position_);
+  Mem::read_region_from_file(filename, this->ptr_(), &this->position_);
 }
 
 void VAManage::saveToFile(const Napi::CallbackInfo& info)
 {
   nm_init;
   string filename = nm_str(info[0]);
-  Mem::write_region_to_file(filename, this->ptr(), -1);
+  Mem::write_region_to_file(filename, this->ptr_(), -1);
 }
 
 void VAManage::destroy(const Napi::CallbackInfo& info)
 {
   Mem::free(this->memory_);
+}
+
+Value VAManage::GetPtr(const Napi::CallbackInfo& info)
+{
+  nm_init;
+  nm_ret((uintptr_t)this->ptr_());
 }

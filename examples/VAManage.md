@@ -51,3 +51,15 @@ mem.saveToFile("C:\\Users\\ajanuw\\Desktop\\b.txt")
 
 mem.destroy();
 ```
+
+## ptr
+```js
+import * as assert from "assert";
+
+const mem = new nw.VAManage();
+
+mem.writeDword(10);
+assert(mem.ptr === (mem.memory + mem.position) )
+
+mem.destroy();
+```

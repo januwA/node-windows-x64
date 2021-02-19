@@ -63,9 +63,9 @@ Value mem_write_bytes(const CallbackInfo &info)
 
   if (info[1].IsArray())
   {
-    Array bytes = nm_arr(info[1]);
-    for (size_t i = 0; i < bytes.Length(); i++)
-      vect_bytes.push_back(nm_dword(bytes.Get(i)));
+    Array table = nm_arr(info[1]);
+    for (size_t i = 0; i < table.Length(); i++)
+      vect_bytes.push_back(nm_dword(table.Get(i)));
   }
   else
   {
@@ -133,9 +133,9 @@ Value mem_read_bytes(const CallbackInfo &info)
   uintptr_t size = nm_qword(info[1]);
   
   auto bytes = Mem::read_bytes((void*)lpAddress, size);
-  Array r = Array::New(env, size);
-  for (int i = 0; i < size; i++) r.Set(i, bytes.at(i));
-  return r;
+  Array table = Array::New(env, size);
+  for (int i = 0; i < size; i++) table.Set(i, bytes.at(i));
+  return table;
 }
 Value mem_read_word(const CallbackInfo &info)
 {
@@ -175,5 +175,5 @@ Value mem_read_region_from_file(const CallbackInfo &info)
   string filename = nm_str(info[0]);
   uintptr_t lpAddress = nm_qword(info[1]);
   Mem::read_region_from_file(filename, (void*)lpAddress);
-  nm_retu;
+  nm_retbt;
 }

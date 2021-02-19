@@ -1,5 +1,5 @@
 #pragma once
-#pragma warning(disable: 4996)
+#pragma warning(disable : 4996)
 
 #include <iostream>
 #include <Windows.h>
@@ -9,45 +9,45 @@
 
 using namespace Napi;
 
-Number getProcessID(const CallbackInfo& info)
+Number getProcessID(const CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetCurrentProcessId());
 }
-Number getCurrentProcess(const CallbackInfo& info)
+Number getCurrentProcess(const CallbackInfo &info)
 {
   nm_init;
   nm_ret((uintptr_t)GetCurrentProcess());
 }
-Number openProcess(const CallbackInfo& info)
+Number openProcess(const CallbackInfo &info)
 {
   nm_init;
-  DWORD dwDesiredAccess = info[0].IsNumber() ? nm_dword(info[0]) : PROCESS_ALL_ACCESS;
+  DWORD dwDesiredAccess = nm_IsNullishOr(info[0], nm_dword, PROCESS_ALL_ACCESS);
   BOOL bInheritHandle = info[1].ToBoolean() ? TRUE : FALSE;
   DWORD dwProcessId = nm_IsNullishOr(info[2], nm_dword, GetCurrentProcessId());
   nm_ret((uintptr_t)OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId));
 }
-Value closeHandle(const CallbackInfo& info)
+Value closeHandle(const CallbackInfo &info)
 {
-  nm_init;
-  nm_ret((uintptr_t)CloseHandle((HANDLE)info[0].ToNumber().Int64Value()));
+  nm_init_cal(1);
+  nm_retb(CloseHandle((HANDLE)nm_qword(info[0])));
 }
 
-Value getMousePos(const CallbackInfo& info)
+Value getMousePos(const CallbackInfo &info)
 {
   nm_init;
-  POINT pos{ 0 };
-  if (GetCursorPos(&pos) == NULL) nm_retu;
+  POINT pos{0};
+  if (GetCursorPos(&pos) == NULL)
+    nm_retu;
   auto r = Object::New(env);
   r.Set("x", pos.x);
   r.Set("y", pos.y);
   return r;
 }
 
-Value setMousePos(const CallbackInfo& info)
+Value setMousePos(const CallbackInfo &info)
 {
-  nm_init;
-  int x, y;
+  nm_init_cal(2) int x, y;
   if (info[0].IsObject())
   {
     x = nm_int(nm_obj(info[0]).Get("x"));
@@ -61,41 +61,41 @@ Value setMousePos(const CallbackInfo& info)
   nm_retb(SetCursorPos(x, y));
 }
 
-Value isKeyPressed(const CallbackInfo& info)
+Value isKeyPressed(const CallbackInfo &info)
 {
-  nm_init;
-  SHORT r = GetKeyState(nm_int(info[0]));
-  nm_retb(r == NULL ? FALSE : TRUE);
+  nm_init_cal(1)
+      nm_retb(GetKeyState(nm_int(info[0])));
 }
 
-Value keyDown(const CallbackInfo& info)
+Value keyDown(const CallbackInfo &info)
 {
-  nm_init;
-  keybd_event(nm_dword(info[0]), 0, 0, 0);
+  nm_init_cal(1)
+      keybd_event(nm_dword(info[0]), 0, 0, 0);
   nm_retu;
 }
 
-Value keyUp(const CallbackInfo& info)
+Value keyUp(const CallbackInfo &info)
 {
-  nm_init;
-  keybd_event(info[0].As<Number>().Uint32Value(), 0, KEYEVENTF_KEYUP, 0);
+  nm_init_cal(1)
+      keybd_event(nm_dword(info[0]), 0, KEYEVENTF_KEYUP, 0);
   nm_retu;
 }
 
-Value doKeyPress(const CallbackInfo& info)
+Value doKeyPress(const CallbackInfo &info)
 {
-  keyDown(info);
+  nm_init_cal(1)
+      keyDown(info);
   keyUp(info);
-  return info.Env().Undefined();
+  nm_retu;
 }
 
-Value e_mouse_event(const CallbackInfo& info)
+Value e_mouse_event(const CallbackInfo &info)
 {
-  nm_init;
-  DWORD     dwFlags = nm_dword(info[0]);
-  DWORD     dx = nm_IsNullishOr(info[1], nm_dword, 0);
-  DWORD     dy = nm_IsNullishOr(info[2], nm_dword, 0);
-  DWORD     dwData = nm_IsNullishOr(info[3], nm_dword, 0);
+  nm_init_cal(1);
+  DWORD dwFlags = nm_dword(info[0]);
+  DWORD dx = nm_IsNullishOr(info[1], nm_dword, 0);
+  DWORD dy = nm_IsNullishOr(info[2], nm_dword, 0);
+  DWORD dwData = nm_IsNullishOr(info[3], nm_dword, 0);
   ULONG_PTR dwExtraInf = nm_IsNullishOr(info[4], nm_dword, 0);
 
   /*
@@ -111,38 +111,42 @@ Value e_mouse_event(const CallbackInfo& info)
   ip.mi.time = 0;
   ip.mi.dwExtraInfo = dwExtraInf;
   ip.mi.dwFlags = dwFlags;
-  SendInput(INPUT_KEYBOARD, &ip, sizeof(ip));
-  nm_retu;
+  nm_ret(SendInput(INPUT_KEYBOARD, &ip, sizeof(ip)));
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/dataxchg/using-the-clipboard
-Value readFromClipboard(const CallbackInfo& info)
+Value readFromClipboard(const CallbackInfo &info)
 {
   nm_init;
-  if (!OpenClipboard(nullptr)) nm_retbf;
+  if (!OpenClipboard(nullptr))
+    nm_retbf;
 
   HGLOBAL hglb = GetClipboardData(CF_TEXT);
-  if (!hglb) nm_retbf;
+  if (!hglb)
+    nm_retbf;
 
   LPTSTR lptstr = (LPTSTR)GlobalLock(hglb);
-  if (!lptstr) nm_retbf;
+  if (!lptstr)
+    nm_retbf;
 
   GlobalUnlock(hglb);
   CloseClipboard();
-  nm_rets((char*)lptstr);
+  nm_rets((char *)lptstr);
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/dataxchg/using-the-clipboard
-Value writeToClipboard(const CallbackInfo& info)
+Value writeToClipboard(const CallbackInfo &info)
 {
-  nm_init;
+  nm_init_cal(1);
 
-  if (!OpenClipboard(nullptr)) nm_retbf;
+  if (!OpenClipboard(nullptr))
+    nm_retbf;
   EmptyClipboard();
 
-  string output =nm_str(info[0]);
+  string output = nm_str(info[0]);
   HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, output.size());
-  if (hMem == NULL) nm_retbf;
+  if (hMem == NULL)
+    nm_retbf;
 
   memcpy_s(GlobalLock(hMem), output.size(), output.c_str(), output.size());
   GlobalUnlock(hMem);
@@ -153,35 +157,38 @@ Value writeToClipboard(const CallbackInfo& info)
   nm_retbt;
 }
 
-Value getScreenHeight(const CallbackInfo& info)
+Value getScreenHeight(const CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetSystemMetrics(SM_CYSCREEN));
 }
 
-Value getScreenWidth(const CallbackInfo& info)
+Value getScreenWidth(const CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetSystemMetrics(SM_CXSCREEN));
 }
 
-Value getWorkAreaWidth(const CallbackInfo& info)
+Value getWorkAreaWidth(const CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetSystemMetrics(SM_CXFULLSCREEN));
 }
 
-Value getWorkAreaHeight(const CallbackInfo& info)
+Value getWorkAreaHeight(const CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetSystemMetrics(SM_CYFULLSCREEN));
 }
 
-Value getPixel(const CallbackInfo& info)
+Value getPixel(const CallbackInfo &info)
 {
-  nm_init;
+  nm_init_cal(2);
+  int x = nm_dword(info[0]);
+  int y = nm_dword(info[1]);
+
   HDC dc = GetDC(NULL);
-  COLORREF rgbColor = GetPixel(dc, 0, 0);
+  COLORREF rgbColor = GetPixel(dc, x, y);
   auto r = Object::New(env);
   r.Set("r", Number::New(env, GetRValue(rgbColor)));
   r.Set("g", Number::New(env, GetGValue(rgbColor)));
@@ -191,26 +198,26 @@ Value getPixel(const CallbackInfo& info)
   return r;
 }
 
-Value beep(const CallbackInfo& info)
+Value beep(const CallbackInfo &info)
 {
   nm_init;
   DWORD dwFreq = nm_IsNullishOr(info[0], nm_dword, 750);
   DWORD dwDuration = nm_IsNullishOr(info[1], nm_dword, 300);
-  nm_ret(Beep(dwFreq, dwDuration));
+  nm_retb(Beep(dwFreq, dwDuration));
 }
 
 // https://docs.microsoft.com/en-us/previous-versions/office/developer/speech-technologies/jj127460(v=msdn.10)?redirectedfrom=MSDN
-Value speak(const CallbackInfo& info)
+Value speak(const CallbackInfo &info)
 {
   nm_init;
   u16string pwcs = nm_wstr(info[0]);
   DWORD dwFlags = SPF_DEFAULT;
-  ULONG* pulStreamNumber = NULL;
+  ULONG *pulStreamNumber = NULL;
 
   CoInitialize(NULL);
-  ISpVoice* pSpVoice = NULL;
-  if (FAILED(CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_INPROC_SERVER, IID_ISpVoice, (void**)&pSpVoice))) nm_retu;
-
+  ISpVoice *pSpVoice = NULL;
+  if (FAILED(CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_INPROC_SERVER, IID_ISpVoice, (void **)&pSpVoice)))
+    nm_retu;
 
   pSpVoice->Speak((LPCWSTR)pwcs.c_str(), dwFlags, pulStreamNumber);
   pSpVoice->Release();
@@ -218,7 +225,7 @@ Value speak(const CallbackInfo& info)
   nm_retbt;
 }
 
-Value sleep(const CallbackInfo& info)
+Value sleep(const CallbackInfo &info)
 {
   nm_init;
   DWORD dwMilliseconds = nm_dword(info[0]);
@@ -227,7 +234,7 @@ Value sleep(const CallbackInfo& info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindowa
-Value findWindow(const CallbackInfo& info)
+Value findWindow(const CallbackInfo &info)
 {
   nm_init;
   string sClassName = nm_str(info[0]);
@@ -243,44 +250,46 @@ Value findWindow(const CallbackInfo& info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindow
-Value getWindow(const CallbackInfo& info)
+Value getWindow(const CallbackInfo &info)
 {
   nm_init;
-  uintptr_t  hwnd = nm_qword(info[0]);
+  uintptr_t hWnd = nm_qword(info[0]);
   UINT uCmd = nm_dword(info[1]);
-  nm_ret((uintptr_t)GetWindow((HWND)hwnd, uCmd));
+  nm_ret((uintptr_t)GetWindow((HWND)hWnd, uCmd));
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtexta
-Value getWindowCaption(const CallbackInfo& info)
+Value getWindowCaption(const CallbackInfo &info)
 {
   nm_init;
-  uintptr_t hwnd = nm_qword(info[0]);
+  uintptr_t hWnd = nm_qword(info[0]);
   char sCaption[1024];
-  int r = GetWindowTextA((HWND)hwnd, sCaption, sizeof(sCaption));
-  if (r == NULL) nm_retu;
+  int r = GetWindowTextA((HWND)hWnd, sCaption, sizeof(sCaption));
+  if (r == NULL)
+    nm_retu;
   nm_rets(sCaption);
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclassname
-Value getWindowClassName(const CallbackInfo& info)
+Value getWindowClassName(const CallbackInfo &info)
 {
   nm_init;
-  uintptr_t hwnd = nm_qword(info[0]);
+  uintptr_t hWnd = nm_qword(info[0]);
   char sClassName[1024];
-  int r = GetClassNameA((HWND)hwnd, sClassName, sizeof(sClassName));
-  if (r == NULL) nm_retu;
+  int r = GetClassNameA((HWND)hWnd, sClassName, sizeof(sClassName));
+  if (r == NULL)
+    nm_retu;
   nm_rets(sClassName);
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowthreadprocessid
-Value getWindowProcessID(const CallbackInfo& info)
+Value getWindowProcessID(const CallbackInfo &info)
 {
   nm_init;
-  uintptr_t hwnd = nm_qword(info[0]);
+  uintptr_t hWnd = nm_qword(info[0]);
 
   int lpdwProcessId;
-  int id = GetWindowThreadProcessId((HWND)hwnd, (LPDWORD)&lpdwProcessId);
+  int id = GetWindowThreadProcessId((HWND)hWnd, (LPDWORD)&lpdwProcessId);
 
   Object r = Object::New(env);
   r.Set("pid", Number::New(env, lpdwProcessId));
@@ -290,20 +299,19 @@ Value getWindowProcessID(const CallbackInfo& info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
-Value getForegroundWindow(const CallbackInfo& info)
+Value getForegroundWindow(const CallbackInfo &info)
 {
   nm_init;
   nm_ret((uintptr_t)GetForegroundWindow());
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage
-Value sendMessage(const CallbackInfo& info)
+Value sendMessage(const CallbackInfo &info)
 {
-  nm_init;
+  nm_init_cal(4);
   uintptr_t hWnd = nm_qword(info[0]);
   UINT Msg = nm_dword(info[1]);
   uint32_t wParam = nm_dword(info[2]);
   uint32_t lParam = nm_dword(info[3]);
-  SendMessageA((HWND)hWnd, Msg, (WPARAM)wParam, (LPARAM)lParam);
-  nm_ret((uintptr_t)GetForegroundWindow());
+  nm_ret((uintptr_t)SendMessageA((HWND)hWnd, Msg, (WPARAM)wParam, (LPARAM)lParam));
 }

@@ -17,3 +17,12 @@ $ npm run bt
 const addon = require("node-windows-x64");
 console.log(addon)
 ```
+
+## 去函数体
+
+https://stackoverflow.com/questions/38110833/match-the-body-of-a-function-using-regex
+```
+(\w*\s[^{};]*)\n^\{($[^}$]*)\}$
+
+$1
+```

@@ -1,0 +1,78 @@
+export function getProcessID(): number;
+export function getCurrentProcess(): number;
+export function openProcess(
+  dwDesiredAccess?: number,
+  bInheritHandle?: number,
+  dwProcessId?: number
+): number;
+export function closeHandle(hObject: number): boolean;
+export function getMousePos(): {
+  x: number;
+  y: number;
+};
+export function setMousePos(X: number, Y: number): boolean;
+export function isKeyPressed(nVirtKey: number): boolean;
+export function keyDown(bVk: number): any;
+export function keyUp(bVk: number): void;
+export function doKeyPress(bVk: number): void;
+export function mouse_event(
+  dwFlags: number,
+  dx?: number,
+  dy?: number,
+  dwData?: number,
+  dwExtraInf?: number
+): number;
+
+// https://docs.microsoft.com/en-us/windows/win32/dataxchg/using-the-clipboard
+export function readFromClipboard(): string;
+
+// https://docs.microsoft.com/en-us/windows/win32/dataxchg/using-the-clipboard
+export function writeToClipboard(output: string): boolean | undefined;
+
+export function getScreenHeight(): number;
+export function getScreenWidth(): number;
+export function getWorkAreaWidth(): number;
+export function getWorkAreaHeight(): number;
+
+export function getPixel(
+  x: number,
+  y: number
+): {
+  r: number;
+  g: number;
+  b: number;
+  rgb: number;
+};
+
+export function beep(dwFreq: number, dwDuration: number): boolean;
+
+// https://docs.microsoft.com/en-us/previous-versions/office/developer/speech-technologies/jj127460(v=msdn.10)?redirectedfrom=MSDN
+export function speak(pwcs: string): boolean;
+
+export function sleep(dwMilliseconds: number): undefined;
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindowa
+export function findWindow(lpClassName?: string, lpWindowName?: string): number;
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindow
+export function getWindow(hWnd: number, uCmd: number): number;
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtexta
+export function getWindowCaption(hWnd: number): string;
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclassname
+export function getWindowClassName(hWnd: number): string;
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowthreadprocessid
+export function getWindowProcessID(hWnd: number): { pid: number; tid: number };
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
+export function getForegroundWindow(): number;
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage
+export function sendMessage(
+  hWnd: number,
+  Msg: number,
+  wParam: number,
+  lParam: number
+): number;

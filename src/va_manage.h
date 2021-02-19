@@ -31,7 +31,8 @@ public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   VAManage(const Napi::CallbackInfo& info);
   ~VAManage();
-  void* ptr();
+  void* ptr_();
+  Napi::Value GetPtr(const Napi::CallbackInfo& info);
 
   Napi::Value read(const Napi::CallbackInfo& info);
   Napi::Value readByte(const Napi::CallbackInfo& info);
