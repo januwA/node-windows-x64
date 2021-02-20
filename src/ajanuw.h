@@ -1,9 +1,12 @@
 #pragma once
+#pragma warning(disable : 4819)
+
 #include <ostream>
 #include <Windows.h>
 #include <regex>
 #include <fstream>
 #include <map>
+#include <sstream>
 
 #define uptr_size sizeof(uintptr_t)
 
@@ -16,12 +19,12 @@ namespace ajanuw
   namespace SSString
   {
     char *setLocale(int _Category = LC_ALL, const char *_Locale = "chs");
-    std::wstring strTowstr(std::string str);
-    std::u16string strToustr(std::string str);
-    std::string ustrTostr(std::u16string ustr);
-    std::string wstrTostr(std::wstring wstr);
-    std::wstring ustrTowstr(std::u16string ustr);
-    std::u16string wstrToustr(std::wstring wstr);
+    std::wstring strToWstr(std::string str);
+    std::u16string strToUstr(std::string str);
+    std::string ustrToStr(std::u16string ustr);
+    std::string wstrToStr(std::wstring wstr);
+    std::wstring ustrToWstr(std::u16string ustr);
+    std::u16string wstrToUstr(std::wstring wstr);
 
     void strToMem(void *dst, std::string str);
     void strToMem(void *dst, std::wstring str);
@@ -71,6 +74,8 @@ namespace ajanuw
     size_t count(std::string str);
     size_t count(std::wstring str);
     size_t count(std::u16string str);
+
+    std::string strFormNumber(uintptr_t number, bool isHex = false);
   }
 
   namespace Mem

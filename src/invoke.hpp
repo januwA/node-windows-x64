@@ -6,7 +6,7 @@
 using namespace Napi;
 using namespace ajanuw;
 
-typedef void *(CALLBACK *asm_fun_t)();
+extern "C" typedef void *(CALLBACK *asm_fun_t)();
 
 struct CallbackContext
 {
@@ -147,11 +147,9 @@ Value invoke(const CallbackInfo &info)
     else
     {
       argsOffset.push_back(offset + 2);
-      char hex_str[1];
       int rsp_offset = rsp_p5 + ((i - 4) * 8);
-      sprintf(hex_str, "%0x", rsp_offset);
       codeStr += "48 B8 00 00 00 00 00 00 00 00\n";
-      codeStr += "48 89 44 24 " + string{hex_str} + "\n";
+      codeStr += "48 89 44 24 " + ajanuw::SSString::strFormNumber(rsp_offset) + "\n";
       offset += size_p_5;
     }
   }
@@ -181,7 +179,7 @@ Value invoke(const CallbackInfo &info)
     }
     else if (_args.Get(i).IsString())
     {
-      String text = _args.Get(i).ToString();
+      Napi::String text = _args.Get(i).ToString();
       BYTE *addr = stringMem + strMemOffset;
 
       if (isWideChar)

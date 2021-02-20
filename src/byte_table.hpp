@@ -115,7 +115,7 @@ for (size_t i = 0; i < len; i++)\
   auto v = nm_dword(data.Get(i)); \
   memset(mem + i, v, sizeof(BYTE));\
 }\
-auto r = String::From(env, (type*)mem);\
+auto r = Napi::String::From(env, (type*)mem);\
 free(mem);\
 return r;\
 

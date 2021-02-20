@@ -33,3 +33,15 @@ nm_(\w+)\(info\[(\d)\]\)
 
 nmi_$1($2)
 ```
+
+
+## .gyp
+
+预定义变量 https://gyp.gsrc.io/docs/InputFormatReference.md#Variables-and-Conditionals
+```
+PRODUCT_DIR        -> <project-dir>\build\Release
+
+INTERMEDIATE_DIR    -> Release\obj\node-windows-x64\
+
+module_root_dir   -> <project-dir>
+```

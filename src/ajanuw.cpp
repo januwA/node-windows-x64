@@ -1,5 +1,19 @@
 #include "ajanuw.h"
 
+std::string ajanuw::SSString::strFormNumber(uintptr_t number, bool isHex)
+{
+  std::stringstream stream;
+  if (isHex)
+  {
+    stream << std::hex << number;
+  }
+  else
+  {
+    stream << number;
+  }
+  return stream.str();
+}
+
 bool ajanuw::SSString::startWith(std::string str, const char *s2)
 {
   return search(str, std::regex("$" + std::string(s2)));
@@ -216,7 +230,7 @@ LPVOID ajanuw::createCallback(callback_t lpCallback, size_t index)
   return newmem;
 }
 
-std::wstring ajanuw::SSString::strTowstr(std::string str)
+std::wstring ajanuw::SSString::strToWstr(std::string str)
 {
   std::wstring wideStr;
   wideStr.resize(str.length());
@@ -224,7 +238,7 @@ std::wstring ajanuw::SSString::strTowstr(std::string str)
   return wideStr;
 }
 
-std::u16string ajanuw::SSString::strToustr(std::string str)
+std::u16string ajanuw::SSString::strToUstr(std::string str)
 {
   std::u16string wideStr{0};
   wideStr.resize(str.length());
@@ -232,7 +246,7 @@ std::u16string ajanuw::SSString::strToustr(std::string str)
   return wideStr;
 }
 
-std::string ajanuw::SSString::ustrTostr(std::u16string ustr)
+std::string ajanuw::SSString::ustrToStr(std::u16string ustr)
 {
   std::string str{0};
   str.resize(ustr.length() * 2);
@@ -240,7 +254,7 @@ std::string ajanuw::SSString::ustrTostr(std::u16string ustr)
   return str;
 }
 
-std::wstring ajanuw::SSString::ustrTowstr(std::u16string ustr)
+std::wstring ajanuw::SSString::ustrToWstr(std::u16string ustr)
 {
   std::wstring str;
   str.resize(ustr.length());
@@ -248,7 +262,7 @@ std::wstring ajanuw::SSString::ustrTowstr(std::u16string ustr)
   return str;
 }
 
-std::u16string ajanuw::SSString::wstrToustr(std::wstring wstr)
+std::u16string ajanuw::SSString::wstrToUstr(std::wstring wstr)
 {
   std::u16string ustr;
   ustr.resize(wstr.length());
@@ -256,7 +270,7 @@ std::u16string ajanuw::SSString::wstrToustr(std::wstring wstr)
   return ustr;
 }
 
-std::string ajanuw::SSString::wstrTostr(std::wstring wstr)
+std::string ajanuw::SSString::wstrToStr(std::wstring wstr)
 {
   std::string str{0};
   str.resize(wstr.length() * 2);

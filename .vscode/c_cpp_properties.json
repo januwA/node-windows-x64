@@ -4,6 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/deps/**",
                 "C:\\Users\\ajanuw\\AppData\\Local\\node-gyp\\Cache\\14.15.4\\include\\node"
             ],
             "defines": [

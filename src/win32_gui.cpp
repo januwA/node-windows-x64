@@ -145,7 +145,7 @@ Napi::Value Win32Gui::createWindow(const Napi::CallbackInfo &info)
   int y = nmi_int(4);
   int nWidth = nmi_int(5);
   int nHeight = nmi_int(6);
-  HMENU hMenu = (HMENU)nmi_dword(7);
+  HMENU hMenu = (HMENU)nmi_qword(7);
 
   nm_ret((uintptr_t)ajanuw::Gui::Win32::createWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hMenu));
 }
