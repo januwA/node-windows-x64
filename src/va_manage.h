@@ -7,12 +7,10 @@
 #include "ajanuw.h"
 
 using namespace Napi;
-using namespace std;
 
-class VAManage : public Napi::ObjectWrap<VAManage>
+class VAManage : public Napi::ObjectWrap<VAManage>, public ajanuw::Mem::VAManage
 {
 private:
-  ajanuw::Mem::VAManage* va_;
   Napi::Value GetSize(const Napi::CallbackInfo &info);
   Napi::Value GetMemory(const Napi::CallbackInfo &info);
   Napi::Value GetPosition(const Napi::CallbackInfo &info);
@@ -22,7 +20,6 @@ public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   VAManage(const Napi::CallbackInfo &info);
   ~VAManage();
-  void *ptr_();
   Napi::Value GetPtr(const Napi::CallbackInfo &info);
 
   Napi::Value read(const Napi::CallbackInfo &info);

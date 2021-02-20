@@ -467,27 +467,23 @@ void ajanuw::Mem::read_region_from_file(std::string fileame, void *lpAddress, si
 
 std::map<HWND, uintptr_t> mapHwnd;
 
-ajanuw::Gui::Win32Gui::Win32Gui(std::string className, std::string windowName)
+ajanuw::Gui::Win32::Win32(std::string className, std::string windowName)
     : x_(0), y_(0),
       width_(600), height_(400),
       style_(WS_OVERLAPPEDWINDOW),
       className_(className),
       windowName_(windowName),
-      hWnd_(NULL),
-      messageEvent(NULL),
-      env_(NULL)
+      hWnd_(NULL)
 {
 }
 
-ajanuw::Gui::Win32Gui::~Win32Gui()
+ajanuw::Gui::Win32::~Win32()
 {
   DeleteObject(hWnd_);
 }
 
-int ajanuw::Gui::Win32Gui::messageLoop(Napi::Env env, Napi::Function cb)
+int ajanuw::Gui::Win32::messageLoop()
 {
-  env_ = env;
-  cb_ = Napi::Persistent(cb);
   MSG msg;
   while (GetMessage(&msg, nullptr, 0, 0))
   {
@@ -497,11 +493,11 @@ int ajanuw::Gui::Win32Gui::messageLoop(Napi::Env env, Napi::Function cb)
   return (int)msg.wParam;
 }
 
-LRESULT ajanuw::Gui::Win32Gui::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT ajanuw::Gui::Win32::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   if (mapHwnd.size())
   {
-    auto self = (Gui::Win32Gui *)mapHwnd.at(hWnd);
+    auto self = (Gui::Win32 *)mapHwnd.at(hWnd);
     self->wndProc_(hWnd, message, wParam, lParam);
   }
   switch (message)
@@ -515,23 +511,11 @@ LRESULT ajanuw::Gui::Win32Gui::WndProc(HWND hWnd, UINT message, WPARAM wParam, L
   return 0;
 }
 
-void ajanuw::Gui::Win32Gui::wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+void ajanuw::Gui::Win32::wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  if (messageEvent)
-    messageEvent(hWnd, message, wParam, lParam);
-
-  if (cb_)
-  {
-    std::vector<napi_value> args;
-    args.push_back(Napi::Number::New(env_, (uintptr_t)hWnd));
-    args.push_back(Napi::Number::New(env_, (uintptr_t)message));
-    args.push_back(Napi::Number::New(env_, (uintptr_t)wParam));
-    args.push_back(Napi::Number::New(env_, (uintptr_t)lParam));
-    cb_.Call(args);
-  }
 }
 
-ATOM ajanuw::Gui::Win32Gui::initRegisterClass()
+ATOM ajanuw::Gui::Win32::initRegisterClass()
 {
   WNDCLASSEXA wcex{0};
   wcex.cbSize = sizeof(WNDCLASSEX);
@@ -548,7 +532,7 @@ ATOM ajanuw::Gui::Win32Gui::initRegisterClass()
   return RegisterClassExA(&wcex);
 }
 
-BOOL ajanuw::Gui::Win32Gui::initWindow()
+BOOL ajanuw::Gui::Win32::initWindow()
 {
   hWnd_ = CreateWindowA(
       className_.c_str(),
@@ -566,7 +550,7 @@ BOOL ajanuw::Gui::Win32Gui::initWindow()
   return TRUE;
 }
 
-HWND ajanuw::Gui::Win32Gui::createWindow(std::string lpClassName, std::string lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HMENU hMenu)
+HWND ajanuw::Gui::Win32::createWindow(std::string lpClassName, std::string lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HMENU hMenu)
 {
   return CreateWindowA(lpClassName.c_str(), lpWindowName.c_str(),
                        dwStyle,

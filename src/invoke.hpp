@@ -63,22 +63,21 @@ uintptr_t cccccc(void *_, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
 Value invoke(const CallbackInfo &info)
 {
   nm_init;
-  Object opt = nm_obj(info[0]);
+  Object opt = nmi_obj(0);
   string sModule = nm_str(opt.Get("module"));
   string sMethod = nm_str(opt.Get("method"));
 
   uintptr_t lpAddress = nm_IsNullishOr(opt.Get("lpAddress"), nm_qword, 0);
   size_t dwSize = nm_IsNullishOr(opt.Get("dwSize"), nm_qword, 1024);
-  DWORD flAllocationType = nm_IsNullishOr(opt.Get("flAllocationType"), nm_dword, MEM_COMMIT | MEM_RESERVE);
-  DWORD flProtect = nm_IsNullishOr(opt.Get("flProtect"), nm_dword, PAGE_EXECUTE_READWRITE);
 
   // method args: number | pointer | string | function
   Array _args = nm_IsNullishOr(opt.Get("args"), nm_arr, Array::New(env));
 
   // string is wide?
   bool isWideChar = SSString::endWith(sMethod, "W");
-  if (!nm_IsNullish(opt.Get("isWideChar")))
-    isWideChar = nm_bool(opt.Get("isWideChar"));
+  Napi::Value js_isWideChar = opt.Get("isWideChar");
+  if (!nm_IsNullish(js_isWideChar))
+    isWideChar = nm_bool(js_isWideChar);
 
   HMODULE hModule = LoadLibraryA(sModule.c_str());
   if (hModule == NULL)
@@ -95,7 +94,7 @@ Value invoke(const CallbackInfo &info)
   }
 
   // result:8 + pading:8 + funcode
-  BYTE *newmem = (BYTE *)VirtualAlloc((LPVOID)lpAddress, dwSize, flAllocationType, flProtect);
+  BYTE *newmem = (BYTE *)Mem::alloc(dwSize, (LPVOID)lpAddress);
   if (newmem == NULL)
   {
     nm_jserr("VirtualAlloc newmem error.");
@@ -226,7 +225,7 @@ Value invoke(const CallbackInfo &info)
 
   if (stringMem != nullptr)
     Mem::free(stringMem);
-    
+
   for (auto cb : vect_cc)
   {
     Mem::free(cb->address);

@@ -48,3 +48,12 @@
 #define nm_retn return env.Null()
 
 #define nm_jserr(err) Napi::Error::New(env, err).ThrowAsJavaScriptException()
+
+
+#define nm_arr_form_vect(to, form) \
+Napi::Array to = Napi::Array::New(env, form.size());\
+for (size_t i = 0; i < form.size(); i++)\
+{\
+to.Set(i, form[i]); \
+}\
+

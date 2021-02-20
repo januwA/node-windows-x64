@@ -5,8 +5,6 @@
 #include <fstream>
 #include <map>
 
-#include <napi.h> // Try not to use napi in it
-
 #define uptr_size sizeof(uintptr_t)
 
 typedef uintptr_t(CALLBACK *callback_t)(void *_, void *index, uintptr_t *lpRcx, uintptr_t *lpP5);
@@ -153,7 +151,7 @@ namespace ajanuw
 
   namespace Gui
   {
-    class Win32Gui
+    class Win32
     {
     public:
       /// <summary>
@@ -169,13 +167,8 @@ namespace ajanuw
       size_t height_;
       DWORD style_;
 
-      Napi::Env env_;
-      Napi::FunctionReference cb_;
-
-      WNDPROC messageEvent;
-
-      Win32Gui(std::string className, std::string windowName);
-      ~Win32Gui();
+      Win32(std::string className, std::string windowName);
+      ~Win32();
 
       /// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowa
       HWND createWindow(std::string lpClassName, std::string lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HMENU hMenu);
@@ -183,7 +176,7 @@ namespace ajanuw
       /// <summary>
       /// 消息循环
       /// </summary>
-      int messageLoop(Napi::Env env, Napi::Function cb);
+      int messageLoop();
 
       // 注册窗口类
       // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerclassexw
@@ -198,7 +191,7 @@ namespace ajanuw
     private:
       static LRESULT WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-      void wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+      virtual void wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     };
   }
 }

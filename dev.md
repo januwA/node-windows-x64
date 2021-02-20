@@ -26,3 +26,10 @@ https://stackoverflow.com/questions/38110833/match-the-body-of-a-function-using-
 
 $1
 ```
+
+## nm to nmi
+```
+nm_(\w+)\(info\[(\d)\]\)
+
+nmi_$1($2)
+```

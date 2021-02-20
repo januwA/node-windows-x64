@@ -30,7 +30,7 @@ Number openProcess(const CallbackInfo &info)
 Value closeHandle(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_retb(CloseHandle((HANDLE)nm_qword(info[0])));
+  nm_retb(CloseHandle((HANDLE)nmi_qword(0)));
 }
 
 Value getMousePos(const CallbackInfo &info)
@@ -51,13 +51,13 @@ Value setMousePos(const CallbackInfo &info)
   int x, y;
   if (info[0].IsObject())
   {
-    x = nm_int(nm_obj(info[0]).Get("x"));
-    y = nm_int(nm_obj(info[0]).Get("y"));
+    x = nm_int(nmi_obj(0).Get("x"));
+    y = nm_int(nmi_obj(0).Get("y"));
   }
   else
   {
-    x = nm_int(info[0]);
-    y = nm_int(info[1]);
+    x = nmi_int(0);
+    y = nmi_int(1);
   }
   nm_retb(SetCursorPos(x, y));
 }
@@ -65,20 +65,20 @@ Value setMousePos(const CallbackInfo &info)
 Value isKeyPressed(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_retb(GetKeyState(nm_int(info[0])));
+  nm_retb(GetKeyState(nmi_int(0)));
 }
 
 Value keyDown(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  keybd_event(nm_dword(info[0]), 0, 0, 0);
+  keybd_event(nmi_dword(0), 0, 0, 0);
   nm_retu;
 }
 
 Value keyUp(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  keybd_event(nm_dword(info[0]), 0, KEYEVENTF_KEYUP, 0);
+  keybd_event(nmi_dword(0), 0, KEYEVENTF_KEYUP, 0);
   nm_retu;
 }
 
@@ -93,7 +93,7 @@ Value doKeyPress(const CallbackInfo &info)
 Value e_mouse_event(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  DWORD dwFlags = nm_dword(info[0]);
+  DWORD dwFlags = nmi_dword(0);
   DWORD dx = nm_IsNullishOr(info[1], nm_dword, 0);
   DWORD dy = nm_IsNullishOr(info[2], nm_dword, 0);
   DWORD dwData = nm_IsNullishOr(info[3], nm_dword, 0);
@@ -144,7 +144,7 @@ Value writeToClipboard(const CallbackInfo &info)
     nm_retbf;
   EmptyClipboard();
 
-  string output = nm_str(info[0]);
+  string output = nmi_str(0);
   HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, output.size());
   if (hMem == NULL)
     nm_retbf;
@@ -185,8 +185,8 @@ Value getWorkAreaHeight(const CallbackInfo &info)
 Value getPixel(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  int x = nmi_dword(0);
-  int y = nmi_dword(1);
+  int x = nmi_int(0);
+  int y = nmi_int(1);
 
   HDC dc = GetDC(NULL);
   COLORREF rgbColor = GetPixel(dc, x, y);
@@ -229,7 +229,7 @@ Value speak(const CallbackInfo &info)
 Value sleep(const CallbackInfo &info)
 {
   nm_init;
-  DWORD dwMilliseconds = nm_dword(info[0]);
+  DWORD dwMilliseconds = nmi_dword(0);
   Sleep(dwMilliseconds);
   nm_retu;
 }
@@ -254,8 +254,8 @@ Value findWindow(const CallbackInfo &info)
 Value getWindow(const CallbackInfo &info)
 {
   nm_init;
-  uintptr_t hWnd = nm_qword(info[0]);
-  UINT uCmd = nm_dword(info[1]);
+  uintptr_t hWnd = nmi_qword(0);
+  UINT uCmd = nmi_dword(1);
   nm_ret((uintptr_t)GetWindow((HWND)hWnd, uCmd));
 }
 
@@ -263,7 +263,7 @@ Value getWindow(const CallbackInfo &info)
 Value getWindowCaption(const CallbackInfo &info)
 {
   nm_init;
-  uintptr_t hWnd = nm_qword(info[0]);
+  uintptr_t hWnd = nmi_qword(0);
   char sCaption[1024];
   int r = GetWindowTextA((HWND)hWnd, sCaption, sizeof(sCaption));
   if (r == NULL)
@@ -275,7 +275,7 @@ Value getWindowCaption(const CallbackInfo &info)
 Value getWindowClassName(const CallbackInfo &info)
 {
   nm_init;
-  uintptr_t hWnd = nm_qword(info[0]);
+  uintptr_t hWnd = nmi_qword(0);
   char sClassName[1024];
   int r = GetClassNameA((HWND)hWnd, sClassName, sizeof(sClassName));
   if (r == NULL)
@@ -287,7 +287,7 @@ Value getWindowClassName(const CallbackInfo &info)
 Value getWindowProcessID(const CallbackInfo &info)
 {
   nm_init;
-  uintptr_t hWnd = nm_qword(info[0]);
+  uintptr_t hWnd = nmi_qword(0);
 
   int lpdwProcessId;
   int id = GetWindowThreadProcessId((HWND)hWnd, (LPDWORD)&lpdwProcessId);
@@ -310,10 +310,10 @@ Value getForegroundWindow(const CallbackInfo &info)
 Value sendMessage(const CallbackInfo &info)
 {
   nm_init_cal(4);
-  uintptr_t hWnd = nm_qword(info[0]);
-  UINT Msg = nm_dword(info[1]);
-  uint32_t wParam = nm_dword(info[2]);
-  uint32_t lParam = nm_dword(info[3]);
+  uintptr_t hWnd = nmi_qword(0);
+  UINT Msg = nmi_dword(1);
+  uint32_t wParam = nmi_dword(2);
+  uint32_t lParam = nmi_dword(3);
   nm_ret((uintptr_t)SendMessageA((HWND)hWnd, Msg, (WPARAM)wParam, (LPARAM)lParam));
 }
 

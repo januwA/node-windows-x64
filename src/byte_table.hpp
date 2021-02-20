@@ -6,8 +6,6 @@
 #include "ajanuw.h"
 
 using namespace Napi;
-using namespace std;
-using namespace ajanuw;
 
 Array _toTable(Env env, void* lpData, size_t size)
 {
@@ -50,14 +48,13 @@ Value str_to_byte_table(const CallbackInfo& info)
 Value wstr_to_byte_table(const CallbackInfo& info)
 {
   nm_init;
-  u16string data = nm_ustr(info[0]);
+  u16string ustr = nm_ustr(info[0]);
 
-  uintptr_t size = data.size() * 2;
-  vector<uint8_t> bytes = Mem::read_bytes((void*)data.c_str(), size);
-
-  auto r = Array::New(env, size);
-  for (size_t i = 0; i < bytes.size(); i++) r.Set(i, bytes.at(i));
-  return r;
+  uintptr_t size = ustr.size() * 2;
+  vector<uint8_t> bytes = Mem::read_bytes((void*)ustr.c_str(), size);
+    
+  nm_arr_form_vect(result, bytes);
+  return result;
 }
 
 #define BYTE_TABEL_TO(type) \

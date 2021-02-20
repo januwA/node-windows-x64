@@ -1,7 +1,15 @@
 const nw = require("../build/Release/node-windows-x64");
 
-nw.invoke({
+let r = nw.invoke({
   module: "user32.dll",
-  method: "MessageBoxW",
-  args: [0, "body", "title", 3],
+  method: "EnumWindows",
+  args: [
+    (hwnd, param) => {
+      console.log("hwnd: %d, param: %d", hwnd, param);
+      return true;
+    },
+    10,
+  ],
 });
+
+console.log("result: ", r);

@@ -5,10 +5,14 @@
 #include "_napi_macro.h"
 #include "ajanuw.h"
 
-class Win32Gui : public Napi::ObjectWrap<Win32Gui>
+class Win32Gui : public Napi::ObjectWrap<Win32Gui>,
+                 public ajanuw::Gui::Win32
 {
 private:
-  ajanuw::Gui::Win32Gui *gui_;
+  Napi::FunctionReference _cb;
+  Napi::Env env_;
+
+  void wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);

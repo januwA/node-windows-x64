@@ -28,7 +28,7 @@ Value mem_alloc(const CallbackInfo &info)
   }
   else
   {
-    Object opt = nm_obj(info[0]);
+    Object opt = nmi_obj(0);
     dwSize = nm_qword(opt.Get("dwSize"));
     lpAddress = nm_IsNullishOr(opt.Get("lpAddress"), nm_qword, lpAddress);
     flAllocationType = nm_IsNullishOr(opt.Get("flAllocationType"), nm_dword, flAllocationType);
@@ -41,13 +41,13 @@ Value mem_alloc(const CallbackInfo &info)
 Value mem_free(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_retb(Mem::free((LPVOID)nm_qword(info[0])));
+  nm_retb(Mem::free((LPVOID)nmi_qword(0)));
 }
 
 Value mem_write_str(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  uintptr_t lpAddress = nm_qword(info[0]);
+  uintptr_t lpAddress = nmi_qword(0);
   String text = info[1].As<String>();
   Boolean isWideChar = info[2].ToBoolean();
   if (isWideChar)
@@ -59,12 +59,12 @@ Value mem_write_str(const CallbackInfo &info)
 Value mem_write_bytes(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  uintptr_t lpAddress = nm_qword(info[0]);
+  uintptr_t lpAddress = nmi_qword(0);
   vector<BYTE> vect_bytes;
 
   if (info[1].IsArray())
   {
-    Array table = nm_arr(info[1]);
+    Array table = nmi_arr(1);
     for (size_t i = 0; i < table.Length(); i++)
       vect_bytes.push_back(nm_dword(table.Get(i)));
   }
@@ -80,39 +80,39 @@ Value mem_write_bytes(const CallbackInfo &info)
 Value mem_write_word(const CallbackInfo& info)
 {
   nm_init_cal(2);
-  Mem::write_word((void*)nm_qword(info[0]), nm_dword(info[1]));
+  Mem::write_word((void*)nmi_qword(0), nmi_dword(1));
   nm_retbt;
 }
 Value mem_write_dword(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  Mem::write_dword((void*)nm_qword(info[0]), nm_dword(info[1]));
+  Mem::write_dword((void*)nmi_qword(0), nmi_dword(1));
   nm_retbt;
 }
 Value mem_write_qword(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  Mem::write_qword((void*)nm_qword(info[0]), nm_qword(info[1]));
+  Mem::write_qword((void*)nmi_qword(0), nmi_qword(1));
   nm_retbt;
 }
 Value mem_write_float(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  Mem::write_float((void*)nm_qword(info[0]), nm_float(info[1]));
+  Mem::write_float((void*)nmi_qword(0), nmi_float(1));
   nm_retbt;
 }
 Value mem_write_double(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  Mem::write_double((void*)nm_qword(info[0]), nm_double(info[1]));
+  Mem::write_double((void*)nmi_qword(0), nmi_double(1));
   nm_retbt;
 }
 Value mem_write_region_to_file(const CallbackInfo& info)
 {
   nm_init_cal(3);
-  string filename = nm_str(info[0]);
-  uintptr_t lpAddress = nm_qword(info[1]);
-  uint32_t size = nm_qword(info[2]);
+  string filename = nmi_str(0);
+  uintptr_t lpAddress = nmi_qword(1);
+  uint32_t size = nmi_qword(2);
   Mem::write_region_to_file(filename, (void*)lpAddress, size);
   nm_retbt;
 }
@@ -120,7 +120,7 @@ Value mem_write_region_to_file(const CallbackInfo& info)
 Value mem_read_str(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  uintptr_t lpAddress = nm_qword(info[0]);
+  uintptr_t lpAddress = nmi_qword(0);
   uintptr_t maxSize = nm_IsNullishOr(info[1], nm_qword, -1);
   Boolean isWideChar = info[2].ToBoolean();
 
@@ -130,8 +130,8 @@ Value mem_read_str(const CallbackInfo &info)
 Value mem_read_bytes(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  uintptr_t lpAddress = nm_qword(info[0]);
-  uintptr_t size = nm_qword(info[1]);
+  uintptr_t lpAddress = nmi_qword(0);
+  uintptr_t size = nmi_qword(1);
   
   auto bytes = Mem::read_bytes((void*)lpAddress, size);
   Array table = Array::New(env, size);
@@ -141,40 +141,40 @@ Value mem_read_bytes(const CallbackInfo &info)
 Value mem_read_word(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret(Mem::read_word((void*)nm_qword(info[0])));
+  nm_ret(Mem::read_word((void*)nmi_qword(0)));
 }
 Value mem_read_dword(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret(Mem::read_dword((void*)nm_qword(info[0])));
+  nm_ret(Mem::read_dword((void*)nmi_qword(0)));
 }
 Value mem_read_qword(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret(Mem::read_qword((void*)nm_qword(info[0])));
+  nm_ret(Mem::read_qword((void*)nmi_qword(0)));
 }
 Value mem_read_pointer(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret(Mem::read_pointer((void*)nm_qword(info[0])));
+  nm_ret(Mem::read_pointer((void*)nmi_qword(0)));
 }
 Value mem_read_float(const CallbackInfo &info)
 {
   nm_init;
-  nm_ret(Mem::read_float((void*)nm_qword(info[0])));
+  nm_ret(Mem::read_float((void*)nmi_qword(0)));
 }
 Value mem_read_double(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret(Mem::read_double((void*)nm_qword(info[0])));
+  nm_ret(Mem::read_double((void*)nmi_qword(0)));
 }
 
 Value mem_read_region_from_file(const CallbackInfo &info)
 {
   nm_init_cal(2);
 
-  string filename = nm_str(info[0]);
-  uintptr_t lpAddress = nm_qword(info[1]);
+  string filename = nmi_str(0);
+  uintptr_t lpAddress = nmi_qword(1);
   Mem::read_region_from_file(filename, (void*)lpAddress);
   nm_retbt;
 }
