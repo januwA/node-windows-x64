@@ -105,7 +105,7 @@ console.log("result: ", r);
 ```js
 nw.invoke({
   module: "user32.dll",
-  method: "MessageBoxWA",
+  method: "MessageBoxA",
   args: [0, "body", "title", 3],
 });
 

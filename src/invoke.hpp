@@ -38,6 +38,21 @@ struct CallbackContext
   }
 };
 
+size_t getStringsCount(Napi::Array args, bool isWideChar)
+{
+  size_t count = 0;
+  for (size_t i = 0; i < args.Length(); i++)
+  {
+    auto it = args.Get(i);
+    if (it.IsString())
+    {
+      count += isWideChar ? SSString::count(nm_ustr(it)) : nm_str(it).length();
+      count++;
+    }
+  }
+  return count;
+}
+
 vector<CallbackContext *> vect_cc;
 
 uintptr_t cccccc(void *_, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
@@ -65,7 +80,6 @@ Value invoke(const CallbackInfo &info)
   if (!nm_IsNullish(opt.Get("isWideChar")))
     isWideChar = nm_bool(opt.Get("isWideChar"));
 
-
   HMODULE hModule = LoadLibraryA(sModule.c_str());
   if (hModule == NULL)
   {
@@ -89,29 +103,20 @@ Value invoke(const CallbackInfo &info)
   }
 
   // save strings
-  size_t dwStrSize = 0;
+  BYTE *stringMem = NULL;
+  size_t strSizeCount = getStringsCount(_args, isWideChar);
   size_t strMemOffset = 0;
-  BYTE* stringMem = NULL;
-  for (size_t i = 0; i < _args.Length(); i++)
-  {
-    auto a = _args.Get(i);
-    if (a.IsString())
-    {
-      dwStrSize += isWideChar ? SSString::count(a.ToString().Utf16Value()) : a.ToString().Utf8Value().length();
-      dwStrSize++;
-    }
-  }
 
-  if (dwStrSize)
+  if (strSizeCount)
   {
-    stringMem = (BYTE*)Mem::alloc(dwStrSize);
+    stringMem = (BYTE *)Mem::alloc(strSizeCount);
     if (stringMem == NULL)
     {
       nm_jserr("VirtualAlloc stringMem error.");
       nm_retu;
     }
   }
-  
+
   uintptr_t *lpResult = (uintptr_t *)newmem;
   asm_fun_t asm_func = (asm_fun_t)(newmem + sizeof(uintptr_t));
 
@@ -178,7 +183,7 @@ Value invoke(const CallbackInfo &info)
     else if (_args.Get(i).IsString())
     {
       String text = _args.Get(i).ToString();
-      BYTE* addr = stringMem + strMemOffset;
+      BYTE *addr = stringMem + strMemOffset;
 
       if (isWideChar)
       {
@@ -205,8 +210,8 @@ Value invoke(const CallbackInfo &info)
   memcpy_s(code.data() + methodOffset, sizeof(uintptr_t), &lpMethod, sizeof(uintptr_t)); // method
   memcpy_s(code.data() + resultOffset, sizeof(uintptr_t), &lpResult, sizeof(uintptr_t)); // result
 
-  memcpy_s((BYTE*)asm_func, code.size(), code.data(), code.size());
-  
+  memcpy_s((BYTE *)asm_func, code.size(), code.data(), code.size());
+
   /*
   printf("pid: %x\n", GetCurrentProcessId());
   printf("fun: %p\n", asm_func);
@@ -216,8 +221,12 @@ Value invoke(const CallbackInfo &info)
   asm_func();
 
   uintptr_t result = *lpResult;
-  if (newmem != nullptr) Mem::free(newmem);
-  if (stringMem != nullptr) Mem::free(stringMem);
+  if (newmem != nullptr)
+    Mem::free(newmem);
+
+  if (stringMem != nullptr)
+    Mem::free(stringMem);
+    
   for (auto cb : vect_cc)
   {
     Mem::free(cb->address);

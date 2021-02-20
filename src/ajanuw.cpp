@@ -1,7 +1,5 @@
 #include "ajanuw.h"
 
-#define uptr_size sizeof(uintptr_t)
-
 bool ajanuw::SSString::startWith(std::string str, const char *s2)
 {
   return search(str, std::regex("$" + std::string(s2)));
@@ -200,7 +198,7 @@ size_t ajanuw::SSString::count(std::u16string str)
   return len(str) * 2;
 }
 
-LPVOID ajanuw::createCallback(void *lpAddress, size_t index)
+LPVOID ajanuw::createCallback(callback_t lpCallback, size_t index)
 {
   std::string code_str = "55 48 8B EC 48 81 EC 90 01 00 00\n"
                          "48 89 4C 24 08 48 89 54 24 10 4C 89 44 24 18 4C 89 4C 24 20\n"
@@ -212,7 +210,7 @@ LPVOID ajanuw::createCallback(void *lpAddress, size_t index)
 
   //memcpy_s(code_bytes.data() + 0x21, uptr_size, &lpCB, uptr_size); // 备用
   memcpy_s(code_bytes.data() + 0x2B, uptr_size, &index, uptr_size);
-  memcpy_s(code_bytes.data() + 0x3E, uptr_size, &lpAddress, uptr_size);
+  memcpy_s(code_bytes.data() + 0x3E, uptr_size, &lpCallback, uptr_size);
   auto newmem = ajanuw::Mem::alloc(code_bytes.size() + uptr_size);
   memcpy_s(newmem, code_bytes.size(), code_bytes.data(), code_bytes.size());
   return newmem;
@@ -353,6 +351,11 @@ void ajanuw::Mem::write_str(void *lpAddress, std::u16string str)
   ajanuw::SSString::strToMem((void *)lpAddress, str);
 }
 
+void ajanuw::Mem::write_byte(void *lpAddress, BYTE byte)
+{
+  memset(lpAddress, byte, sizeof(BYTE));
+}
+
 void ajanuw::Mem::write_bytes(void *lpAddress, std::vector<BYTE> bytes)
 {
   memcpy_s(lpAddress, bytes.size(), bytes.data(), bytes.size());
@@ -478,7 +481,7 @@ ajanuw::Gui::Win32Gui::Win32Gui(std::string className, std::string windowName)
 
 ajanuw::Gui::Win32Gui::~Win32Gui()
 {
-  DeleteObject(this->hWnd_);
+  DeleteObject(hWnd_);
 }
 
 int ajanuw::Gui::Win32Gui::messageLoop(Napi::Env env, Napi::Function cb)
@@ -514,8 +517,8 @@ LRESULT ajanuw::Gui::Win32Gui::WndProc(HWND hWnd, UINT message, WPARAM wParam, L
 
 void ajanuw::Gui::Win32Gui::wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  if (this->messageEvent)
-    this->messageEvent(hWnd, message, wParam, lParam);
+  if (messageEvent)
+    messageEvent(hWnd, message, wParam, lParam);
 
   if (cb_)
   {
@@ -533,7 +536,7 @@ ATOM ajanuw::Gui::Win32Gui::initRegisterClass()
   WNDCLASSEXA wcex{0};
   wcex.cbSize = sizeof(WNDCLASSEX);
   wcex.style = CS_HREDRAW | CS_VREDRAW;
-  wcex.lpfnWndProc = this->WndProc;
+  wcex.lpfnWndProc = WndProc;
   wcex.cbClsExtra = 0;
   wcex.cbWndExtra = 0;
   wcex.hInstance = NULL;
@@ -541,25 +544,25 @@ ATOM ajanuw::Gui::Win32Gui::initRegisterClass()
   wcex.lpszMenuName = NULL;
   wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
   wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-  wcex.lpszClassName = this->className_.c_str();
+  wcex.lpszClassName = className_.c_str();
   return RegisterClassExA(&wcex);
 }
 
 BOOL ajanuw::Gui::Win32Gui::initWindow()
 {
-  this->hWnd_ = CreateWindowA(
-      this->className_.c_str(),
-      this->windowName_.c_str(),
-      this->style_,
-      this->x_, this->y_,
-      this->width_, this->height_,
+  hWnd_ = CreateWindowA(
+      className_.c_str(),
+      windowName_.c_str(),
+      style_,
+      x_, y_,
+      width_, height_,
       NULL, NULL, NULL, NULL);
 
-  if (!this->hWnd_)
+  if (!hWnd_)
     return FALSE;
-  mapHwnd.insert(std::pair<HWND, uintptr_t>(this->hWnd_, (uintptr_t)this));
-  ShowWindow(this->hWnd_, SW_RESTORE);
-  UpdateWindow(this->hWnd_);
+  mapHwnd.insert(std::pair<HWND, uintptr_t>(hWnd_, (uintptr_t)this));
+  ShowWindow(hWnd_, SW_RESTORE);
+  UpdateWindow(hWnd_);
   return TRUE;
 }
 
@@ -569,7 +572,161 @@ HWND ajanuw::Gui::Win32Gui::createWindow(std::string lpClassName, std::string lp
                        dwStyle,
                        x, y,
                        nWidth, nHeight,
-                       this->hWnd_,
+                       hWnd_,
                        hMenu,
                        NULL, NULL);
+}
+
+ajanuw::Mem::VAManage::VAManage(size_t size) : size_(size), position_(0)
+{
+  memory_ = ajanuw::Mem::alloc(size);
+  if (memory_ == NULL)
+  {
+    printf("VAManage alloc fail.");
+    throw 1;
+  }
+}
+
+ajanuw::Mem::VAManage::~VAManage()
+{
+}
+
+uint8_t *ajanuw::Mem::VAManage::ptr_()
+{
+  return (BYTE *)memory_ + position_;
+}
+
+std::vector<uint8_t> ajanuw::Mem::VAManage::read(size_t size)
+{
+  std::vector<uint8_t> table;
+  for (size_t i = 0; i < size; i++)
+    table.push_back(ajanuw::Mem::read_byte(ptr_() + i));
+  return table;
+}
+
+uint8_t ajanuw::Mem::VAManage::readByte()
+{
+  return ajanuw::Mem::read_byte(ptr_());
+}
+
+uint16_t ajanuw::Mem::VAManage::readWord()
+{
+  return ajanuw::Mem::read_word(ptr_());
+}
+
+uint32_t ajanuw::Mem::VAManage::readDword()
+{
+  return ajanuw::Mem::read_dword(ptr_());
+}
+
+uint64_t ajanuw::Mem::VAManage::readQword()
+{
+  return ajanuw::Mem::read_qword(ptr_());
+}
+
+float ajanuw::Mem::VAManage::readFloat()
+{
+  return ajanuw::Mem::read_float(ptr_());
+}
+
+double ajanuw::Mem::VAManage::readDouble()
+{
+  return ajanuw::Mem::read_double(ptr_());
+}
+
+std::string ajanuw::Mem::VAManage::readStr(size_t maxSize)
+{
+  return ajanuw::Mem::read_str((char *)ptr_(), maxSize);
+}
+
+std::wstring ajanuw::Mem::VAManage::readWstr(size_t maxSize)
+{
+  return ajanuw::Mem::read_str((wchar_t *)ptr_(), maxSize);
+}
+
+std::u16string ajanuw::Mem::VAManage::readUstr(size_t maxSize)
+{
+  return ajanuw::Mem::read_str((char16_t *)ptr_(), maxSize);
+}
+
+void ajanuw::Mem::VAManage::write(std::vector<uint8_t> table, size_t count)
+{
+  if (count < table.size())
+  {
+    table.resize(count);
+  }
+  ajanuw::Mem::write_bytes(ptr_(), table);
+  position_ += table.size();
+}
+
+void ajanuw::Mem::VAManage::writeByte(uint8_t v)
+{
+  ajanuw::Mem::write_byte(ptr_(), v);
+  position_++;
+}
+
+void ajanuw::Mem::VAManage::writeWord(uint16_t v)
+{
+  ajanuw::Mem::write_word(ptr_(), v);
+  position_ += sizeof(uint16_t);
+}
+
+void ajanuw::Mem::VAManage::writeDword(uint32_t v)
+{
+  ajanuw::Mem::write_dword(ptr_(), v);
+  position_ += sizeof(uint32_t);
+}
+
+void ajanuw::Mem::VAManage::writeQword(uintptr_t v)
+{
+  ajanuw::Mem::write_qword(ptr_(), v);
+  position_ += sizeof(uint64_t);
+}
+
+void ajanuw::Mem::VAManage::writeFloat(float v)
+{
+  ajanuw::Mem::write_float(ptr_(), v);
+  position_ += sizeof(float);
+}
+
+void ajanuw::Mem::VAManage::writeDouble(double v)
+{
+  ajanuw::Mem::write_double(ptr_(), v);
+  position_ += sizeof(double);
+}
+
+void ajanuw::Mem::VAManage::writeStr(std::string str)
+{
+  ajanuw::Mem::write_str(ptr_(), str);
+  position_ += ajanuw::SSString::count(str);
+}
+
+void ajanuw::Mem::VAManage::writeWstr(std::wstring wstr)
+{
+  ajanuw::Mem::write_str(ptr_(), wstr);
+  position_ += ajanuw::SSString::count(wstr);
+}
+
+void ajanuw::Mem::VAManage::writeUstr(std::u16string ustr)
+{
+  ajanuw::Mem::write_str(ptr_(), ustr);
+  position_ += ajanuw::SSString::count(ustr);
+}
+
+void ajanuw::Mem::VAManage::loadFromFile(std::string filename)
+{
+  ajanuw::Mem::read_region_from_file(filename, ptr_(), &position_);
+}
+
+void ajanuw::Mem::VAManage::saveToFile(std::string filename)
+{
+  ajanuw::Mem::write_region_to_file(filename, ptr_(), size_);
+}
+
+BOOL ajanuw::Mem::VAManage::destroy()
+{
+  if (memory_)
+    return ajanuw::Mem::free(memory_);
+  else
+    return FALSE;
 }

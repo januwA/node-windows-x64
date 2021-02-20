@@ -7,10 +7,13 @@
 
 #include <napi.h> // Try not to use napi in it
 
+#define uptr_size sizeof(uintptr_t)
+
+typedef uintptr_t(CALLBACK *callback_t)(void *_, void *index, uintptr_t *lpRcx, uintptr_t *lpP5);
+
 namespace ajanuw
 {
-
-  LPVOID createCallback(void *lpAddress, size_t index);
+  LPVOID createCallback(callback_t lpCallback, size_t index);
 
   namespace SSString
   {
@@ -80,6 +83,7 @@ namespace ajanuw
     void write_str(void *lpAddress, std::string str);
     void write_str(void *lpAddress, std::wstring str);
     void write_str(void *lpAddress, std::u16string str);
+    void write_byte(void *lpAddress, BYTE byte);
     void write_bytes(void *lpAddress, std::vector<BYTE> bytes);
     void write_word(void *lpAddress, WORD value);
     void write_dword(void *lpAddress, DWORD value);
@@ -102,6 +106,49 @@ namespace ajanuw
     double read_double(void *lpAddress);
     void read_region_from_file(std::string fileame, void *lpAddress);
     void read_region_from_file(std::string fileame, void *lpAddress, size_t *fileSize);
+
+    class VAManage
+    {
+    public:
+      VAManage(size_t size);
+      ~VAManage();
+      const uintptr_t size_;
+      LPVOID memory_;
+      size_t position_;
+
+      // memory_ +  position_
+      uint8_t *ptr_();
+
+      // read bytes
+      std::vector<uint8_t> read(size_t size);
+      uint8_t readByte();
+      uint16_t readWord();
+      uint32_t readDword();
+      uint64_t readQword();
+      float readFloat();
+      double readDouble();
+      std::string readStr(size_t maxSize);
+      std::wstring readWstr(size_t maxSize);
+      std::u16string readUstr(size_t maxSize);
+
+      // write bytes
+      void write(std::vector<uint8_t> table, size_t count);
+      void writeByte(uint8_t v);
+      void writeWord(uint16_t v);
+      void writeDword(uint32_t v);
+      void writeQword(uintptr_t v);
+      void writeFloat(float v);
+      void writeDouble(double v);
+      void writeStr(std::string str);
+      void writeWstr(std::wstring wstr);
+      void writeUstr(std::u16string ustr);
+
+      void loadFromFile(std::string filename);
+      void saveToFile(std::string filename);
+      BOOL destroy();
+
+    private:
+    };
   }
 
   namespace Gui

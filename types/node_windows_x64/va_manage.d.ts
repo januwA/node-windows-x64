@@ -50,5 +50,5 @@ export class VAManage {
   /**
    * 释放虚拟内存
    */
-  destroy();
+  destroy(): boolean;
 }

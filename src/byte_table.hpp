@@ -50,7 +50,7 @@ Value str_to_byte_table(const CallbackInfo& info)
 Value wstr_to_byte_table(const CallbackInfo& info)
 {
   nm_init;
-  u16string data = nm_wstr(info[0]);
+  u16string data = nm_ustr(info[0]);
 
   uintptr_t size = data.size() * 2;
   vector<uint8_t> bytes = Mem::read_bytes((void*)data.c_str(), size);

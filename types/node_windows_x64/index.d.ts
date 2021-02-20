@@ -28,8 +28,6 @@ export declare function invoke<T>(option: {
   )[];
   lpAddress?: number;
   dwSize?: number;
-  flAllocationType?: number;
-  flProtect?: number;
 
   /**
    * 如果arg是字符串，将在invoke中保存到内存，默认存的char类型

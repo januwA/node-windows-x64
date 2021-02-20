@@ -4,38 +4,37 @@ using namespace ajanuw;
 Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(env, "VAManage",
-    {
-      InstanceAccessor<&VAManage::GetSize>("size"),
-      InstanceAccessor<&VAManage::GetMemory>("memory"),
-      InstanceAccessor<&VAManage::GetPtr>("ptr"),
-      InstanceAccessor<&VAManage::GetPosition,&VAManage::SetPosition>("position"),
+                                    {
+                                        InstanceAccessor<&VAManage::GetSize>("size"),
+                                        InstanceAccessor<&VAManage::GetMemory>("memory"),
+                                        InstanceAccessor<&VAManage::GetPtr>("ptr"),
+                                        InstanceAccessor<&VAManage::GetPosition, &VAManage::SetPosition>("position"),
 
-      InstanceMethod<&VAManage::read>("read"),
-      InstanceMethod<&VAManage::readByte>("readByte"),
-      InstanceMethod<&VAManage::readWord>("readWord"),
-      InstanceMethod<&VAManage::readDword>("readDword"),
-      InstanceMethod<&VAManage::readQword>("readQword"),
-      InstanceMethod<&VAManage::readFloat>("readFloat"),
-      InstanceMethod<&VAManage::readDouble>("readDouble"),
-      InstanceMethod<&VAManage::readStr>("readStr"),
-      InstanceMethod<&VAManage::readWstr>("readWstr"),
+                                        InstanceMethod<&VAManage::read>("read"),
+                                        InstanceMethod<&VAManage::readByte>("readByte"),
+                                        InstanceMethod<&VAManage::readWord>("readWord"),
+                                        InstanceMethod<&VAManage::readDword>("readDword"),
+                                        InstanceMethod<&VAManage::readQword>("readQword"),
+                                        InstanceMethod<&VAManage::readFloat>("readFloat"),
+                                        InstanceMethod<&VAManage::readDouble>("readDouble"),
+                                        InstanceMethod<&VAManage::readStr>("readStr"),
+                                        InstanceMethod<&VAManage::readWstr>("readWstr"),
 
-      InstanceMethod<&VAManage::write>("write"),
-      InstanceMethod<&VAManage::writeByte>("writeByte"),
-      InstanceMethod<&VAManage::writeWord>("writeWord"),
-      InstanceMethod<&VAManage::writeDword>("writeDword"),
-      InstanceMethod<&VAManage::writeQword>("writeQword"),
-      InstanceMethod<&VAManage::writeFloat>("writeFloat"),
-      InstanceMethod<&VAManage::writeDouble>("writeDouble"),
-      InstanceMethod<&VAManage::writeStr>("writeStr"),
-      InstanceMethod<&VAManage::writeWstr>("writeWstr"),
+                                        InstanceMethod<&VAManage::write>("write"),
+                                        InstanceMethod<&VAManage::writeByte>("writeByte"),
+                                        InstanceMethod<&VAManage::writeWord>("writeWord"),
+                                        InstanceMethod<&VAManage::writeDword>("writeDword"),
+                                        InstanceMethod<&VAManage::writeQword>("writeQword"),
+                                        InstanceMethod<&VAManage::writeFloat>("writeFloat"),
+                                        InstanceMethod<&VAManage::writeDouble>("writeDouble"),
+                                        InstanceMethod<&VAManage::writeStr>("writeStr"),
+                                        InstanceMethod<&VAManage::writeWstr>("writeWstr"),
 
-      InstanceMethod<&VAManage::loadFromFile>("loadFromFile"),
-      InstanceMethod<&VAManage::saveToFile>("saveToFile"),
-      InstanceMethod<&VAManage::destroy>("destroy"),
-    }
-  );
-  Napi::FunctionReference* constructor = new Napi::FunctionReference();
+                                        InstanceMethod<&VAManage::loadFromFile>("loadFromFile"),
+                                        InstanceMethod<&VAManage::saveToFile>("saveToFile"),
+                                        InstanceMethod<&VAManage::destroy>("destroy"),
+                                    });
+  Napi::FunctionReference *constructor = new Napi::FunctionReference();
   *constructor = Napi::Persistent(func);
   constructor->SuppressDestruct();
 
@@ -43,197 +42,174 @@ Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
   return exports;
 }
 
-Napi::Value VAManage::GetSize(const Napi::CallbackInfo& info)
+Napi::Value VAManage::GetSize(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret(this->size_);
+  nm_ret(va_->size_);
 }
-Napi::Value VAManage::GetMemory(const Napi::CallbackInfo& info)
+Napi::Value VAManage::GetMemory(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret((uintptr_t)this->memory_);
+  nm_ret((uintptr_t)va_->memory_);
 }
-Napi::Value VAManage::GetPosition(const Napi::CallbackInfo& info)
+Napi::Value VAManage::GetPosition(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret((uintptr_t)this->position_);
+  nm_ret((uintptr_t)va_->position_);
 }
-void VAManage::SetPosition(const Napi::CallbackInfo& info, const Napi::Value& value)
+void VAManage::SetPosition(const Napi::CallbackInfo &info, const Napi::Value &value)
 {
   nm_init;
-  this->position_ = nm_qword(value);
+  va_->position_ = nm_qword(value);
 }
 
-VAManage::VAManage(const CallbackInfo& info) : ObjectWrap<VAManage>(info), size_(nm_IsNullishOr(info[0], nm_qword, 1024)), position_(0)
+VAManage::VAManage(const CallbackInfo &info) : ObjectWrap<VAManage>(info)
 {
-  memory_ = VirtualAlloc(0, size_, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+  va_ = new ajanuw::Mem::VAManage(nm_IsNullishOr(info[0], nm_qword, 1024));
 }
 
 VAManage::~VAManage()
 {
 }
 
-void* VAManage::ptr_()
+void *VAManage::ptr_()
 {
-  return (BYTE*)this->memory_ + this->position_;
+  return va_->ptr_();
 }
 
-Napi::Value VAManage::read(const Napi::CallbackInfo& info)
+Napi::Value VAManage::read(const Napi::CallbackInfo &info)
 {
   nm_init;
   size_t size = nm_qword(info[0]);
-  Array r = Array::New(env, size);
-  for (size_t i = 0; i < size; i++) r.Set(i, Mem::read_byte( (void*)((uintptr_t)this->ptr_() + i)) );
+  std::vector<uint8_t> table = va_->read(size);
+  auto r =  Array::New(env, table.size());
+  for (size_t i = 0; i < table.size(); i++)
+  {
+    r.Set(i, table[i]);
+  }
+  
   return r;
 }
 
-#define WRITE_TYPE_FORM(type)\
-nm_init; \
-nm_ret( Mem::read_##type(this->ptr_()) ); \
+#define WRITE_TYPE_FORM(type) \
+  nm_init;                    \
+  nm_ret(va_->read##type());
 
-Napi::Value VAManage::readByte(const Napi::CallbackInfo& info)
+Napi::Value VAManage::readByte(const Napi::CallbackInfo &info)
 {
-  WRITE_TYPE_FORM(byte);
+  WRITE_TYPE_FORM(Byte);
 }
 
-Napi::Value VAManage::readWord(const Napi::CallbackInfo& info)
+Napi::Value VAManage::readWord(const Napi::CallbackInfo &info)
 {
-  WRITE_TYPE_FORM(word);
+  WRITE_TYPE_FORM(Word);
 }
 
-Value VAManage::readDword(const CallbackInfo& info)
+Value VAManage::readDword(const CallbackInfo &info)
 {
-  WRITE_TYPE_FORM(dword);
+  WRITE_TYPE_FORM(Dword);
 }
 
-Napi::Value VAManage::readQword(const Napi::CallbackInfo& info)
+Napi::Value VAManage::readQword(const Napi::CallbackInfo &info)
 {
-  WRITE_TYPE_FORM(qword);
+  WRITE_TYPE_FORM(Qword);
 }
 
-Napi::Value VAManage::readFloat(const Napi::CallbackInfo& info)
+Napi::Value VAManage::readFloat(const Napi::CallbackInfo &info)
 {
-  WRITE_TYPE_FORM(float);
+  WRITE_TYPE_FORM(Float);
 }
 
-Napi::Value VAManage::readDouble(const Napi::CallbackInfo& info)
+Napi::Value VAManage::readDouble(const Napi::CallbackInfo &info)
 {
-  WRITE_TYPE_FORM(double);
+  WRITE_TYPE_FORM(Double);
 }
 
-Napi::Value VAManage::readStr(const Napi::CallbackInfo& info)
+Napi::Value VAManage::readStr(const Napi::CallbackInfo &info)
 {
   nm_init;
   size_t maxSize = nm_IsNullishOr(info[0], nm_qword, -1);
-  nm_rets(SSString::strFormMem(this->ptr_(), maxSize));
+  nm_rets(va_->readStr(maxSize));
 }
 
-Napi::Value VAManage::readWstr(const Napi::CallbackInfo& info)
+Napi::Value VAManage::readWstr(const Napi::CallbackInfo &info)
 {
   nm_init;
   size_t maxSize = nm_IsNullishOr(info[0], nm_qword, -1);
-  nm_rets(SSString::ustrFormMem(this->ptr_(), maxSize));
+  nm_rets(va_->readUstr(maxSize));
 }
 
-void VAManage::write(const Napi::CallbackInfo& info)
+void VAManage::write(const Napi::CallbackInfo &info)
 {
   nm_init;
-  Array table = nm_arr(info[0]);
-  size_t count = nm_IsNullishOr(info[1], nm_qword, table.Length());
-
+  Array table = nmi_arr(0);
+  size_t count = nmi_IsNullishOr(1, nm_qword, table.Length());
   vector<BYTE> vect;
   for (size_t i = 0; i < count; i++)
     vect.push_back(nm_dword(table.Get(i)));
 
-  Mem::write_bytes(this->ptr_(), vect);
-  this->position_ += count;
+  va_->write(vect, count);
 }
 
-void VAManage::writeByte(const Napi::CallbackInfo& info)
+void VAManage::writeByte(const Napi::CallbackInfo &info)
+{
+  va_->writeByte(nm_dword(info[0]));
+}
+
+void VAManage::writeWord(const Napi::CallbackInfo &info)
+{
+  va_->writeWord(nm_dword(info[0]));
+}
+
+void VAManage::writeDword(const Napi::CallbackInfo &info)
+{
+  va_->writeDword(nm_dword(info[0]));
+}
+
+void VAManage::writeQword(const Napi::CallbackInfo &info)
+{
+  va_->writeQword(nm_qword(info[0]));
+}
+void VAManage::writeFloat(const Napi::CallbackInfo &info)
+{
+  va_->writeFloat(nm_float(info[0]));
+}
+
+void VAManage::writeDouble(const Napi::CallbackInfo &info)
+{
+  va_->writeDouble(nm_double(info[0]));
+}
+
+void VAManage::writeStr(const Napi::CallbackInfo &info)
+{
+  va_->writeStr(nmi_str(0));
+}
+
+void VAManage::writeWstr(const Napi::CallbackInfo &info)
+{
+  va_->writeUstr(nmi_ustr(0));
+}
+
+void VAManage::loadFromFile(const Napi::CallbackInfo &info)
+{
+  va_->loadFromFile(nmi_str(0));
+}
+
+void VAManage::saveToFile(const Napi::CallbackInfo &info)
+{
+  va_->saveToFile(nmi_str(0));
+}
+
+Napi::Value VAManage::destroy(const Napi::CallbackInfo &info)
 {
   nm_init;
-  uint32_t v = nm_dword(info[0]);
-  memset(this->ptr_(), v, sizeof(BYTE));
-  this->position_ += sizeof(BYTE);
+  BOOL r = va_->destroy();
+  delete va_;
+  nm_retb(r);
 }
 
-void VAManage::writeWord(const Napi::CallbackInfo& info)
+Value VAManage::GetPtr(const Napi::CallbackInfo &info)
 {
   nm_init;
-  uint32_t v = nm_dword(info[0]);
-  Mem::write_word(this->ptr_(), v);
-  this->position_ += sizeof(WORD);
-}
-
-void VAManage::writeDword(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  uint32_t v = nm_dword(info[0]);
-  Mem::write_dword(this->ptr_(), v);
-  this->position_ += sizeof(DWORD);
-}
-
-void VAManage::writeQword(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  uintptr_t v = nm_qword(info[0]);
-  Mem::write_qword(this->ptr_(), v);
-  this->position_ += sizeof(ULONGLONG);
-}
-void VAManage::writeFloat(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  float v = nm_float(info[0]);
-  Mem::write_float(this->ptr_(), v);
-  this->position_ += sizeof(float);
-}
-
-void VAManage::writeDouble(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  double v = nm_double(info[0]);
-  Mem::write_double(this->ptr_(), v);
-  this->position_ += sizeof(double);
-}
-
-void VAManage::writeStr(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  String text = info[0].As<String>();
-  string str = text.Utf8Value();
-  Mem::write_str(this->ptr_(), str);
-  this->position_ += SSString::count(str);
-}
-
-void VAManage::writeWstr(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  String text = info[0].As<String>();
-  u16string ustr = text.Utf16Value();
-  Mem::write_str(this->ptr_(), ustr);
-  this->position_ += SSString::count(ustr);
-}
-
-void VAManage::loadFromFile(const Napi::CallbackInfo& info)
-{
-  string filename = nm_str(info[0]);
-  Mem::read_region_from_file(filename, this->ptr_(), &this->position_);
-}
-
-void VAManage::saveToFile(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  string filename = nm_str(info[0]);
-  Mem::write_region_to_file(filename, this->ptr_(), -1);
-}
-
-void VAManage::destroy(const Napi::CallbackInfo& info)
-{
-  Mem::free(this->memory_);
-}
-
-Value VAManage::GetPtr(const Napi::CallbackInfo& info)
-{
-  nm_init;
-  nm_ret((uintptr_t)this->ptr_());
+  nm_ret((uintptr_t)ptr_());
 }

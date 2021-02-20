@@ -17,6 +17,7 @@
     "memory",
     "win32",
     "gui",
+    "invoke",
     "Ajanuw"
   ],
   "author": "Ajanuw",

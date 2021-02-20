@@ -185,8 +185,8 @@ Value getWorkAreaHeight(const CallbackInfo &info)
 Value getPixel(const CallbackInfo &info)
 {
   nm_init_cal(2);
-  int x = nm_dword(info[0]);
-  int y = nm_dword(info[1]);
+  int x = nmi_dword(0);
+  int y = nmi_dword(1);
 
   HDC dc = GetDC(NULL);
   COLORREF rgbColor = GetPixel(dc, x, y);
@@ -202,8 +202,8 @@ Value getPixel(const CallbackInfo &info)
 Value beep(const CallbackInfo &info)
 {
   nm_init;
-  DWORD dwFreq = nm_IsNullishOr(info[0], nm_dword, 750);
-  DWORD dwDuration = nm_IsNullishOr(info[1], nm_dword, 300);
+  DWORD dwFreq = nmi_IsNullishOr(0, nm_dword, 750);
+  DWORD dwDuration = nmi_IsNullishOr(1, nm_dword, 300);
   nm_retb(Beep(dwFreq, dwDuration));
 }
 
@@ -211,7 +211,7 @@ Value beep(const CallbackInfo &info)
 Value speak(const CallbackInfo &info)
 {
   nm_init;
-  u16string pwcs = nm_wstr(info[0]);
+  u16string pwcs = nmi_ustr(0);
   DWORD dwFlags = SPF_DEFAULT;
   ULONG *pulStreamNumber = NULL;
 
@@ -238,8 +238,8 @@ Value sleep(const CallbackInfo &info)
 Value findWindow(const CallbackInfo &info)
 {
   nm_init;
-  string sClassName = nm_str(info[0]);
-  string sWindowName = nm_str(info[1]);
+  string sClassName = nmi_str(0);
+  string sWindowName = nmi_str(1);
 
   BOOL hasLpClassName = info[0].ToBoolean();
   BOOL hasLpWindowName = info[0].ToBoolean();
