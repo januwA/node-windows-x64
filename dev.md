@@ -6,19 +6,12 @@ $ npm run c
 $ npm run bt
 ```
 
-## 替换win路径
-```
-\\(\w)
-\\\$1
-```
+要是已经安装了vs2019和python没必要安装windows-build-tools
 
-## 查看所有api
-```js
-const addon = require("node-windows-x64");
-console.log(addon)
-```
 
 ## 去函数体
+
+将.h文件拷贝到.d.ts中时
 
 https://stackoverflow.com/questions/38110833/match-the-body-of-a-function-using-regex
 ```
@@ -27,15 +20,7 @@ https://stackoverflow.com/questions/38110833/match-the-body-of-a-function-using-
 $1
 ```
 
-## nm to nmi
-```
-nm_(\w+)\(info\[(\d)\]\)
-
-nmi_$1($2)
-```
-
-
-## .gyp
+## .gyp 文件
 
 预定义变量 https://gyp.gsrc.io/docs/InputFormatReference.md#Variables-and-Conditionals
 ```
@@ -45,3 +30,9 @@ INTERMEDIATE_DIR    -> Release\obj\node-windows-x64\
 
 module_root_dir   -> <project-dir>
 ```
+
+## vs2019 组件
+
+![](./images/2021-02-22-16-56-15.png)
+
+![](./images/2021-02-22-16-56-34.png)

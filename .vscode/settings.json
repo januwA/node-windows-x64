@@ -20,5 +20,6 @@
     "string": "cpp",
     "xloctime": "cpp"
   },
-  "C_Cpp.intelliSenseEngineFallback": "Enabled"
+  "C_Cpp.intelliSenseEngineFallback": "Enabled",
+  "python.formatting.provider": "yapf"
 }

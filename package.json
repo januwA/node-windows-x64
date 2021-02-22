@@ -1,6 +1,6 @@
 {
   "name": "node-windows-x64",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "node windows x64",
   "private": false,
   "main": "./index.js",
@@ -15,9 +15,11 @@
   "keywords": [
     "windows x64",
     "memory",
-    "win32",
-    "gui",
+    "win32 gui",
     "invoke",
+    "asm",
+    "asmjit",
+    "asmtk",
     "Ajanuw"
   ],
   "author": "Ajanuw",

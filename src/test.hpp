@@ -3,31 +3,42 @@
 #include <Windows.h>
 #include <napi.h>
 #include "ajanuw.h"
-#include "asmjit.h"
-#include <stdio.h>
+
+#include <asmjit/asmjit.h>
+#include <asmtk/asmtk.h>
 
 using namespace asmjit;
-typedef int (*Func)(int test);
+using namespace asmtk;
+
+typedef int (*Func)();
 
 void test(const Napi::CallbackInfo &info)
 {
   nm_init;
-  JitRuntime rt;
+  using namespace asmjit::x86;
 
+  JitRuntime rt;
   CodeHolder code;
   code.init(rt.environment());
 
   x86::Assembler a(&code);
-  a.mov(x86::rax, x86::rcx);
-  a.ret();
+  AsmParser p(&a);
+  asmjit::Error err = p.parse(
+      "mov eax,1\n"
+      "ret\n");
+
+  if (err)
+  {
+    printf("ERROR: %08x (%s)\n", err, DebugUtils::errorAsString(err));
+    return;
+  }
 
   Func fn;
-  asmjit::Error err = rt.add(&fn, &code);
+  err = rt.add(&fn, &code);
   if (err)
     return;
 
-  int result = fn(10);
-  printf("%d\n", result);
+  printf("%d\n", fn());
 
   rt.release(fn);
 }

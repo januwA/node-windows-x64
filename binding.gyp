@@ -1,9 +1,9 @@
 {
-    'variables': {
-    },
+    'variables': {},
     "targets": [
         {
-            "target_name": "node-windows-x64",
+            "target_name":
+            "node-windows-x64",
             "sources": [
                 "src/ajanuw.cpp",
                 "src/mem.hpp",
@@ -15,20 +15,30 @@
                 "src/win32_gui.cpp",
                 "src/main.cpp",
             ],
+
+            # headers
             "include_dirs": [
                 "<!@(node -p \"require('node-addon-api').include\")",
-                '<(module_root_dir)/deps/asmjit/include',
+                '<(module_root_dir)/include',
             ],
             'defines': ['NAPI_DISABLE_CPP_EXCEPTIONS'],
-            'libraries': [
-                '-l<(module_root_dir)/deps\\asmjit\\asmjit.lib',
-            ],
-            "copies": [
-                {
-                    "destination": "<(module_root_dir)/build/Release/",
-                    "files": ["<(module_root_dir)/deps\\asmjit\\asmjit.dll"]
-                }
-            ]
+
+            # link libs
+            'link_settings': {
+                'library_dirs': [
+                    # '<(module_root_dir)/deps_release/lib',
+                ],
+                'libraries': [
+                    # '-lasmjit.lib', '-lasmtk.lib',
+                    '-l<(module_root_dir)/deps_release/lib/**',
+                ],
+            },
+
+            # Copy the dll after packaging
+            "copies": [{
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": ["<(module_root_dir)/deps_release/dll/**"]
+            }]
         },
     ]
 }
