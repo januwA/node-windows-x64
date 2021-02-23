@@ -1,3 +1,9 @@
+## 0.0.4 [2021-2-23]
+
+- *test version*
+- perf: Use asmjit to rewrite the "createCallback" function
+
+
 ## 0.0.3 [2021-2-22]
 
 - *test version*

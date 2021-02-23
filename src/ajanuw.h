@@ -7,6 +7,8 @@
 #include <fstream>
 #include <map>
 #include <sstream>
+#include <asmjit/asmjit.h>
+#include <asmtk/asmtk.h>
 
 #define uptr_size sizeof(uintptr_t)
 
@@ -199,4 +201,17 @@ namespace ajanuw
       virtual void wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     };
   }
+
+  namespace Asm
+  {
+    class AutoAsm
+    {
+    private:
+    public:
+      std::string script_;
+      AutoAsm(std::string script);
+      ~AutoAsm();
+    };
+  }
+
 }
