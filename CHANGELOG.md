@@ -1,11 +1,12 @@
 ## 0.0.4 [2021-2-23]
 
 - *test version*
-- feat: Support parsing ceaddressstring
+- feat: Support parsing CEAddresSstring
 - feat: add registerSymbol and unregisterSymbol
 - perf: Use asmjit to rewrite the "createCallback" function
 - perf: The module of invoke is now an optional parameter
 - docs: undate invoke docs
+- feat: "nw.mem_*" Series supports CEAddresSstring
 
 ## 0.0.3 [2021-2-22]
 

@@ -85,10 +85,11 @@ namespace ajanuw
   {
     LPVOID alloc(SIZE_T dwSize, LPVOID lpAddress = 0, DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE, DWORD flProtect = PAGE_EXECUTE_READWRITE);
     BOOL free(LPVOID lpAddress);
+    BOOL free(std::string CEAddtrssString);
 
     void write_str(void *lpAddress, std::string str);
-    void write_str(void *lpAddress, std::wstring str);
-    void write_str(void *lpAddress, std::u16string str);
+    void write_wstr(void *lpAddress, std::wstring str);
+    void write_ustr(void *lpAddress, std::u16string str);
     void write_byte(void *lpAddress, BYTE byte);
     void write_bytes(void *lpAddress, std::vector<BYTE> bytes);
     void write_word(void *lpAddress, WORD value);
@@ -97,10 +98,26 @@ namespace ajanuw
     void write_float(void *lpAddress, float value);
     void write_double(void *lpAddress, double value);
     void write_region_to_file(std::string filename, void *lpAddress, uintptr_t size);
+  
+    void write_str(std::string CEAddtrssString, std::string str);
+    void write_wstr(std::string CEAddtrssString, std::wstring str);
+    void write_ustr(std::string CEAddtrssString, std::u16string str);
+    void write_byte(std::string CEAddtrssString, BYTE byte);
+    void write_bytes(std::string CEAddtrssString, std::vector<BYTE> bytes);
+    void write_word(std::string CEAddtrssString, WORD value);
+    void write_dword(std::string CEAddtrssString, DWORD value);
+    void write_qword(std::string CEAddtrssString, uint64_t value);
+    void write_float(std::string CEAddtrssString, float value);
+    void write_double(std::string CEAddtrssString, double value);
+    void write_region_to_file(std::string filename, std::string CEAddtrssString, uintptr_t size);
 
     std::string read_str(char *lpAddress, uintptr_t max);
-    std::wstring read_str(wchar_t *lpAddress, uintptr_t max);
-    std::u16string read_str(char16_t *lpAddress, uintptr_t max);
+    std::wstring read_wstr(wchar_t *lpAddress, uintptr_t max);
+    std::u16string read_ustr(char16_t *lpAddress, uintptr_t max);
+
+    std::string read_str(std::string CEAddtrssString, uintptr_t max);
+    std::wstring read_wstr(std::string CEAddtrssString, uintptr_t max);
+    std::u16string read_ustr(std::string CEAddtrssString, uintptr_t max);
 
     std::vector<BYTE> read_bytes(void *lpAddress, uintptr_t size);
     BYTE read_byte(void *lpAddress);
@@ -112,6 +129,17 @@ namespace ajanuw
     double read_double(void *lpAddress);
     void read_region_from_file(std::string fileame, void *lpAddress);
     void read_region_from_file(std::string fileame, void *lpAddress, size_t *fileSize);
+
+    std::vector<BYTE> read_bytes(std::string CEAddtrssString, uintptr_t size);
+    BYTE read_byte(std::string CEAddtrssString);
+    WORD read_word(std::string CEAddtrssString);
+    DWORD read_dword(std::string CEAddtrssString);
+    uint64_t read_qword(std::string CEAddtrssString);
+    uintptr_t read_pointer(std::string CEAddtrssString);
+    float read_float(std::string CEAddtrssString);
+    double read_double(std::string CEAddtrssString);
+    void read_region_from_file(std::string fileame, std::string CEAddtrssString);
+    void read_region_from_file(std::string fileame, std::string CEAddtrssString, size_t *fileSize);
 
     class VAManage
     {
@@ -219,9 +247,9 @@ namespace ajanuw
   {
   public:
     static void registerSymbol(std::string symbolname, LPVOID address);
-    static  void unregisterSymbol(std::string symbolname);
-    static  LPVOID get(std::string symbolname);
-    static  bool has(std::string symbolname);
+    static void unregisterSymbol(std::string symbolname);
+    static LPVOID get(std::string symbolname);
+    static bool has(std::string symbolname);
 
   private:
     static std::map<std::string, LPVOID> _symbolMap;

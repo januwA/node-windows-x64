@@ -62,7 +62,7 @@ void VAManage::SetPosition(const Napi::CallbackInfo& info, const Napi::Value& va
   this->position_ = nm_qword(value);
 }
 
-VAManage::VAManage(const CallbackInfo& info) : ObjectWrap<VAManage>(info), ajanuw::Mem::VAManage(nm_IsNullishOr(info[0], nm_qword, 1024))
+VAManage::VAManage(const CallbackInfo& info) : ObjectWrap<VAManage>(info), ajanuw::Mem::VAManage(nm_is_nullishOr(info[0], nm_qword, 1024))
 {
 }
 
@@ -116,14 +116,14 @@ Napi::Value VAManage::readDouble(const Napi::CallbackInfo& info)
 Napi::Value VAManage::readStr(const Napi::CallbackInfo& info)
 {
   nm_init;
-  size_t maxSize = nm_IsNullishOr(info[0], nm_qword, -1);
+  size_t maxSize = nm_is_nullishOr(info[0], nm_qword, -1);
   nm_rets(ajanuw::Mem::VAManage::readStr(maxSize));
 }
 
 Napi::Value VAManage::readWstr(const Napi::CallbackInfo& info)
 {
   nm_init;
-  size_t maxSize = nm_IsNullishOr(info[0], nm_qword, -1);
+  size_t maxSize = nm_is_nullishOr(info[0], nm_qword, -1);
   nm_rets(ajanuw::Mem::VAManage::readUstr(maxSize));
 }
 
@@ -131,7 +131,7 @@ void VAManage::write(const Napi::CallbackInfo& info)
 {
   nm_init;
   Array table = nmi_arr(0);
-  size_t count = nmi_IsNullishOr(1, nm_qword, table.Length());
+  size_t count = nmi_is_nullishOr(1, nm_qword, table.Length());
 
   std::vector<BYTE> vect;
   for (size_t i = 0; i < count; i++)

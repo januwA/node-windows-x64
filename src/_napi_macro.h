@@ -9,11 +9,27 @@
     nm_retu;                                           \
   }
 
-#define nm_IsNullish(value) (value.IsUndefined() || value.IsNull())
+#define nm_is_nullish(value) (value.IsUndefined() || value.IsNull())
 
 // get option param
-#define nm_IsNullishOr(value, type, default) nm_IsNullish(value) ? (default) : type(value)
-#define nmi_IsNullishOr(i, type, default) nm_IsNullish(info[i]) ? (default) : type(info[i])
+#define nm_is_nullishOr(value, type, default) nm_is_nullish(value) ? (default) : type(value)
+#define nmi_is_nullishOr(i, type, default) nm_is_nullish(info[i]) ? (default) : type(info[i])
+
+#define nm_is_str(value) value.IsString()
+#define nm_is_num(value) value.IsNumber()
+#define nm_is_bool(value) value.IsBoolean()
+#define nm_is_arr(value) value.IsArray()
+#define nm_is_abuffer(value) value.IsArrayBuffer()
+#define nm_is_obj(value) value.IsObject()
+#define nm_is_fun(value) value.IsFunction()
+
+#define nmi_is_str(i) nm_is_str(info[i])
+#define nmi_is_num(i) nm_is_num(info[i])
+#define nmi_is_bool(i) nm_is_bool(info[i])
+#define nmi_is_arr(i) nm_is_arr(info[i])
+#define nmi_is_abuffer(i) nm_is_abuffer(info[i])
+#define nmi_is_obj(i) nm_is_obj(info[i])
+#define nmi_is_fun(i) nm_is_fun(info[i])
 
 #define nm_str(value) value.ToString().Utf8Value()
 #define nm_ustr(value) value.ToString().Utf16Value()
@@ -38,6 +54,8 @@
 #define nmi_arr(i) nm_arr(info[i])
 #define nmi_obj(i) nm_obj(info[i])
 #define nmi_fun(i) nm_fun(info[i])
+
+
 
 #define nm_ret(value) return Napi::Number::New(env, value)
 #define nm_rets(value) return Napi::String::New(env, value)

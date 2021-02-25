@@ -55,7 +55,7 @@ size_t getStringsCount(Napi::Array args, bool isWideChar)
 
 vector<CallbackContext *> vect_cc;
 
-uintptr_t cccccc(void *_, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
+extern "C" uintptr_t cccccc(void *_, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
 {
   return vect_cc.at((size_t)index)->call(lpRcx, lpP5).ToNumber().Int64Value();
 }
@@ -67,26 +67,26 @@ Value invoke(const CallbackInfo &info)
   HMODULE hModule = NULL;
   BYTE *lpMethod = nullptr;
 
-  uintptr_t lpAddress = nm_IsNullishOr(opt.Get("lpAddress"), nm_qword, 0);
-  size_t dwSize = nm_IsNullishOr(opt.Get("dwSize"), nm_qword, 1024);
+  uintptr_t lpAddress = nm_is_nullishOr(opt.Get("lpAddress"), nm_qword, 0);
+  size_t dwSize = nm_is_nullishOr(opt.Get("dwSize"), nm_qword, 1024);
 
   // method args: number | pointer | string | function
-  Array _args = nm_IsNullishOr(opt.Get("args"), nm_arr, Array::New(env));
+  Array _args = nm_is_nullishOr(opt.Get("args"), nm_arr, Array::New(env));
 
   // string is wide?
   bool isWideChar = false;
 
-  if (opt.Get("method").IsNumber())
+  if (  nm_is_num(opt.Get("method"))  )
   {
     isWideChar = nm_bool(opt.Get("isWideChar"));
-    lpMethod = reinterpret_cast<BYTE*>(nm_qword(opt.Get("method")));
+    lpMethod = reinterpret_cast<BYTE *>(nm_qword(opt.Get("method")));
   }
   else
   {
     string sMethod = nm_str(opt.Get("method"));
     isWideChar = SSString::endWith(sMethod, "W");
     Napi::Value js_isWideChar = opt.Get("isWideChar");
-    if (!nm_IsNullish(js_isWideChar))
+    if (!nm_is_nullish(js_isWideChar))
       isWideChar = nm_bool(js_isWideChar);
 
     if (opt.Has("module"))
@@ -100,9 +100,9 @@ Value invoke(const CallbackInfo &info)
       }
     }
     if (hModule != NULL)
-      lpMethod = (BYTE*)GetProcAddress(hModule, sMethod.c_str());
+      lpMethod = (BYTE *)GetProcAddress(hModule, sMethod.c_str());
     else
-      lpMethod = (BYTE*)ajanuw::CEStringe::getAddress(sMethod);
+      lpMethod = (BYTE *)ajanuw::CEStringe::getAddress(sMethod);
   }
 
   if (lpMethod == NULL)
@@ -203,7 +203,7 @@ Value invoke(const CallbackInfo &info)
       if (isWideChar)
       {
         u16string str = text.Utf16Value();
-        Mem::write_str(addr, str);
+        Mem::write_ustr(addr, str);
         strMemOffset += SSString::count(str) + 2;
       }
       else

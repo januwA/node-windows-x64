@@ -22,9 +22,9 @@ Number getCurrentProcess(const CallbackInfo &info)
 Number openProcess(const CallbackInfo &info)
 {
   nm_init;
-  DWORD dwDesiredAccess = nm_IsNullishOr(info[0], nm_dword, PROCESS_ALL_ACCESS);
+  DWORD dwDesiredAccess = nm_is_nullishOr(info[0], nm_dword, PROCESS_ALL_ACCESS);
   BOOL bInheritHandle = info[1].ToBoolean() ? TRUE : FALSE;
-  DWORD dwProcessId = nm_IsNullishOr(info[2], nm_dword, GetCurrentProcessId());
+  DWORD dwProcessId = nm_is_nullishOr(info[2], nm_dword, GetCurrentProcessId());
   nm_ret((uintptr_t)OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId));
 }
 Value closeHandle(const CallbackInfo &info)
@@ -94,10 +94,10 @@ Value e_mouse_event(const CallbackInfo &info)
 {
   nm_init_cal(1);
   DWORD dwFlags = nmi_dword(0);
-  DWORD dx = nm_IsNullishOr(info[1], nm_dword, 0);
-  DWORD dy = nm_IsNullishOr(info[2], nm_dword, 0);
-  DWORD dwData = nm_IsNullishOr(info[3], nm_dword, 0);
-  ULONG_PTR dwExtraInf = nm_IsNullishOr(info[4], nm_dword, 0);
+  DWORD dx = nm_is_nullishOr(info[1], nm_dword, 0);
+  DWORD dy = nm_is_nullishOr(info[2], nm_dword, 0);
+  DWORD dwData = nm_is_nullishOr(info[3], nm_dword, 0);
+  ULONG_PTR dwExtraInf = nm_is_nullishOr(info[4], nm_dword, 0);
 
   /*
   mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
@@ -202,8 +202,8 @@ Value getPixel(const CallbackInfo &info)
 Value beep(const CallbackInfo &info)
 {
   nm_init;
-  DWORD dwFreq = nmi_IsNullishOr(0, nm_dword, 750);
-  DWORD dwDuration = nmi_IsNullishOr(1, nm_dword, 300);
+  DWORD dwFreq = nmi_is_nullishOr(0, nm_dword, 750);
+  DWORD dwDuration = nmi_is_nullishOr(1, nm_dword, 300);
   nm_retb(Beep(dwFreq, dwDuration));
 }
 
@@ -321,8 +321,8 @@ Value sendMessage(const CallbackInfo &info)
 Value e_setlocale(const CallbackInfo &info)
 {
   nm_init;
-  int _Category = nmi_IsNullishOr(0, nm_dword, LC_ALL);
-  string _Locale = nmi_IsNullishOr(1, nm_str, "chs");
+  int _Category = nmi_is_nullishOr(0, nm_dword, LC_ALL);
+  string _Locale = nmi_is_nullishOr(1, nm_str, "chs");
   nm_rets(ajanuw::SSString::setLocale(_Category, _Locale.c_str()));
 }
 
