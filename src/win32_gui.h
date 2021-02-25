@@ -16,6 +16,9 @@ private:
 
 public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
+  static Napi::Value getHLMessage(const Napi::CallbackInfo& info);
+  static Napi::Value getCheck(const Napi::CallbackInfo& info);
+
   Win32Gui(const Napi::CallbackInfo &info);
   ~Win32Gui();
 
@@ -39,4 +42,7 @@ public:
   Napi::Value messageLoop(const Napi::CallbackInfo &info);
 
   Napi::Value createWindow(const Napi::CallbackInfo &info);
+  Napi::Value button(const Napi::CallbackInfo &info);
+  Napi::Value checkbox(const Napi::CallbackInfo &info);
+  Napi::Value radio(const Napi::CallbackInfo &info);
 };

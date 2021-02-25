@@ -8,6 +8,7 @@
 #include "byte_table.hpp"
 #include "va_manage.h"
 #include "win32_gui.h"
+#include "globalDefine.hpp"
 
 #define __EXPORT(name, func) exports.Set(Napi::String::New(env, name), Napi::Function::New(env, func))
 
@@ -51,6 +52,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   __EXPORT("registerSymbol", registerSymbol);
   __EXPORT("unregisterSymbol", unregisterSymbol);
   __EXPORT("getAddress", getAddress);
+  __EXPORT("globalDefine", globalDefine);
 
   __EXPORT("mem_alloc", mem_alloc);
   __EXPORT("mem_free", mem_free);

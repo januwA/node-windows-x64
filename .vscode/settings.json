@@ -22,7 +22,8 @@
     "algorithm": "cpp",
     "cmath": "cpp",
     "xlocmon": "cpp",
-    "xmemory": "cpp"
+    "xmemory": "cpp",
+    "*.rh": "cpp"
   },
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "python.formatting.provider": "yapf"

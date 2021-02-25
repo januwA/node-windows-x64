@@ -18,6 +18,9 @@ Napi::Object Win32Gui::Init(Napi::Env env, Napi::Object exports)
   Napi::Function func = DefineClass(
       env, "Win32Gui",
       {
+          StaticMethod<&Win32Gui::getHLMessage>("getHLMessage"),
+          StaticMethod<&Win32Gui::getCheck>("getCheck"),
+
           InstanceAccessor<&Win32Gui::GetX, &Win32Gui::SetX>("x"),
           InstanceAccessor<&Win32Gui::GetY, &Win32Gui::SetY>("y"),
           InstanceAccessor<&Win32Gui::GetWidth, &Win32Gui::SetWidth>("width"),
@@ -26,7 +29,11 @@ Napi::Object Win32Gui::Init(Napi::Env env, Napi::Object exports)
           InstanceMethod<&Win32Gui::initRegisterClass>("initRegisterClass"),
           InstanceMethod<&Win32Gui::initWindow>("initWindow"),
           InstanceMethod<&Win32Gui::messageLoop>("messageLoop"),
+
           InstanceMethod<&Win32Gui::createWindow>("createWindow"),
+          InstanceMethod<&Win32Gui::button>("button"),
+          InstanceMethod<&Win32Gui::checkbox>("checkbox"),
+          InstanceMethod<&Win32Gui::radio>("radio"),
 
       });
   Napi::FunctionReference *constructor = new Napi::FunctionReference();
@@ -61,6 +68,20 @@ Win32Gui::Win32Gui(const Napi::CallbackInfo &info)
 
 Win32Gui::~Win32Gui()
 {
+}
+
+Napi::Value Win32Gui::getHLMessage(const Napi::CallbackInfo &info)
+{
+  nm_init;
+  auto hl = ajanuw::Gui::Win32::getHLMessage(nmi_dword(0));
+  nm_arr_form_vect(r, hl);
+  return r;
+}
+
+Napi::Value Win32Gui::getCheck(const Napi::CallbackInfo& info)
+{
+  nm_init;
+  nm_retb(ajanuw::Gui::Win32::getCheck((HWND)nmi_qword(0)));
 }
 
 Napi::Value Win32Gui::GetX(const Napi::CallbackInfo &info)
@@ -137,15 +158,85 @@ Napi::Value Win32Gui::messageLoop(const Napi::CallbackInfo &info)
 
 Napi::Value Win32Gui::createWindow(const Napi::CallbackInfo &info)
 {
-  nm_init_cal(8);
-  std::string lpClassName = nmi_str(0);
-  std::string lpWindowName = nmi_str(1);
-  DWORD dwStyle = nmi_dword(2);
-  int x = nmi_int(3);
-  int y = nmi_int(4);
-  int nWidth = nmi_int(5);
-  int nHeight = nmi_int(6);
-  HMENU hMenu = (HMENU)nmi_qword(7);
+  nm_init_cal(1);
+  Napi::Object opt = nmi_obj(0);
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::createWindow(
+      ajanuw::Gui::Win32CreateOption{
+          nm_str(opt.Get("className")),
+          nm_str(opt.Get("windowName")),
+          nm_dword(opt.Get("style")),
+          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
+          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
+          nm_int(opt.Get("width")),
+          nm_int(opt.Get("height")),
+          (HMENU)nm_qword(opt.Get("id")),
+      }));
+}
 
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::createWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hMenu));
+Napi::Value Win32Gui::button(const Napi::CallbackInfo &info)
+{
+  nm_init_cal(1);
+
+  Napi::Object opt = nmi_obj(0);
+  LONG units = GetDialogBaseUnits();
+  int dw = MulDiv(LOWORD(units), 50, 4);
+  int dh = MulDiv(HIWORD(units), 14, 8);
+
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::button(
+      ajanuw::Gui::Win32CreateOption{
+          "",
+          nm_str(opt.Get("windowName")),
+          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
+          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
+          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
+          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
+          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
+          (HMENU)nm_qword(opt.Get("id")),
+      }));
+}
+
+Napi::Value Win32Gui::checkbox(const Napi::CallbackInfo &info)
+{
+  nm_init_cal(1);
+
+  Napi::Object opt = nmi_obj(0);
+
+  LONG units = GetDialogBaseUnits();
+  int dw = MulDiv(LOWORD(units), 50, 4);
+  int dh = MulDiv(HIWORD(units), 14, 8);
+
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::checkbox(
+      ajanuw::Gui::Win32CreateOption{
+          "",
+          nm_str(opt.Get("windowName")),
+          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
+          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
+          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
+          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
+          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
+          (HMENU)nm_qword(opt.Get("id")),
+      }));
+}
+
+Napi::Value Win32Gui::radio(const Napi::CallbackInfo &info)
+{
+  nm_init_cal(1);
+
+  Napi::Object opt = nmi_obj(0);
+
+  LONG units = GetDialogBaseUnits();
+  int dw = MulDiv(LOWORD(units), 50, 4);
+  int dh = MulDiv(HIWORD(units), 14, 8);
+
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::radio(
+      ajanuw::Gui::Win32CreateOption{
+          "",
+          nm_str(opt.Get("windowName")),
+          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
+          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
+          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
+          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
+          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
+          (HMENU)nm_qword(opt.Get("id")),
+      }));
 }

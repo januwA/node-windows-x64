@@ -67,16 +67,10 @@ Value invoke(const CallbackInfo &info)
   HMODULE hModule = NULL;
   BYTE *lpMethod = nullptr;
 
-  uintptr_t lpAddress = nm_is_nullishOr(opt.Get("lpAddress"), nm_qword, 0);
-  size_t dwSize = nm_is_nullishOr(opt.Get("dwSize"), nm_qword, 1024);
-
-  // method args: number | pointer | string | function
-  Array _args = nm_is_nullishOr(opt.Get("args"), nm_arr, Array::New(env));
-
   // string is wide?
   bool isWideChar = false;
 
-  if (  nm_is_num(opt.Get("method"))  )
+  if (nm_is_num(opt.Get("method")))
   {
     isWideChar = nm_bool(opt.Get("isWideChar"));
     lpMethod = reinterpret_cast<BYTE *>(nm_qword(opt.Get("method")));
@@ -111,6 +105,8 @@ Value invoke(const CallbackInfo &info)
     nm_retu;
   }
 
+  uintptr_t lpAddress = nm_is_nullishOr(opt.Get("lpAddress"), nm_qword, 0);
+  size_t dwSize = nm_is_nullishOr(opt.Get("dwSize"), nm_qword, 1024);
   // result:8 + pading:8 + funcode
   BYTE *newmem = (BYTE *)Mem::alloc(dwSize, (LPVOID)lpAddress);
   if (newmem == NULL)
@@ -119,6 +115,8 @@ Value invoke(const CallbackInfo &info)
     nm_retu;
   }
 
+  // args: number | pointer | string | function
+  Array _args = nm_is_nullishOr(opt.Get("args"), nm_arr, Array::New(env));
   // save strings
   BYTE *stringMem = NULL;
   size_t strSizeCount = getStringsCount(_args, isWideChar);

@@ -11,20 +11,11 @@
 #include <asmjit/asmjit.h>
 #include <asmtk/asmtk.h>
 
-struct _TestData
+void test(const Napi::CallbackInfo &info)
 {
-  DWORD hp = 10;
-  DWORD mp = 2;
-  char* name = "abc";
-} TestData;
-
-void test(const Napi::CallbackInfo& info)
-{
-  ajanuw::Symbol::registerSymbol("ttt", &TestData);
-  LPVOID addr = ajanuw::CEStringe::getAddress("[ttt +8]+2");
-  printf("%p\n", addr);
-  printf("%c\n", *(char*)addr);
-
+  nm_init;
+  std::string r = ajanuw::SSString::strFormMem((void *)nmi_qword(0), -1);
+  printf("%s\n", r.c_str());
 }
 
 /*

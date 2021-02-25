@@ -12,7 +12,7 @@ using namespace std;
 using namespace Napi;
 using namespace ajanuw;
 
-Value mem_alloc(const CallbackInfo& info)
+Value mem_alloc(const CallbackInfo &info)
 {
   nm_init;
 
@@ -37,20 +37,16 @@ Value mem_alloc(const CallbackInfo& info)
   }
 }
 
-Value mem_free(const CallbackInfo& info)
+Value mem_free(const CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
-  {
     nm_retb(Mem::free(nmi_str(0)));
-  }
   else
-  {
     nm_retb(Mem::free((LPVOID)nmi_qword(0)));
-  }
 }
 
-Value mem_write_str(const CallbackInfo& info)
+Value mem_write_str(const CallbackInfo &info)
 {
   nm_init_cal(2);
   String text = info[1].As<String>();
@@ -60,18 +56,18 @@ Value mem_write_str(const CallbackInfo& info)
     if (nmi_is_str(0))
       ajanuw::Mem::write_ustr(nmi_str(0), text.Utf16Value());
     else
-      ajanuw::Mem::write_ustr((void*)nmi_qword(0), text.Utf16Value());
+      ajanuw::Mem::write_ustr((void *)nmi_qword(0), text.Utf16Value());
   }
   else
   {
     if (nmi_is_str(0))
       ajanuw::Mem::write_str(nmi_str(0), text.Utf8Value());
     else
-      ajanuw::Mem::write_str((void*)nmi_qword(0), text.Utf8Value());
+      ajanuw::Mem::write_str((void *)nmi_qword(0), text.Utf8Value());
   }
   nm_retbt;
 }
-Value mem_write_bytes(const CallbackInfo& info)
+Value mem_write_bytes(const CallbackInfo &info)
 {
   nm_init_cal(2);
   vector<BYTE> vect_bytes;
@@ -91,55 +87,55 @@ Value mem_write_bytes(const CallbackInfo& info)
   if (nmi_is_str(0))
     Mem::write_bytes(nmi_str(0), vect_bytes);
   else
-    Mem::write_bytes((BYTE*)nmi_qword(0), vect_bytes);
+    Mem::write_bytes((BYTE *)nmi_qword(0), vect_bytes);
   nm_retbt;
 }
-Value mem_write_word(const CallbackInfo& info)
+Value mem_write_word(const CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
     Mem::write_word(nmi_str(0), nmi_dword(1));
   else
-    Mem::write_word((void*)nmi_qword(0), nmi_dword(1));
+    Mem::write_word((void *)nmi_qword(0), nmi_dword(1));
   nm_retbt;
 }
-Value mem_write_dword(const CallbackInfo& info)
+Value mem_write_dword(const CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
     Mem::write_dword(nmi_str(0), nmi_dword(1));
   else
-    Mem::write_dword((void*)nmi_qword(0), nmi_dword(1));
+    Mem::write_dword((void *)nmi_qword(0), nmi_dword(1));
   nm_retbt;
 }
-Value mem_write_qword(const CallbackInfo& info)
+Value mem_write_qword(const CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
     Mem::write_qword(nmi_str(0), nmi_qword(1));
   else
-    Mem::write_qword((void*)nmi_qword(0), nmi_qword(1));
+    Mem::write_qword((void *)nmi_qword(0), nmi_qword(1));
   nm_retbt;
 }
-Value mem_write_float(const CallbackInfo& info)
+Value mem_write_float(const CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
     Mem::write_float(nmi_str(0), nmi_float(1));
   else
-    Mem::write_float((void*)nmi_qword(0), nmi_float(1));
+    Mem::write_float((void *)nmi_qword(0), nmi_float(1));
   nm_retbt;
 }
-Value mem_write_double(const CallbackInfo& info)
+Value mem_write_double(const CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
     Mem::write_double(nmi_str(0), nmi_double(1));
   else
-    Mem::write_double((void*)nmi_qword(0), nmi_double(1));
+    Mem::write_double((void *)nmi_qword(0), nmi_double(1));
   nm_retbt;
 }
-Value mem_write_region_to_file(const CallbackInfo& info)
+Value mem_write_region_to_file(const CallbackInfo &info)
 {
   nm_init_cal(3);
   string filename = nmi_str(0);
@@ -148,11 +144,11 @@ Value mem_write_region_to_file(const CallbackInfo& info)
   if (nmi_is_str(1))
     Mem::write_region_to_file(filename, nmi_str(1), size);
   else
-    Mem::write_region_to_file(filename, (void*)nmi_qword(1), size);
+    Mem::write_region_to_file(filename, (void *)nmi_qword(1), size);
   nm_retbt;
 }
 
-Value mem_read_str(const CallbackInfo& info)
+Value mem_read_str(const CallbackInfo &info)
 {
   nm_init_cal(1);
   uintptr_t maxSize = nm_is_nullishOr(info[1], nm_qword, -1);
@@ -162,14 +158,13 @@ Value mem_read_str(const CallbackInfo& info)
     if (nmi_is_str(0))
       nm_rets(ajanuw::Mem::read_ustr(nmi_str(0), maxSize));
     else
-      nm_rets(ajanuw::Mem::read_ustr((char16_t*)nmi_qword(0), maxSize));
+      nm_rets(ajanuw::Mem::read_ustr((char16_t *)nmi_qword(0), maxSize));
+  else if (nmi_is_str(0))
+    nm_rets(ajanuw::Mem::read_str(nmi_str(0), maxSize));
   else
-    if (nmi_is_str(0))
-      nm_rets(ajanuw::Mem::read_str(nmi_str(0), maxSize));
-    else
-      nm_rets(ajanuw::Mem::read_str((char*)nmi_qword(0), maxSize));
+    nm_rets(ajanuw::Mem::read_str((char *)nmi_qword(0), maxSize));
 }
-Value mem_read_bytes(const CallbackInfo& info)
+Value mem_read_bytes(const CallbackInfo &info)
 {
   nm_init_cal(2);
   uintptr_t size = nmi_qword(1);
@@ -178,63 +173,63 @@ Value mem_read_bytes(const CallbackInfo& info)
   if (nmi_is_str(0))
     result = Mem::read_bytes(nmi_str(0), size);
   else
-    result = Mem::read_bytes((void*)nmi_qword(0), size);
+    result = Mem::read_bytes((void *)nmi_qword(0), size);
 
   Array table = Array::New(env, size);
   for (int i = 0; i < size; i++)
     table.Set(i, result.at(i));
   return table;
 }
-Value mem_read_word(const CallbackInfo& info)
+Value mem_read_word(const CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
     nm_ret(Mem::read_word(nmi_str(0)));
   else
-    nm_ret(Mem::read_word((void*)nmi_qword(0)));
+    nm_ret(Mem::read_word((void *)nmi_qword(0)));
 }
-Value mem_read_dword(const CallbackInfo& info)
+Value mem_read_dword(const CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
     nm_ret(Mem::read_dword(nmi_str(0)));
   else
-    nm_ret(Mem::read_dword((void*)nmi_qword(0)));
+    nm_ret(Mem::read_dword((void *)nmi_qword(0)));
 }
-Value mem_read_qword(const CallbackInfo& info)
+Value mem_read_qword(const CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
     nm_ret(Mem::read_qword(nmi_str(0)));
   else
-    nm_ret(Mem::read_qword((void*)nmi_qword(0)));
+    nm_ret(Mem::read_qword((void *)nmi_qword(0)));
 }
-Value mem_read_pointer(const CallbackInfo& info)
+Value mem_read_pointer(const CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
     nm_ret(Mem::read_pointer(nmi_str(0)));
   else
-    nm_ret(Mem::read_pointer((void*)nmi_qword(0)));
+    nm_ret(Mem::read_pointer((void *)nmi_qword(0)));
 }
-Value mem_read_float(const CallbackInfo& info)
+Value mem_read_float(const CallbackInfo &info)
 {
   nm_init;
   if (nmi_is_str(0))
     nm_ret(Mem::read_float(nmi_str(0)));
   else
-    nm_ret(Mem::read_float((void*)nmi_qword(0)));
+    nm_ret(Mem::read_float((void *)nmi_qword(0)));
 }
-Value mem_read_double(const CallbackInfo& info)
+Value mem_read_double(const CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
     nm_ret(Mem::read_double(nmi_str(0)));
   else
-    nm_ret(Mem::read_double((void*)nmi_qword(0)));
+    nm_ret(Mem::read_double((void *)nmi_qword(0)));
 }
 
-Value mem_read_region_from_file(const CallbackInfo& info)
+Value mem_read_region_from_file(const CallbackInfo &info)
 {
   nm_init_cal(2);
 
@@ -242,6 +237,6 @@ Value mem_read_region_from_file(const CallbackInfo& info)
   if (nmi_is_str(1))
     Mem::read_region_from_file(filename, nmi_str(1));
   else
-    Mem::read_region_from_file(filename, (void*)nmi_qword(1));
+    Mem::read_region_from_file(filename, (void *)nmi_qword(1));
   nm_retbt;
 }

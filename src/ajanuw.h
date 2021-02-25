@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <Windows.h>
+#include <Windowsx.h>
 #include <TlHelp32.h>
 #include <psapi.h>
 #include <regex>
@@ -34,10 +35,10 @@ namespace ajanuw
     void strToMem(void *dst, std::wstring str);
     void strToMem(void *dst, std::u16string str);
 
-    // TODO: Fix "ab��" get "ab?" when max is 3
-    std::string strFormMem(void *src, uintptr_t max);
-    std::wstring wstrFormMem(void *src, uintptr_t max);
-    std::u16string ustrFormMem(void *src, uintptr_t max);
+    // TODO: 按字节读取，读中会出问题
+    std::string strFormMem(void *src, size_t max);
+    std::wstring wstrFormMem(void *src, size_t max);
+    std::u16string ustrFormMem(void *src, size_t max);
 
     bool startWith(std::string str, const char *s2);
     bool endWith(std::string str, const char *s2);
@@ -85,7 +86,7 @@ namespace ajanuw
   {
     LPVOID alloc(SIZE_T dwSize, LPVOID lpAddress = 0, DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE, DWORD flProtect = PAGE_EXECUTE_READWRITE);
     BOOL free(LPVOID lpAddress);
-    BOOL free(std::string CEAddtrssString);
+    BOOL free(std::string CEAddressString);
 
     void write_str(void *lpAddress, std::string str);
     void write_wstr(void *lpAddress, std::wstring str);
@@ -98,26 +99,26 @@ namespace ajanuw
     void write_float(void *lpAddress, float value);
     void write_double(void *lpAddress, double value);
     void write_region_to_file(std::string filename, void *lpAddress, uintptr_t size);
-  
-    void write_str(std::string CEAddtrssString, std::string str);
-    void write_wstr(std::string CEAddtrssString, std::wstring str);
-    void write_ustr(std::string CEAddtrssString, std::u16string str);
-    void write_byte(std::string CEAddtrssString, BYTE byte);
-    void write_bytes(std::string CEAddtrssString, std::vector<BYTE> bytes);
-    void write_word(std::string CEAddtrssString, WORD value);
-    void write_dword(std::string CEAddtrssString, DWORD value);
-    void write_qword(std::string CEAddtrssString, uint64_t value);
-    void write_float(std::string CEAddtrssString, float value);
-    void write_double(std::string CEAddtrssString, double value);
-    void write_region_to_file(std::string filename, std::string CEAddtrssString, uintptr_t size);
+
+    void write_str(std::string CEAddressString, std::string str);
+    void write_wstr(std::string CEAddressString, std::wstring str);
+    void write_ustr(std::string CEAddressString, std::u16string str);
+    void write_byte(std::string CEAddressString, BYTE byte);
+    void write_bytes(std::string CEAddressString, std::vector<BYTE> bytes);
+    void write_word(std::string CEAddressString, WORD value);
+    void write_dword(std::string CEAddressString, DWORD value);
+    void write_qword(std::string CEAddressString, uint64_t value);
+    void write_float(std::string CEAddressString, float value);
+    void write_double(std::string CEAddressString, double value);
+    void write_region_to_file(std::string filename, std::string CEAddressString, uintptr_t size);
 
     std::string read_str(char *lpAddress, uintptr_t max);
     std::wstring read_wstr(wchar_t *lpAddress, uintptr_t max);
     std::u16string read_ustr(char16_t *lpAddress, uintptr_t max);
 
-    std::string read_str(std::string CEAddtrssString, uintptr_t max);
-    std::wstring read_wstr(std::string CEAddtrssString, uintptr_t max);
-    std::u16string read_ustr(std::string CEAddtrssString, uintptr_t max);
+    std::string read_str(std::string CEAddressString, uintptr_t max);
+    std::wstring read_wstr(std::string CEAddressString, uintptr_t max);
+    std::u16string read_ustr(std::string CEAddressString, uintptr_t max);
 
     std::vector<BYTE> read_bytes(void *lpAddress, uintptr_t size);
     BYTE read_byte(void *lpAddress);
@@ -130,16 +131,16 @@ namespace ajanuw
     void read_region_from_file(std::string fileame, void *lpAddress);
     void read_region_from_file(std::string fileame, void *lpAddress, size_t *fileSize);
 
-    std::vector<BYTE> read_bytes(std::string CEAddtrssString, uintptr_t size);
-    BYTE read_byte(std::string CEAddtrssString);
-    WORD read_word(std::string CEAddtrssString);
-    DWORD read_dword(std::string CEAddtrssString);
-    uint64_t read_qword(std::string CEAddtrssString);
-    uintptr_t read_pointer(std::string CEAddtrssString);
-    float read_float(std::string CEAddtrssString);
-    double read_double(std::string CEAddtrssString);
-    void read_region_from_file(std::string fileame, std::string CEAddtrssString);
-    void read_region_from_file(std::string fileame, std::string CEAddtrssString, size_t *fileSize);
+    std::vector<BYTE> read_bytes(std::string CEAddressString, uintptr_t size);
+    BYTE read_byte(std::string CEAddressString);
+    WORD read_word(std::string CEAddressString);
+    DWORD read_dword(std::string CEAddressString);
+    uint64_t read_qword(std::string CEAddressString);
+    uintptr_t read_pointer(std::string CEAddressString);
+    float read_float(std::string CEAddressString);
+    double read_double(std::string CEAddressString);
+    void read_region_from_file(std::string fileame, std::string CEAddressString);
+    void read_region_from_file(std::string fileame, std::string CEAddressString, size_t *fileSize);
 
     class VAManage
     {
@@ -187,12 +188,27 @@ namespace ajanuw
 
   namespace Gui
   {
+
+    struct Win32CreateOption
+    {
+      std::string className;
+      std::string windowName;
+      DWORD style;
+      int x;
+      int y;
+      int width;
+      int height;
+      HMENU id;
+    };
+
     class Win32
     {
     public:
-      /// <summary>
-      /// 主窗口句柄
-      /// </summary>
+      // 0: HIWORD, 1: LOWORD 
+      static std::vector<WORD> getHLMessage(DWORD message);
+      static bool getCheck(HWND hwnd);
+      
+      // 主窗口句柄
       HWND hWnd_;
 
       std::string windowName_;
@@ -206,27 +222,25 @@ namespace ajanuw
       Win32(std::string className, std::string windowName);
       ~Win32();
 
-      /// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowa
-      HWND createWindow(std::string lpClassName, std::string lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HMENU hMenu);
-
-      /// <summary>
-      /// 消息循环
-      /// </summary>
+      // 消息循环
       int messageLoop();
 
       // 注册窗口类
       // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerclassexw
       ATOM initRegisterClass();
 
-      /// <summary>
-      /// 窗口初始化
-      /// </summary>
-      /// <returns></returns>
+      // 窗口初始化
       BOOL initWindow();
 
-    private:
-      static LRESULT WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+      /// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowa
+      HWND createWindow(Win32CreateOption opt);
+      HWND button(Win32CreateOption opt);
+      HWND checkbox(Win32CreateOption opt);
+      HWND radio(Win32CreateOption opt);
 
+    private:
+      static std::map<HWND, uintptr_t> hwndMap;
+      static LRESULT WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
       virtual void wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     };
   }

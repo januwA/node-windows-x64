@@ -326,21 +326,21 @@ Value e_setlocale(const CallbackInfo &info)
   nm_rets(ajanuw::SSString::setLocale(_Category, _Locale.c_str()));
 }
 
-Value registerSymbol(const CallbackInfo& info)
+Value registerSymbol(const CallbackInfo &info)
 {
   nm_init_cal(2);
   ajanuw::Symbol::registerSymbol(nmi_str(0), (LPVOID)nmi_qword(1));
   nm_retu;
 }
 
-Value unregisterSymbol(const CallbackInfo& info)
+Value unregisterSymbol(const CallbackInfo &info)
 {
   nm_init_cal(1);
   ajanuw::Symbol::unregisterSymbol(nmi_str(0));
   nm_retu;
 }
 
-Value getAddress(const CallbackInfo& info)
+Value getAddress(const CallbackInfo &info)
 {
   nm_init_cal(1);
   nm_ret((uintptr_t)ajanuw::CEStringe::getAddress(nmi_str(0)));

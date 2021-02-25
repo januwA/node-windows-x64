@@ -119,3 +119,12 @@ for (const t of text) {
   nw.sendMessage( hWnd, WM_IME_CHAR, wParam, lParam )
 }
 ```
+
+## globalDefine
+
+调用后，将在global中设置大量变量
+
+```js
+nw.globalDefine();
+console.log(VK_BACK);
+```
