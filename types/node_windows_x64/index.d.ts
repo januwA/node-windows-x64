@@ -6,12 +6,12 @@ export declare function invoke<T>(option: {
   /**
    * 模块名
    */
-  module: string;
+  module?: string;
 
   /**
-   * 函数名
+   * 函数名，或者函数地址，或者CEAddtrssString
    */
-  method: string;
+  method: string | number;
 
   /**
    * 参数最多32个

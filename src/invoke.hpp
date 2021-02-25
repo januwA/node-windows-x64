@@ -64,8 +64,8 @@ Value invoke(const CallbackInfo &info)
 {
   nm_init;
   Object opt = nmi_obj(0);
-  string sModule = nm_str(opt.Get("module"));
-  string sMethod = nm_str(opt.Get("method"));
+  HMODULE hModule = NULL;
+  BYTE *lpMethod = nullptr;
 
   uintptr_t lpAddress = nm_IsNullishOr(opt.Get("lpAddress"), nm_qword, 0);
   size_t dwSize = nm_IsNullishOr(opt.Get("dwSize"), nm_qword, 1024);
@@ -74,22 +74,40 @@ Value invoke(const CallbackInfo &info)
   Array _args = nm_IsNullishOr(opt.Get("args"), nm_arr, Array::New(env));
 
   // string is wide?
-  bool isWideChar = SSString::endWith(sMethod, "W");
-  Napi::Value js_isWideChar = opt.Get("isWideChar");
-  if (!nm_IsNullish(js_isWideChar))
-    isWideChar = nm_bool(js_isWideChar);
+  bool isWideChar = false;
 
-  HMODULE hModule = LoadLibraryA(sModule.c_str());
-  if (hModule == NULL)
+  if (opt.Get("method").IsNumber())
   {
-    nm_jserr("not find \"" + sModule + "\" module.");
-    nm_retu;
+    isWideChar = nm_bool(opt.Get("isWideChar"));
+    lpMethod = reinterpret_cast<BYTE*>(nm_qword(opt.Get("method")));
+  }
+  else
+  {
+    string sMethod = nm_str(opt.Get("method"));
+    isWideChar = SSString::endWith(sMethod, "W");
+    Napi::Value js_isWideChar = opt.Get("isWideChar");
+    if (!nm_IsNullish(js_isWideChar))
+      isWideChar = nm_bool(js_isWideChar);
+
+    if (opt.Has("module"))
+    {
+      string sModule = nm_str(opt.Get("module"));
+      hModule = LoadLibraryA(sModule.c_str());
+      if (hModule == NULL)
+      {
+        nm_jserr("not find \"" + sModule + "\" module.");
+        nm_retu;
+      }
+    }
+    if (hModule != NULL)
+      lpMethod = (BYTE*)GetProcAddress(hModule, sMethod.c_str());
+    else
+      lpMethod = (BYTE*)ajanuw::CEStringe::getAddress(sMethod);
   }
 
-  BYTE *lpMethod = (BYTE *)GetProcAddress(hModule, sMethod.c_str());
   if (lpMethod == NULL)
   {
-    nm_jserr("not find \"" + sMethod + "\" method.");
+    nm_jserr("not find method.");
     nm_retu;
   }
 

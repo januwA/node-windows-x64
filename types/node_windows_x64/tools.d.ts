@@ -79,9 +79,28 @@ export function sendMessage(
 
 /**
  * 当中文出现异常，尝试setlocale
- * 
+ *
  * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/setlocale-wsetlocale?view=msvc-160&viewFallbackFrom=vs-2019
- * @param _Category 
- * @param _Locale 
+ * @param _Category
+ * @param _Locale
  */
 export function setlocale(_Category?: number, _Locale?: string): string;
+
+/**
+ *
+ * @param symbolname
+ * @param address
+ */
+export function registerSymbol(symbolname: string, address: number): void;
+
+/**
+ *
+ * @param symbolname
+ */
+export function unregisterSymbol(symbolname: string): void;
+
+/**
+ *
+ * @param CEAddressString
+ */
+export function getAddress(CEAddressString: string): number;

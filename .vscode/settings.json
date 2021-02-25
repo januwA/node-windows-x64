@@ -18,7 +18,11 @@
     "memory": "cpp",
     "new": "cpp",
     "string": "cpp",
-    "xloctime": "cpp"
+    "xloctime": "cpp",
+    "algorithm": "cpp",
+    "cmath": "cpp",
+    "xlocmon": "cpp",
+    "xmemory": "cpp"
   },
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "python.formatting.provider": "yapf"

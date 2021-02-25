@@ -48,6 +48,9 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   __EXPORT("getForegroundWindow", getForegroundWindow);
   __EXPORT("sendMessage", sendMessage);
   __EXPORT("setlocale", e_setlocale);
+  __EXPORT("registerSymbol", registerSymbol);
+  __EXPORT("unregisterSymbol", unregisterSymbol);
+  __EXPORT("getAddress", getAddress);
 
   __EXPORT("mem_alloc", mem_alloc);
   __EXPORT("mem_free", mem_free);

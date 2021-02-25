@@ -3,6 +3,8 @@
 
 #include <ostream>
 #include <Windows.h>
+#include <TlHelp32.h>
+#include <psapi.h>
 #include <regex>
 #include <fstream>
 #include <map>
@@ -39,7 +41,6 @@ namespace ajanuw
 
     bool startWith(std::string str, const char *s2);
     bool endWith(std::string str, const char *s2);
-    std::vector<std::string> match(std::string str, std::regex reg);
     bool search(std::string str, std::regex reg);
     std::string trim(std::string str);
     std::string trimStart(std::string str);
@@ -212,6 +213,60 @@ namespace ajanuw
       AutoAsm(std::string script);
       ~AutoAsm();
     };
+  }
+
+  class Symbol
+  {
+  public:
+    static void registerSymbol(std::string symbolname, LPVOID address);
+    static  void unregisterSymbol(std::string symbolname);
+    static  LPVOID get(std::string symbolname);
+    static  bool has(std::string symbolname);
+
+  private:
+    static std::map<std::string, LPVOID> _symbolMap;
+  };
+
+  namespace CEStringe
+  {
+    struct SplitListItem
+    {
+      std::string key;
+      std::string value;
+    };
+
+    /* example
+
+struct _TestData
+{
+  DWORD hp = 10;
+  DWORD mp = 2;
+  char* name = "abc";
+} TestData;
+
+  ajanuw::Symbol::registerSymbol("ttt", &TestData);
+  LPVOID addr = ajanuw::CEStringe::getAddress("[ttt+8]+2");
+  printf("%p\n", addr);
+  printf("%c\n", *(char*)addr); // c
+
+
+
+  LPVOID addr = ajanuw::CEStringe::getAddress("user32.MessageBoxA");
+  printf("%p\n", addr);
+  printf("%p\n", MessageBoxA);
+
+
+
+  LPVOID addr = ajanuw::CEStringe::getAddress("MessageBoxA");
+  printf("%p\n", addr);
+  printf("%p\n", MessageBoxA);
+
+
+    */
+    LPVOID getAddress(std::string address, LPVOID nextValue = NULL);
+    std::string replaceString(std::string origenString, std::string replaceString, std::string newValue);
+    std::vector<SplitListItem> splitString(std::string origenString);
+    LPVOID getData(std::string str);
   }
 
 }

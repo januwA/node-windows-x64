@@ -52,12 +52,6 @@ let r = nw.invoke({
 console.log("result: ", r);
 ```
 
-## View all api
-```js
-const { node_windows_x64: nw } = require("node-windows-x64");
-console.log(nw);
-```
-
 ## invoke automatically manages the string
 ```js
 nw.invoke({
@@ -68,6 +62,14 @@ nw.invoke({
 
 nw.invoke({
   module: "user32.dll",
+  method: "MessageBoxW",
+  args: [0, "body", "title", 3],
+});
+```
+
+## Optional method parameter
+```js
+nw.invoke({
   method: "MessageBoxW",
   args: [0, "body", "title", 3],
 });

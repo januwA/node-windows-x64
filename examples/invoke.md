@@ -115,3 +115,43 @@ nw.invoke({
   args: [0, "body", "title", 3],
 });
 ```
+
+## Optional method parameter
+```js
+nw.invoke({
+  method: "MessageBoxW",
+  args: [0, "body", "title", 3],
+});
+```
+
+```js
+nw.invoke({
+  method: "user32.MessageBoxW",
+  args: [0, "body", "title", 3],
+});
+
+
+const addr = nw.getAddress("user32.MessageBoxA");
+nw.invoke({
+  method: addr,
+  args: [0, "body", "title", 3],
+});
+
+
+const addr = nw.getAddress("user32.MessageBoxW");
+nw.invoke({
+  method: addr,
+  args: [0, "body", "title", 3],
+  isWideChar: true,
+});
+
+
+const addr = nw.getAddress("user32.MessageBoxW");
+nw.registerSymbol("bbox", addr);
+
+nw.invoke({
+  method: "bbox",
+  args: [0, "body", "title", 3],
+  isWideChar: true,
+});
+```
