@@ -10,6 +10,7 @@
 - feat: Map attributes that do not exist on node_windows_x64 to the invoke function
 - feat: Add "globalDefineScript" script to define a large number of global variables in global
 - feat: win32 gui add more functions to generate controls
+- feat: win32 gui add event listener callback
 
 ## 0.0.3 [2021-2-22]
 

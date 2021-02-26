@@ -23,9 +23,7 @@ nw.mem_free(newmem);
 
 ## MessageBoxW Example
 ```js
-const newmem = nw.mem_alloc({
-  size: 1024,
-});
+const newmem = nw.mem_alloc(1024);
 
 let title = "xxx";
 let body = "hello world";
@@ -49,9 +47,7 @@ nw.mem_free(newmem);
 
 ## SystemParametersInfoA Example
 ```js
-const newmem = nw.mem_alloc({
-  size: 100,
-});
+const newmem = nw.mem_alloc(100);
 
 const SPI_SETDESKWALLPAPER = 0x0014;
 const SPIF_SENDCHANGE = 0x02;
@@ -69,9 +65,7 @@ nw.mem_free(newmem);
 
 ## GetWindowTextW Example
 ```js
-const newmem = nw.mem_alloc({
-  size: 1024,
-});
+const newmem = nw.mem_alloc(1024);
 
 let r = nw.invoke({
   module: "User32.dll",

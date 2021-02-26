@@ -1,5 +1,6 @@
 export * from "./mem";
 export * from "./va_manage";
+export * from "./win32_gui";
 export * from "./tools";
 
 export declare function invoke<T>(option: {
@@ -25,9 +26,8 @@ export declare function invoke<T>(option: {
         lpOtherArg?: number
       ) => any)
     | number
+    | string
   )[];
-  lpAddress?: number;
-  dwSize?: number;
 
   /**
    * 如果arg是字符串，将在invoke中保存到内存，默认存的char类型

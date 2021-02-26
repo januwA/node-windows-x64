@@ -42,6 +42,7 @@
 #define nm_arr(value) value.As<Napi::Array>()
 #define nm_obj(value) value.As<Napi::Object>()
 #define nm_fun(value) value.As<Napi::Function>()
+#define nm_funref(value) Napi::Persistent(value.As<Napi::Function>())
 
 #define nmi_str(i) nm_str(info[i])
 #define nmi_ustr(i) nm_ustr(info[i])

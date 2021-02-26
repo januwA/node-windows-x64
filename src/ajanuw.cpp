@@ -363,7 +363,7 @@ BOOL ajanuw::Mem::free(LPVOID lpAddress)
 
 BOOL ajanuw::Mem::free(std::string CEAddressString)
 {
-  return ajanuw::Mem::free(ajanuw::CEStringe::getAddress(CEAddressString));
+  return ajanuw::Mem::free(ajanuw::CEString::getAddress(CEAddressString));
 }
 
 void ajanuw::Mem::write_str(void *lpAddress, std::string str)
@@ -421,57 +421,57 @@ void ajanuw::Mem::write_region_to_file(std::string filename, void *lpAddress, ui
 
 void ajanuw::Mem::write_str(std::string CEAddressString, std::string str)
 {
-  ajanuw::Mem::write_str(ajanuw::CEStringe::getAddress(CEAddressString), str);
+  ajanuw::Mem::write_str(ajanuw::CEString::getAddress(CEAddressString), str);
 }
 
 void ajanuw::Mem::write_wstr(std::string CEAddressString, std::wstring str)
 {
-  ajanuw::Mem::write_wstr(ajanuw::CEStringe::getAddress(CEAddressString), str);
+  ajanuw::Mem::write_wstr(ajanuw::CEString::getAddress(CEAddressString), str);
 }
 
 void ajanuw::Mem::write_ustr(std::string CEAddressString, std::u16string str)
 {
-  ajanuw::Mem::write_ustr(ajanuw::CEStringe::getAddress(CEAddressString), str);
+  ajanuw::Mem::write_ustr(ajanuw::CEString::getAddress(CEAddressString), str);
 }
 
 void ajanuw::Mem::write_byte(std::string CEAddressString, BYTE byte)
 {
-  ajanuw::Mem::write_byte(ajanuw::CEStringe::getAddress(CEAddressString), byte);
+  ajanuw::Mem::write_byte(ajanuw::CEString::getAddress(CEAddressString), byte);
 }
 
 void ajanuw::Mem::write_bytes(std::string CEAddressString, std::vector<BYTE> bytes)
 {
-  ajanuw::Mem::write_bytes(ajanuw::CEStringe::getAddress(CEAddressString), bytes);
+  ajanuw::Mem::write_bytes(ajanuw::CEString::getAddress(CEAddressString), bytes);
 }
 
 void ajanuw::Mem::write_word(std::string CEAddressString, WORD value)
 {
-  ajanuw::Mem::write_word(ajanuw::CEStringe::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_word(ajanuw::CEString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_dword(std::string CEAddressString, DWORD value)
 {
-  ajanuw::Mem::write_dword(ajanuw::CEStringe::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_dword(ajanuw::CEString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_qword(std::string CEAddressString, uint64_t value)
 {
-  ajanuw::Mem::write_qword(ajanuw::CEStringe::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_qword(ajanuw::CEString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_float(std::string CEAddressString, float value)
 {
-  ajanuw::Mem::write_float(ajanuw::CEStringe::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_float(ajanuw::CEString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_double(std::string CEAddressString, double value)
 {
-  ajanuw::Mem::write_double(ajanuw::CEStringe::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_double(ajanuw::CEString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_region_to_file(std::string filename, std::string CEAddressString, uintptr_t size)
 {
-  ajanuw::Mem::write_region_to_file(filename, ajanuw::CEStringe::getAddress(CEAddressString), size);
+  ajanuw::Mem::write_region_to_file(filename, ajanuw::CEString::getAddress(CEAddressString), size);
 }
 
 std::string ajanuw::Mem::read_str(char *lpAddress, uintptr_t max)
@@ -488,15 +488,15 @@ std::u16string ajanuw::Mem::read_ustr(char16_t *lpAddress, uintptr_t max)
 }
 std::string ajanuw::Mem::read_str(std::string CEAddressString, uintptr_t max)
 {
-  return ajanuw::Mem::read_str((char *)ajanuw::CEStringe::getAddress(CEAddressString), max);
+  return ajanuw::Mem::read_str((char *)ajanuw::CEString::getAddress(CEAddressString), max);
 }
 std::wstring ajanuw::Mem::read_wstr(std::string CEAddressString, uintptr_t max)
 {
-  return ajanuw::Mem::read_wstr((wchar_t *)ajanuw::CEStringe::getAddress(CEAddressString), max);
+  return ajanuw::Mem::read_wstr((wchar_t *)ajanuw::CEString::getAddress(CEAddressString), max);
 }
 std::u16string ajanuw::Mem::read_ustr(std::string CEAddressString, uintptr_t max)
 {
-  return ajanuw::Mem::read_ustr((char16_t *)ajanuw::CEStringe::getAddress(CEAddressString), max);
+  return ajanuw::Mem::read_ustr((char16_t *)ajanuw::CEString::getAddress(CEAddressString), max);
 }
 std::vector<BYTE> ajanuw::Mem::read_bytes(void *lpAddress, uintptr_t size)
 {
@@ -563,59 +563,59 @@ void ajanuw::Mem::read_region_from_file(std::string fileame, void *lpAddress, si
 
 std::vector<BYTE> ajanuw::Mem::read_bytes(std::string CEAddressString, uintptr_t size)
 {
-  return ajanuw::Mem::read_bytes(ajanuw::CEStringe::getAddress(CEAddressString), size);
+  return ajanuw::Mem::read_bytes(ajanuw::CEString::getAddress(CEAddressString), size);
 }
 
 BYTE ajanuw::Mem::read_byte(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_byte(ajanuw::CEStringe::getAddress(CEAddressString));
+  return ajanuw::Mem::read_byte(ajanuw::CEString::getAddress(CEAddressString));
 }
 
 WORD ajanuw::Mem::read_word(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_word(ajanuw::CEStringe::getAddress(CEAddressString));
+  return ajanuw::Mem::read_word(ajanuw::CEString::getAddress(CEAddressString));
 }
 
 DWORD ajanuw::Mem::read_dword(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_dword(ajanuw::CEStringe::getAddress(CEAddressString));
+  return ajanuw::Mem::read_dword(ajanuw::CEString::getAddress(CEAddressString));
 }
 
 uint64_t ajanuw::Mem::read_qword(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_qword(ajanuw::CEStringe::getAddress(CEAddressString));
+  return ajanuw::Mem::read_qword(ajanuw::CEString::getAddress(CEAddressString));
 }
 
 uintptr_t ajanuw::Mem::read_pointer(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_pointer(ajanuw::CEStringe::getAddress(CEAddressString));
+  return ajanuw::Mem::read_pointer(ajanuw::CEString::getAddress(CEAddressString));
 }
 
 float ajanuw::Mem::read_float(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_float(ajanuw::CEStringe::getAddress(CEAddressString));
+  return ajanuw::Mem::read_float(ajanuw::CEString::getAddress(CEAddressString));
 }
 
 double ajanuw::Mem::read_double(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_double(ajanuw::CEStringe::getAddress(CEAddressString));
+  return ajanuw::Mem::read_double(ajanuw::CEString::getAddress(CEAddressString));
 }
 
 void ajanuw::Mem::read_region_from_file(std::string fileame, std::string CEAddressString)
 {
-  ajanuw::Mem::read_region_from_file(fileame, ajanuw::CEStringe::getAddress(CEAddressString));
+  ajanuw::Mem::read_region_from_file(fileame, ajanuw::CEString::getAddress(CEAddressString));
 }
 
 void ajanuw::Mem::read_region_from_file(std::string fileame, std::string CEAddressString, size_t *fileSize)
 {
-  ajanuw::Mem::read_region_from_file(fileame, ajanuw::CEStringe::getAddress(CEAddressString), fileSize);
+  ajanuw::Mem::read_region_from_file(fileame, ajanuw::CEString::getAddress(CEAddressString), fileSize);
 }
 
 std::map<HWND, uintptr_t> ajanuw::Gui::Win32::Win32::hwndMap;
 
 ajanuw::Gui::Win32::Win32(std::string className, std::string windowName)
-    : x_(0), y_(0),
-      width_(600), height_(400),
+    : x_(CW_USEDEFAULT), y_(CW_USEDEFAULT),
+      width_(CW_USEDEFAULT), height_(CW_USEDEFAULT),
       style_(WS_OVERLAPPEDWINDOW),
       className_(className),
       windowName_(windowName),
@@ -641,24 +641,31 @@ int ajanuw::Gui::Win32::messageLoop()
 
 LRESULT ajanuw::Gui::Win32::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  if (ajanuw::Gui::Win32::Win32::hwndMap.size())
+  LRESULT r = 0;
+  if (Gui::Win32::Win32::hwndMap.size())
   {
-    auto self = (Gui::Win32 *)ajanuw::Gui::Win32::Win32::hwndMap.at(hWnd);
-    self->wndProc_(hWnd, message, wParam, lParam);
+    auto self = (Gui::Win32 *)Gui::Win32::Win32::hwndMap.at(hWnd);
+    r = self->OnReceiveMessage(hWnd, message, wParam, lParam);
   }
-  switch (message)
+
+  // 自动处理一些默认事件
+  if (r == 0)
   {
-  case WM_DESTROY:
-    PostQuitMessage(0);
-    break;
-  default:
-    return DefWindowProc(hWnd, message, wParam, lParam);
+    switch (message)
+    {
+    case WM_DESTROY:
+      PostQuitMessage(0);
+      break;
+    default:
+      return DefWindowProc(hWnd, message, wParam, lParam);
+    }
   }
-  return 0;
+  return r;
 }
 
-void ajanuw::Gui::Win32::wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT ajanuw::Gui::Win32::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+  return 0;
 }
 
 ATOM ajanuw::Gui::Win32::initRegisterClass()
@@ -703,43 +710,87 @@ std::vector<WORD> ajanuw::Gui::Win32::getHLMessage(DWORD message)
   return std::vector<WORD>{HIWORD(message), LOWORD(message)};
 }
 
-bool ajanuw::Gui::Win32::getCheck(HWND hwnd)
+bool ajanuw::Gui::Win32::getCheck(HWND hWnd)
 {
-  return Button_GetCheck(hwnd);
+  return Button_GetCheck(hWnd);
+}
+
+DWORD ajanuw::Gui::Win32::rgb(DWORD r, DWORD g, DWORD b)
+{
+  return RGB(r, g, b);
 }
 
 HWND ajanuw::Gui::Win32::createWindow(Win32CreateOption opt)
 {
-  HWND hwnd = CreateWindowA(opt.className.c_str(), opt.windowName.c_str(),
+  HWND hWnd = CreateWindowA(opt.className.c_str(), opt.windowName.c_str(),
                             opt.style,
                             opt.x, opt.y,
                             opt.width, opt.height,
-                            hWnd_,
+                            opt.parent ? opt.parent : hWnd_,
                             opt.id,
                             NULL, NULL);
   std::wstring ws = ajanuw::SSString::strToWstr(opt.windowName);
-  SetWindowTextW(hwnd, ws.c_str());
-  return hwnd;
+  SetWindowTextW(hWnd, ws.c_str());
+  return hWnd;
 }
 
 HWND ajanuw::Gui::Win32::button(Win32CreateOption opt)
 {
   opt.className = "button";
-  opt.style |= WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_CENTER | BS_MULTILINE;
+  opt.style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_CENTER | BS_MULTILINE | opt.style;
   return ajanuw::Gui::Win32::createWindow(opt);
 }
 
 HWND ajanuw::Gui::Win32::checkbox(Win32CreateOption opt)
 {
   opt.className = "button";
-  opt.style |= WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_CENTER | BS_MULTILINE;
+  opt.style = WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_CENTER | BS_MULTILINE | opt.style;
   return ajanuw::Gui::Win32::createWindow(opt);
 }
 
 HWND ajanuw::Gui::Win32::radio(Win32CreateOption opt)
 {
   opt.className = "button";
-  opt.style |= WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON | BS_CENTER | BS_MULTILINE;
+  opt.style = WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON | BS_CENTER | BS_MULTILINE | opt.style;
+  return ajanuw::Gui::Win32::createWindow(opt);
+}
+HWND ajanuw::Gui::Win32::groupbox(Win32CreateOption opt)
+{
+  opt.className = "button";
+  opt.style = WS_CHILD | WS_VISIBLE | BS_GROUPBOX | BS_MULTILINE | opt.style;
+  return ajanuw::Gui::Win32::createWindow(opt);
+}
+
+HWND ajanuw::Gui::Win32::text(Win32CreateOption opt)
+{
+  opt.className = "static";
+  opt.style = WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOTIFY | SS_SIMPLE | opt.style;
+  return ajanuw::Gui::Win32::createWindow(opt);
+}
+
+HWND ajanuw::Gui::Win32::input(Win32CreateOption opt)
+{
+  opt.className = "edit";
+  opt.style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_AUTOHSCROLL | opt.style;
+  return ajanuw::Gui::Win32::createWindow(opt);
+}
+
+HWND ajanuw::Gui::Win32::textarea(Win32CreateOption opt)
+{
+  opt.className = "edit";
+  opt.style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | WS_HSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | opt.style;
+  return ajanuw::Gui::Win32::createWindow(opt);
+}
+HWND ajanuw::Gui::Win32::listbox(Win32CreateOption opt)
+{
+  opt.className = "LISTBOX";
+  opt.style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | opt.style;
+  return ajanuw::Gui::Win32::createWindow(opt);
+}
+HWND ajanuw::Gui::Win32::select(Win32CreateOption opt)
+{
+  opt.className = "combobox";
+  opt.style = WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST | WS_VSCROLL | opt.style;
   return ajanuw::Gui::Win32::createWindow(opt);
 }
 
@@ -928,7 +979,7 @@ bool ajanuw::Symbol::has(std::string symbolname)
   return ajanuw::Symbol::_symbolMap.count(symbolname) != NULL;
 }
 
-LPVOID ajanuw::CEStringe::getAddress(std::string CEAddressString, LPVOID nextValue)
+LPVOID ajanuw::CEString::getAddress(std::string CEAddressString, LPVOID nextValue)
 {
   CEAddressString = std::regex_replace(CEAddressString, std::regex("\\s"), "");
   std::smatch m;
@@ -954,21 +1005,21 @@ LPVOID ajanuw::CEStringe::getAddress(std::string CEAddressString, LPVOID nextVal
   return getAddress(newOrigenString, data);
 }
 
-std::string ajanuw::CEStringe::replaceString(std::string origenString, std::string replaceString, std::string newValue)
+std::string ajanuw::CEString::replaceString(std::string origenString, std::string replaceString, std::string newValue)
 {
   size_t startIndex = origenString.find(replaceString);
   size_t endIndex = replaceString.size();
   return origenString.replace(startIndex - 1, endIndex + 2, newValue);
 }
 
-std::vector<ajanuw::CEStringe::SplitListItem> ajanuw::CEStringe::splitString(std::string origenString)
+std::vector<ajanuw::CEString::SplitListItem> ajanuw::CEString::splitString(std::string origenString)
 {
   std::regex pattern{"[+-]"};
-  std::vector<ajanuw::CEStringe::SplitListItem> resultSplitList;
+  std::vector<ajanuw::CEString::SplitListItem> resultSplitList;
   if (!ajanuw::SSString::search(origenString, pattern))
   {
     // 单符号，不包含偏移
-    resultSplitList.push_back(ajanuw::CEStringe::SplitListItem{"", origenString});
+    resultSplitList.push_back(ajanuw::CEString::SplitListItem{"", origenString});
     return resultSplitList;
   }
 
@@ -988,14 +1039,14 @@ std::vector<ajanuw::CEStringe::SplitListItem> ajanuw::CEStringe::splitString(std
 
   for (size_t i = 0; i < splitList.size(); i++)
   {
-    resultSplitList.push_back(ajanuw::CEStringe::SplitListItem{i > 0 ? splitKeys[i - 1] : "", splitList[i]});
+    resultSplitList.push_back(ajanuw::CEString::SplitListItem{i > 0 ? splitKeys[i - 1] : "", splitList[i]});
   }
   return resultSplitList;
 }
 
-LPVOID ajanuw::CEStringe::getData(std::string str)
+LPVOID ajanuw::CEString::getData(std::string str)
 {
-  std::vector<SplitListItem> r = ajanuw::CEStringe::splitString(str);
+  std::vector<SplitListItem> r = ajanuw::CEString::splitString(str);
   uintptr_t data = 0;
   for (auto x : r)
   {

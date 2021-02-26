@@ -81,7 +81,6 @@ namespace ajanuw
 
     std::string strFormNumber(uintptr_t number, bool isHex = false);
   }
-
   namespace Mem
   {
     LPVOID alloc(SIZE_T dwSize, LPVOID lpAddress = 0, DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE, DWORD flProtect = PAGE_EXECUTE_READWRITE);
@@ -199,15 +198,17 @@ namespace ajanuw
       int width;
       int height;
       HMENU id;
+      HWND parent;
     };
 
     class Win32
     {
     public:
-      // 0: HIWORD, 1: LOWORD 
+      // 0: HIWORD, 1: LOWORD
       static std::vector<WORD> getHLMessage(DWORD message);
-      static bool getCheck(HWND hwnd);
-      
+      static bool getCheck(HWND hWnd);
+      static DWORD rgb(DWORD r, DWORD g, DWORD b);
+
       // 主窗口句柄
       HWND hWnd_;
 
@@ -237,11 +238,19 @@ namespace ajanuw
       HWND button(Win32CreateOption opt);
       HWND checkbox(Win32CreateOption opt);
       HWND radio(Win32CreateOption opt);
+      HWND groupbox(Win32CreateOption opt);
+      HWND text(Win32CreateOption opt);
+      HWND input(Win32CreateOption opt);
+      HWND textarea(Win32CreateOption opt);
+      HWND listbox(Win32CreateOption opt);
+      HWND select(Win32CreateOption opt);
+
+    protected:
+      static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+      virtual LRESULT OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     private:
       static std::map<HWND, uintptr_t> hwndMap;
-      static LRESULT WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-      virtual void wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     };
   }
 
@@ -269,7 +278,7 @@ namespace ajanuw
     static std::map<std::string, LPVOID> _symbolMap;
   };
 
-  namespace CEStringe
+  namespace CEString
   {
     struct SplitListItem
     {

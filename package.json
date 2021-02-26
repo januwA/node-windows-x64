@@ -9,7 +9,7 @@
     "c": "node-gyp configure --release",
     "b": "node-gyp build --release",
     "bt": "npm run b && npm t",
-    "test": "node test/test.js",
+    "test": "ts-node test/test.ts",
     "install": "node-gyp rebuild"
   },
   "keywords": [

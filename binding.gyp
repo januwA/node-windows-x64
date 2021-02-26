@@ -13,7 +13,7 @@
                 "src/byte_table.hpp",
                 "src/va_manage.cpp",
                 "src/win32_gui.cpp",
-                "src/globalDefine.hpp",
+                "src/global_define.hpp",
                 "src/main.cpp",
             ],
 

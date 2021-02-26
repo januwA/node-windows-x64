@@ -35,7 +35,6 @@ nw.mem_free(newmem);
 ```
 
 ## Callback
-
 ```js
 let r = nw.invoke({
   module: "user32.dll",

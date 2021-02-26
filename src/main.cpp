@@ -8,7 +8,7 @@
 #include "byte_table.hpp"
 #include "va_manage.h"
 #include "win32_gui.h"
-#include "globalDefine.hpp"
+#include "global_define.hpp"
 
 #define __EXPORT(name, func) exports.Set(Napi::String::New(env, name), Napi::Function::New(env, func))
 

@@ -312,9 +312,25 @@ Value sendMessage(const CallbackInfo &info)
   nm_init_cal(4);
   uintptr_t hWnd = nmi_qword(0);
   UINT Msg = nmi_dword(1);
-  uint32_t wParam = nmi_dword(2);
-  uint32_t lParam = nmi_dword(3);
-  nm_ret((uintptr_t)SendMessageA((HWND)hWnd, Msg, (WPARAM)wParam, (LPARAM)lParam));
+  uintptr_t wParam = nmi_qword(2);
+  uintptr_t lParam = nmi_qword(3);
+
+  if (nmi_is_str(2) && nmi_is_num(3))
+  {
+    nm_ret((uintptr_t)SendMessageA((HWND)hWnd, Msg, (WPARAM)nmi_str(2).c_str(), (LPARAM)lParam));
+  }
+  else if (nmi_is_num(2) && nmi_is_str(3))
+  {
+    nm_ret((uintptr_t)SendMessageA((HWND)hWnd, Msg, (WPARAM)wParam, (LPARAM)nmi_str(3).c_str()));
+  }
+  else if (nmi_is_str(2) && nmi_is_str(3))
+  {
+    nm_ret((uintptr_t)SendMessageA((HWND)hWnd, Msg, (WPARAM)nmi_str(2).c_str(), (LPARAM)nmi_str(3).c_str()));
+  }
+  else
+  {
+    nm_ret((uintptr_t)SendMessageA((HWND)hWnd, Msg, (WPARAM)wParam, (LPARAM)lParam));
+  }
 }
 
 // https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/setlocale-wsetlocale?view=msvc-160&viewFallbackFrom=vs-2019
@@ -343,5 +359,5 @@ Value unregisterSymbol(const CallbackInfo &info)
 Value getAddress(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret((uintptr_t)ajanuw::CEStringe::getAddress(nmi_str(0)));
+  nm_ret((uintptr_t)ajanuw::CEString::getAddress(nmi_str(0)));
 }

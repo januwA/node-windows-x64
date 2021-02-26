@@ -62,7 +62,7 @@ extern "C" uintptr_t cccccc(void *_, void *index, uintptr_t *lpRcx, uintptr_t *l
 
 Value invoke(const CallbackInfo &info)
 {
-  nm_init;
+  nm_init_cal(1);
   Object opt = nmi_obj(0);
   HMODULE hModule = NULL;
   BYTE *lpMethod = nullptr;
@@ -96,22 +96,12 @@ Value invoke(const CallbackInfo &info)
     if (hModule != NULL)
       lpMethod = (BYTE *)GetProcAddress(hModule, sMethod.c_str());
     else
-      lpMethod = (BYTE *)ajanuw::CEStringe::getAddress(sMethod);
+      lpMethod = (BYTE *)ajanuw::CEString::getAddress(sMethod);
   }
 
   if (lpMethod == NULL)
   {
     nm_jserr("not find method.");
-    nm_retu;
-  }
-
-  uintptr_t lpAddress = nm_is_nullishOr(opt.Get("lpAddress"), nm_qword, 0);
-  size_t dwSize = nm_is_nullishOr(opt.Get("dwSize"), nm_qword, 1024);
-  // result:8 + pading:8 + funcode
-  BYTE *newmem = (BYTE *)Mem::alloc(dwSize, (LPVOID)lpAddress);
-  if (newmem == NULL)
-  {
-    nm_jserr("VirtualAlloc newmem error.");
     nm_retu;
   }
 
@@ -131,9 +121,6 @@ Value invoke(const CallbackInfo &info)
       nm_retu;
     }
   }
-
-  uintptr_t *lpResult = (uintptr_t *)newmem;
-  asm_fun_t asm_func = (asm_fun_t)(newmem + sizeof(uintptr_t));
 
   const int size_p_1_4 = 0x0A;
   const int size_p_5 = 0x0F;
@@ -183,6 +170,17 @@ Value invoke(const CallbackInfo &info)
 
   // 2. init code bytes
   vector<BYTE> code = SSString::toBytes(codeStr);
+
+  // result:8 + pading:8 + funcode
+  BYTE *newmem = (BYTE *)Mem::alloc(sizeof(uintptr_t) * 2 + code.size());
+  if (newmem == NULL)
+  {
+    nm_jserr("VirtualAlloc newmem error.");
+    nm_retu;
+  }
+  uintptr_t *lpResult = (uintptr_t *)newmem;
+  asm_fun_t asm_func = (asm_fun_t)(newmem + sizeof(uintptr_t));
+
   for (size_t i = 0; i < _args.Length(); i++)
   {
     uintptr_t value;
@@ -234,11 +232,8 @@ Value invoke(const CallbackInfo &info)
   asm_func();
 
   uintptr_t result = *lpResult;
-  if (newmem != nullptr)
-    Mem::free(newmem);
-
-  if (stringMem != nullptr)
-    Mem::free(stringMem);
+  Mem::free(newmem);
+  Mem::free(stringMem);
 
   for (auto cb : vect_cc)
   {

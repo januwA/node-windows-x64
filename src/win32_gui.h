@@ -5,19 +5,33 @@
 #include "_napi_macro.h"
 #include "ajanuw.h"
 
+class Win32GuiEvent
+{
+private:
+  
+public:
+  HMENU id_;
+  Napi::FunctionReference click;
+  Win32GuiEvent(HMENU id);
+  ~Win32GuiEvent();
+};
+
 class Win32Gui : public Napi::ObjectWrap<Win32Gui>,
                  public ajanuw::Gui::Win32
 {
 private:
-  Napi::FunctionReference _cb;
+  Napi::FunctionReference _messageCallback;
   Napi::Env env_;
 
-  void wndProc_(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+  LRESULT OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+  std::map<HMENU, Win32GuiEvent*> _eventMap;
 
 public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
-  static Napi::Value getHLMessage(const Napi::CallbackInfo& info);
-  static Napi::Value getCheck(const Napi::CallbackInfo& info);
+  static Napi::Value getHLMessage(const Napi::CallbackInfo &info);
+  static Napi::Value getCheck(const Napi::CallbackInfo &info);
+  static Napi::Value rgb(const Napi::CallbackInfo &info);
 
   Win32Gui(const Napi::CallbackInfo &info);
   ~Win32Gui();
@@ -45,4 +59,10 @@ public:
   Napi::Value button(const Napi::CallbackInfo &info);
   Napi::Value checkbox(const Napi::CallbackInfo &info);
   Napi::Value radio(const Napi::CallbackInfo &info);
+  Napi::Value groupbox(const Napi::CallbackInfo &info);
+  Napi::Value text(const Napi::CallbackInfo &info);
+  Napi::Value input(const Napi::CallbackInfo &info);
+  Napi::Value textarea(const Napi::CallbackInfo &info);
+  Napi::Value listbox(const Napi::CallbackInfo &info);
+  Napi::Value select(const Napi::CallbackInfo &info);
 };
