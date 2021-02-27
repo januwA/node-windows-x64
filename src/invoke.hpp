@@ -10,13 +10,13 @@ extern "C" typedef void *(CALLBACK *asm_fun_t)();
 
 struct CallbackContext
 {
-  CallbackContext(Napi::Env env_, Function cb_) : cb(cb_), env(env_), address(0){};
+  CallbackContext(Napi::Env env_, Function cb_, LPVOID address_) : cb(cb_),
+                                                                   env(env_),
+                                                                   address(address_){};
 
   Function cb;
   Napi::Env env;
-
   LPVOID address;
-
   Value call(uintptr_t *lpRcx, uintptr_t *lpP5)
   {
     uintptr_t *rcx = (lpRcx + 0);
@@ -53,16 +53,16 @@ size_t getStringsCount(Napi::Array args, bool isWideChar)
   return count;
 }
 
-vector<CallbackContext *> vect_cc;
-
-extern "C" uintptr_t cccccc(void *_, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
+extern "C" uintptr_t cccccc(vector<CallbackContext *> *vect_cc, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
 {
-  return vect_cc.at((size_t)index)->call(lpRcx, lpP5).ToNumber().Int64Value();
+  return vect_cc->at((size_t)index)->call(lpRcx, lpP5).ToNumber().Int64Value();
 }
 
 Value invoke(const CallbackInfo &info)
 {
   nm_init_cal(1);
+  vector<CallbackContext *> vCC;
+
   Object opt = nmi_obj(0);
   HMODULE hModule = NULL;
   BYTE *lpMethod = nullptr;
@@ -186,9 +186,10 @@ Value invoke(const CallbackInfo &info)
     uintptr_t value;
     if (_args.Get(i).IsFunction())
     {
-      auto CC = new CallbackContext(env, _args.Get(i).As<Function>());
-      vect_cc.push_back(CC);
-      CC->address = createCallback(&cccccc, i);
+      auto CC = new CallbackContext(env,
+                                    _args.Get(i).As<Function>(),
+                                    createCallback(&cccccc, i, &vCC));
+      vCC.push_back(CC);
       value = (uintptr_t)CC->address;
     }
     else if (_args.Get(i).IsString())
@@ -235,11 +236,10 @@ Value invoke(const CallbackInfo &info)
   Mem::free(newmem);
   Mem::free(stringMem);
 
-  for (auto cb : vect_cc)
+  for (auto cb : vCC)
   {
     Mem::free(cb->address);
     delete cb;
   }
-  vect_cc.clear();
   nm_ret(result);
 }

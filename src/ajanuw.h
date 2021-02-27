@@ -15,11 +15,9 @@
 
 #define uptr_size sizeof(uintptr_t)
 
-typedef uintptr_t(CALLBACK *callback_t)(void *_, void *index, uintptr_t *lpRcx, uintptr_t *lpP5);
-
 namespace ajanuw
 {
-  LPVOID createCallback(callback_t lpCallback, size_t index);
+  LPVOID createCallback(void*  lpCallback, size_t index, void* vCC);
 
   namespace SSString
   {

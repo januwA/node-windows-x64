@@ -1,3 +1,9 @@
+## 0.0.6 [2021-2-27]
+
+- *test version*
+- fix: Fix the error when invoke handles callback
+
+
 ## 0.0.5 [2021-2-27]
 
 - *test version*

@@ -197,7 +197,7 @@ size_t ajanuw::SSString::count(std::u16string str)
   return len(str) * 2;
 }
 
-LPVOID ajanuw::createCallback(callback_t lpCallback, size_t index)
+LPVOID ajanuw::createCallback(void* lpCallback, size_t index, void* vCC)
 {
   using namespace asmjit;
   using namespace asmjit::x86;
@@ -218,9 +218,9 @@ LPVOID ajanuw::createCallback(callback_t lpCallback, size_t index)
 
   a.sub(rsp, 32);
 
-  a.mov(rcx, NULL);          // 备用参数
-  a.mov(rdx, imm(index));    // index
-  a.lea(r8, ptr(rsp, 32));   //前4个参数指针
+  a.mov(rcx, vCC);       // callback 列表
+  a.mov(rdx, imm(index));    // callback index
+  a.lea(r8, ptr(rsp, 32));   // 前4个参数指针
   a.lea(r9, ptr(rbp, 0x30)); // 之后的参数指针
   a.mov(rax, lpCallback);
   a.call(rax);
