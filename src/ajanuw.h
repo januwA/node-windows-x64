@@ -256,6 +256,12 @@ namespace ajanuw
 
   namespace Asm
   {
+    using namespace asmjit;
+    using namespace asmtk;
+    using namespace asmjit::x86;
+    
+    typedef uintptr_t (*Func)(uintptr_t lpParam);
+
     class AutoAsm
     {
     private:
@@ -263,6 +269,9 @@ namespace ajanuw
       std::string script_;
       AutoAsm(std::string script);
       ~AutoAsm();
+
+      // auto asm
+      static uintptr_t aa(std::string, uintptr_t rcx);
     };
   }
 

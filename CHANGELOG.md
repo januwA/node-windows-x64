@@ -1,4 +1,4 @@
-## 0.0.4 [2021-2-23]
+## 0.0.4 [2021-2-27]
 
 - *test version*
 - feat: Support parsing CEAddresSstring
@@ -11,6 +11,7 @@
 - feat: Add "globalDefineScript" script to define a large number of global variables in global
 - feat: win32 gui add more functions to generate controls
 - feat: win32 gui add event listener callback
+- feat: Auto Asm
 
 ## 0.0.3 [2021-2-22]
 

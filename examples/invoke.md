@@ -110,14 +110,6 @@ nw.invoke({
 });
 ```
 
-## Optional method parameter
-```js
-nw.invoke({
-  method: "MessageBoxW",
-  args: [0, "body", "title", 3],
-});
-```
-
 ```js
 nw.invoke({
   method: "user32.MessageBoxW",
@@ -147,5 +139,29 @@ nw.invoke({
   method: "bbox",
   args: [0, "body", "title", 3],
   isWideChar: true,
+});
+```
+
+## Proxy
+
+The node_windows_x64 is proxied to map all non-existent attributes to the invoke function.
+
+```js
+nw.MessageBoxA(0, "body", "title", 3);
+
+nw["user32.MessageBoxA"](0, "body", "title", 3);
+```
+
+The code above is actually
+
+```js
+target.invoke({
+  method: "MessageBoxA",
+  args: [0, "body", "title", 3],
+});
+
+target.invoke({
+  method: "user32.MessageBoxA",
+  args: [0, "body", "title", 3],
 });
 ```

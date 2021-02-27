@@ -956,6 +956,26 @@ ajanuw::Asm::AutoAsm::~AutoAsm()
 {
 }
 
+uintptr_t ajanuw::Asm::AutoAsm::aa(std::string asmString, uintptr_t rcx = 0)
+{
+  JitRuntime rt;
+  CodeHolder code;
+  code.init(rt.environment());
+
+  x86::Assembler a(&code);
+  AsmParser p(&a);
+
+  asmjit::Error err = p.parse(asmString.c_str());
+  if (err) return NULL;
+
+  Func fn;
+  rt.add(&fn, &code);
+
+  uintptr_t r = fn(rcx);
+  rt.release(fn);
+  return r;
+}
+
 std::map<std::string, LPVOID> ajanuw::Symbol::_symbolMap;
 void ajanuw::Symbol::registerSymbol(std::string symbolname, LPVOID address)
 {

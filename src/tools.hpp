@@ -361,3 +361,9 @@ Value getAddress(const CallbackInfo &info)
   nm_init_cal(1);
   nm_ret((uintptr_t)ajanuw::CEString::getAddress(nmi_str(0)));
 }
+
+Value aa(const CallbackInfo &info)
+{
+  nm_init_cal(1);
+  nm_ret(ajanuw::Asm::AutoAsm::aa(nmi_str(0), nm_is_nullishOr(info[1], nm_qword, 0)));
+}

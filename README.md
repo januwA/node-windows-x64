@@ -11,91 +11,20 @@
 
 ## Example
  ```js
-//  import { node_windows_x64 as nw } from "node-windows-x64";
+// import { node_windows_x64 as nw } from "node-windows-x64";
  const { node_windows_x64: nw } = require("node-windows-x64");
 
-const newmem = nw.mem_alloc(1024);
-
-let title = "xxx";
-let body = "hello world";
-let lpTitle = newmem;
-let lpBody  = newmem + 100;
-
-nw.mem_write_str(lpTitle, title);
-nw.mem_write_str(lpBody, body);
-
-let r = nw.invoke({
-  module: "user32.dll",
-  method: "MessageBoxA",
-  args: [0, lpBody, lpTitle, 1],
-});
-console.log("result: ", r);
-
-nw.mem_free(newmem);
+nw.MessageBoxA(0, "body", "title", 3);
 ```
 
 ## Callback
 ```js
-let r = nw.invoke({
-  module: "user32.dll",
-  method: "EnumWindows",
-  args: [
-    (hwnd, param) => {
-      console.log("hwnd: %d, param: %d", hwnd, param);
-      return true;
-    },
-    10,
-  ],
-});
+const r = nw["user32.EnumWindows"]((hwnd, param) => {
+  console.log("hwnd: %d, param: %d", hwnd, param);
+  return true;
+}, 10);
 
 console.log("result: ", r);
-```
-
-## invoke automatically manages the string
-```js
-nw.invoke({
-  module: "user32.dll",
-  method: "MessageBoxA",
-  args: [0, "body", "title", 3],
-});
-
-nw.invoke({
-  module: "user32.dll",
-  method: "MessageBoxW",
-  args: [0, "body", "title", 3],
-});
-```
-
-## Proxy
-
-The node_windows_x64 is proxied to map all non-existent attributes to the invoke function.
-
-```js
-nw.MessageBoxA(0, "body", "title", 3);
-
-nw["user32.MessageBoxA"](0, "body", "title", 3);
-```
-
-The code above is actually
-
-```js
-target.invoke({
-  method: "MessageBoxA",
-  args: [0, "body", "title", 3],
-});
-
-target.invoke({
-  method: "user32.MessageBoxA",
-  args: [0, "body", "title", 3],
-});
-```
-
-## Optional method parameter
-```js
-nw.invoke({
-  method: "MessageBoxW",
-  args: [0, "body", "title", 3],
-});
 ```
 
 ## win32 gui
@@ -143,4 +72,20 @@ if (wui.initRegisterClass() && wui.initWindow()) {
 }
 ```
 
-There are more examples under the "examples" file
+## Auto Asm
+```js
+const r = nw.aa(
+  `
+  inc rcx
+  mov rax,rcx
+  ret
+`,
+  1
+);
+
+console.log(r); // 2
+```
+
+
+
+# There are more examples under the "examples" file

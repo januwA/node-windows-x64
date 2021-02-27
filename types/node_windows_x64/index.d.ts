@@ -2,6 +2,7 @@ export * from "./mem";
 export * from "./va_manage";
 export * from "./win32_gui";
 export * from "./tools";
+export * from "./aa";
 
 export declare function invoke<T>(option: {
   /**
@@ -38,3 +39,5 @@ export declare function invoke<T>(option: {
    */
   isWideChar?: boolean;
 }): T;
+
+export declare function test(...args: any[]): any;
