@@ -1,3 +1,8 @@
+## 0.0.5 [2021-2-27]
+
+- *test version*
+- fix: Fix the error of invoke parameter address offset
+
 ## 0.0.4 [2021-2-27]
 
 - *test version*

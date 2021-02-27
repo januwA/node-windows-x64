@@ -152,7 +152,7 @@ Value invoke(const CallbackInfo &info)
       argsOffset.push_back(offset + 2);
       int rsp_offset = rsp_p5 + ((i - 4) * 8);
       codeStr += "48 B8 00 00 00 00 00 00 00 00\n";
-      codeStr += "48 89 44 24 " + ajanuw::SSString::strFormNumber(rsp_offset) + "\n";
+      codeStr += "48 89 44 24 " + ajanuw::SSString::strFormNumber(rsp_offset, true) + "\n";
       offset += size_p_5;
     }
   }
