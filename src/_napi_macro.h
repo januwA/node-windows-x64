@@ -76,7 +76,5 @@ for (size_t i = 0; i < form.size(); i++)\
 to.Set(i, form[i]); \
 }\
 
-#define nm_has(o, p) o.Has(p)
-#define nm_get(o, p) o.Get(p)
-#define nm_get_to(o, p, type) nm_ ##type(o.Get(p))
-#define nm_get_is(o, p, type) nm_is_ ##type(o.Get(p))
+#define nm_get_to(p, type) nm_ ##type(o.Get(p))
+#define nm_get_is(p, type) nm_is_ ##type(o.Get(p))

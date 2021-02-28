@@ -17,8 +17,7 @@ const win10SDK_wingnt =
 let props = ``;
 let typescriptDeclarationFile = "";
 let m;
-
-const obj = {};
+let obj = {};
 
 const toStr = (h, exp, comment) => {
   m = h.matchAll(exp);
@@ -31,8 +30,8 @@ const toStr = (h, exp, comment) => {
 
   for (const it of Array.from(m)) {
     const key = it[1].trim();
-    
-    if(key in obj) break; // 跳过重复项
+
+    if (obj[key]) continue; // 跳过重复项
 
     props += `g.Set("${key}", ${it[2]
       .replace(/\/\/.*/g, "")
@@ -45,12 +44,14 @@ const toStr = (h, exp, comment) => {
     obj[key] = true;
   }
   props += "\r\n";
+  obj = {};
 };
 
 // 直到下一个#
 const getExp = (key) => new RegExp(`#define\\s+(${key})\\s+([^#]+)`, "g");
 
 const WinUser = fs.readFileSync(win10SDK_winuser).toString("utf-8");
+
 toStr(WinUser, getExp("WM_[A-Z0-9_]+"), `Window Messages`);
 toStr(WinUser, getExp("WS_[A-Z0-9_]+"), `Window Styles`);
 toStr(WinUser, getExp("CS_[A-Z0-9_]+"), `Class styles`);

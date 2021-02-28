@@ -1,5 +1,4 @@
 #pragma once
-#pragma warning(disable : 2664)
 #include <iostream>
 #include <Windows.h>
 #include <TlHelp32.h>

@@ -2,6 +2,7 @@
 
 - *test version*
 - perf: Use asmjit to rewrite invoke
+- fix: fix globalDefineScript.js
 
 ## 0.0.6 [2021-2-27]
 

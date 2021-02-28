@@ -8,7 +8,12 @@ export interface Win32CreateOption {
   height?: number;
   parent?: number;
   events?: {
-    [type: string]: Function;
+    [type: string]: (
+      hWnd: number,
+      message: number,
+      wParam: number,
+      lParam: number
+    ) => undefined | number | void;
   };
 }
 
@@ -35,7 +40,7 @@ export class Win32Gui {
       message: number,
       wParam: number,
       lParam: number
-    ) => undefined | number
+    ) => undefined | number | void
   ): number;
 
   createWindow(opt: {

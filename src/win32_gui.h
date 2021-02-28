@@ -8,11 +8,10 @@
 class Win32GuiEvent
 {
 private:
-  
 public:
-  HMENU id_;
   Napi::FunctionReference click;
-  Win32GuiEvent(HMENU id);
+  Napi::FunctionReference keydown;
+  Win32GuiEvent(Napi::Object o);
   ~Win32GuiEvent();
 };
 
@@ -25,7 +24,10 @@ private:
 
   LRESULT OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-  std::map<HMENU, Win32GuiEvent*> _eventMap;
+  std::map<HMENU, Win32GuiEvent *> _eventMap;
+
+  ajanuw::Gui::Win32CreateOption getCreateOption(Napi::Object o, int dw, int dh);
+  void setEvents(Napi::Object options);
 
 public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);

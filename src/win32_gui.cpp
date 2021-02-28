@@ -1,7 +1,13 @@
 #include "win32_gui.h"
 
-Win32GuiEvent::Win32GuiEvent(HMENU id) : id_(id)
+#define SET_EVENT(type) \
+  if (o.Has(#type))    \
+  ##type = nm_get_to(#type, funref)
+
+Win32GuiEvent::Win32GuiEvent(Napi::Object o)
 {
+  SET_EVENT(click);
+  SET_EVENT(keydown);
 }
 
 Win32GuiEvent::~Win32GuiEvent()
@@ -10,7 +16,12 @@ Win32GuiEvent::~Win32GuiEvent()
 
 LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-
+  const std::initializer_list<napi_value> args = {
+      Napi::Number::New(env_, (uintptr_t)hWnd),
+      Napi::Number::New(env_, (uintptr_t)message),
+      Napi::Number::New(env_, (uintptr_t)wParam),
+      Napi::Number::New(env_, (uintptr_t)lParam),
+  };
   switch (message)
   {
   case WM_COMMAND:
@@ -20,7 +31,7 @@ LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARA
     {
       Win32GuiEvent *e = _eventMap.at(id);
       if (e->click)
-        e->click.Call({});
+        e->click.Call(args);
     }
   }
   break;
@@ -28,14 +39,7 @@ LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARA
 
   if (_messageCallback)
   {
-    return _messageCallback.Call({
-                                     Napi::Number::New(env_, (uintptr_t)hWnd),
-                                     Napi::Number::New(env_, (uintptr_t)message),
-                                     Napi::Number::New(env_, (uintptr_t)wParam),
-                                     Napi::Number::New(env_, (uintptr_t)lParam),
-                                 })
-        .ToNumber()
-        .Uint32Value();
+    return _messageCallback.Call(args).ToNumber().Uint32Value();
   }
   return 0;
 }
@@ -87,16 +91,16 @@ Win32Gui::Win32Gui(const Napi::CallbackInfo &info)
   if (info.Length() > 2)
   {
     Napi::Object o = nmi_obj(2);
-    if (nm_has(o, "x"))
-      ajanuw::Gui::Win32::x_ = nm_get_to(o, "x", int);
-    if (nm_has(o, "y"))
-      ajanuw::Gui::Win32::y_ = nm_get_to(o, "y", int);
-    if (nm_has(o, "width"))
-      ajanuw::Gui::Win32::width_ = nm_get_to(o, "width", int);
-    if (nm_has(o, "height"))
-      ajanuw::Gui::Win32::height_ = nm_get_to(o, "height", int);
-    if (nm_has(o, "style"))
-      ajanuw::Gui::Win32::style_ = nm_get_to(o, "style", dword);
+    if (o.Has("x"))
+      ajanuw::Gui::Win32::x_ = nm_get_to("x", int);
+    if (o.Has("y"))
+      ajanuw::Gui::Win32::y_ = nm_get_to("y", int);
+    if (o.Has("width"))
+      ajanuw::Gui::Win32::width_ = nm_get_to("width", int);
+    if (o.Has("height"))
+      ajanuw::Gui::Win32::height_ = nm_get_to("height", int);
+    if (o.Has("style"))
+      ajanuw::Gui::Win32::style_ = nm_get_to("style", dword);
   }
 }
 
@@ -200,242 +204,135 @@ Napi::Value Win32Gui::messageLoop(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::createWindow(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-  Napi::Object opt = nmi_obj(0);
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::createWindow(
-      ajanuw::Gui::Win32CreateOption{
-          nm_str(opt.Get("className")),
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_int(opt.Get("width")),
-          nm_int(opt.Get("height")),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::createWindow(getCreateOption(nmi_obj(0), 0, 0)));
 }
 
 Napi::Value Win32Gui::button(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
-  Napi::Object opt = nmi_obj(0);
-  HMENU id = (HMENU)nm_qword(opt.Get("id"));
-  if (opt.Has("events"))
-  {
-    Napi::Object events = nm_obj(opt.Get("events"));
-    _eventMap.insert(std::pair<HMENU, Win32GuiEvent *>(id, new Win32GuiEvent{id}));
-    if (events.Has("click"))
-      _eventMap.at(id)->click = nm_funref(events.Get("click"));
-    if (events.Has("keydown"))
-      _eventMap.at(id)->click = nm_funref(events.Get("keydown"));
-  }
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
   int dh = MulDiv(HIWORD(units), 14, 8);
-
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::button(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          id,
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::button(getCreateOption(o, dw, dh)));
 }
 
 Napi::Value Win32Gui::checkbox(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-
-  Napi::Object opt = nmi_obj(0);
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
   int dh = MulDiv(HIWORD(units), 14, 8);
-
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::checkbox(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::checkbox(getCreateOption(o, dw, dh)));
 }
 
 Napi::Value Win32Gui::radio(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
-  Napi::Object opt = nmi_obj(0);
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
   int dh = MulDiv(HIWORD(units), 14, 8);
-
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::radio(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::radio(getCreateOption(o, dw, dh)));
 }
 
 Napi::Value Win32Gui::groupbox(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
-  Napi::Object opt = nmi_obj(0);
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
   int dh = MulDiv(HIWORD(units), 14, 8);
 
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::groupbox(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::groupbox(getCreateOption(o, dw, dh)));
 }
 
 Napi::Value Win32Gui::text(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
-  Napi::Object opt = nmi_obj(0);
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
   int dh = MulDiv(HIWORD(units), 14, 8);
-
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::text(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::text(getCreateOption(o, dw, dh)));
 }
 
 Napi::Value Win32Gui::input(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-
-  Napi::Object opt = nmi_obj(0);
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 100, 4);
   int dh = MulDiv(HIWORD(units), 14, 8);
-
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::input(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::input(getCreateOption(o, dw, dh)));
 }
 
 Napi::Value Win32Gui::textarea(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-
-  Napi::Object opt = nmi_obj(0);
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 100, 4);
   int dh = MulDiv(HIWORD(units), 14 * 5, 8);
-
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::textarea(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::textarea(getCreateOption(o, dw, dh)));
 }
 
 Napi::Value Win32Gui::listbox(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-
-  Napi::Object opt = nmi_obj(0);
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 100, 4);
   int dh = MulDiv(HIWORD(units), 14 * 5, 8);
-
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::listbox(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0))}));
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::listbox(getCreateOption(o, dw, dh)));
 }
 
 Napi::Value Win32Gui::select(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-
-  Napi::Object opt = nmi_obj(0);
-
+  Napi::Object o = nmi_obj(0);
+  setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 100, 4);
   int dh = MulDiv(HIWORD(units), 14 * 5, 8);
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::select(getCreateOption(o, dw, dh)));
+}
 
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::select(
-      ajanuw::Gui::Win32CreateOption{
-          "",
-          nm_is_nullishOr(opt.Get("windowName"), nm_str, ""),
-          nm_is_nullishOr(opt.Get("style"), nm_dword, 0),
-          nm_is_nullishOr(opt.Get("x"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("y"), nm_int, 0),
-          nm_is_nullishOr(opt.Get("width"), nm_int, dw),
-          nm_is_nullishOr(opt.Get("height"), nm_int, dh),
-          (HMENU)nm_qword(opt.Get("id")),
-          (HWND)(nm_is_nullishOr(opt.Get("parent"), nm_qword, 0)),
-      }));
+ajanuw::Gui::Win32CreateOption Win32Gui::getCreateOption(Napi::Object o, int dw, int dh)
+{
+  return ajanuw::Gui::Win32CreateOption{
+      nm_is_nullishOr(o.Get("className"), nm_str, ""),
+      nm_is_nullishOr(o.Get("windowName"), nm_str, ""),
+      nm_is_nullishOr(o.Get("style"), nm_dword, 0),
+      nm_is_nullishOr(o.Get("x"), nm_int, 0),
+      nm_is_nullishOr(o.Get("y"), nm_int, 0),
+      nm_is_nullishOr(o.Get("width"), nm_int, dw),
+      nm_is_nullishOr(o.Get("height"), nm_int, dh),
+      (HMENU)nm_qword(o.Get("id")),
+      (HWND)(nm_is_nullishOr(o.Get("parent"), nm_qword, 0)),
+  };
+}
+
+void Win32Gui::setEvents(Napi::Object options)
+{
+  if (options.Has("events"))
+  {
+    HMENU id = (HMENU)nm_qword(options.Get("id"));
+    _eventMap.insert(std::pair<HMENU, Win32GuiEvent *>(
+        id,
+        new Win32GuiEvent{nm_obj(options.Get("events"))}));
+  }
 }

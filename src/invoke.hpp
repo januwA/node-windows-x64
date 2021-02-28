@@ -64,28 +64,27 @@ Value invoke(const CallbackInfo &info)
 
   nm_init_cal(1);
   vector<CallbackContext *> vCC;
-
   Object o = nmi_obj(0);
   HMODULE hModule = NULL;
   BYTE *lpMethod = nullptr;
   bool bWideChar = false;
 
-  if (nm_get_is(o, "method", num))
+  if (nm_get_is("method", num))
   {
-    bWideChar = nm_get_to(o, "isWideChar", bool);
-    lpMethod = reinterpret_cast<BYTE *>(nm_get_to(o, "method", qword));
+    bWideChar = nm_get_to("isWideChar", bool);
+    lpMethod = reinterpret_cast<BYTE *>(nm_get_to("method", qword));
   }
   else
   {
-    string sMethod = nm_get_to(o, "method", str);
+    string sMethod = nm_get_to("method", str);
     bWideChar = SSString::endWith(sMethod, "W");
-    Napi::Value js_isWideChar = nm_get(o, "isWideChar");
+    Napi::Value js_isWideChar = o.Get("isWideChar");
     if (!nm_is_nullish(js_isWideChar))
       bWideChar = nm_bool(js_isWideChar);
 
-    if (nm_has(o, "module"))
+    if (o.Has("module"))
     {
-      string sModule = nm_get_to(o, "module", str);
+      string sModule = nm_get_to("module", str);
       hModule = LoadLibraryA(sModule.c_str());
       if (hModule == NULL)
       {
@@ -106,7 +105,7 @@ Value invoke(const CallbackInfo &info)
   }
 
   // args: number | pointer | string | function
-  Array args = nm_is_nullishOr(nm_get(o, "args"), nm_arr, Array::New(env));
+  Array args = nm_is_nullishOr(o.Get("args"), nm_arr, Array::New(env));
 
   // save strings
   BYTE *stringMem = NULL;
@@ -143,9 +142,9 @@ Value invoke(const CallbackInfo &info)
       vCC.push_back(CC);
       value = (uintptr_t)CC->address;
     }
-    else if (nm_get_is(args, i, str))
+    else if (nm_is_str(args.Get(i)))
     {
-      Napi::String text = nm_get(args, i).ToString();
+      Napi::String text = args.Get(i).ToString();
       BYTE *addr = stringMem + strMemOffset;
       value = (uintptr_t)addr;
       if (bWideChar)
@@ -164,7 +163,7 @@ Value invoke(const CallbackInfo &info)
     else
     {
       // null and undefined to 0
-      value = nm_qword(nm_get(args, i));
+      value = nm_qword(args.Get(i));
     }
 
     if (i < 4)
