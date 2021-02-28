@@ -1,3 +1,8 @@
+## 0.0.7 [2021-2-28]
+
+- *test version*
+- perf: Use asmjit to rewrite invoke
+
 ## 0.0.6 [2021-2-27]
 
 - *test version*

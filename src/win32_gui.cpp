@@ -86,17 +86,17 @@ Win32Gui::Win32Gui(const Napi::CallbackInfo &info)
 
   if (info.Length() > 2)
   {
-    Napi::Object opt = nmi_obj(2);
-    if (opt.Has("x"))
-      ajanuw::Gui::Win32::x_ = nm_int(opt.Get("x"));
-    if (opt.Has("y"))
-      ajanuw::Gui::Win32::y_ = nm_int(opt.Get("y"));
-    if (opt.Has("width"))
-      ajanuw::Gui::Win32::width_ = nm_int(opt.Get("width"));
-    if (opt.Has("height"))
-      ajanuw::Gui::Win32::height_ = nm_int(opt.Get("height"));
-    if (opt.Has("style"))
-      ajanuw::Gui::Win32::style_ = nm_dword(opt.Get("style"));
+    Napi::Object o = nmi_obj(2);
+    if (nm_has(o, "x"))
+      ajanuw::Gui::Win32::x_ = nm_get_to(o, "x", int);
+    if (nm_has(o, "y"))
+      ajanuw::Gui::Win32::y_ = nm_get_to(o, "y", int);
+    if (nm_has(o, "width"))
+      ajanuw::Gui::Win32::width_ = nm_get_to(o, "width", int);
+    if (nm_has(o, "height"))
+      ajanuw::Gui::Win32::height_ = nm_get_to(o, "height", int);
+    if (nm_has(o, "style"))
+      ajanuw::Gui::Win32::style_ = nm_get_to(o, "style", dword);
   }
 }
 

@@ -11,33 +11,15 @@
 #include <asmjit/asmjit.h>
 #include <asmtk/asmtk.h>
 
-using namespace asmjit;
-using namespace asmtk;
-typedef uintptr_t (*Func)(uintptr_t lpParam);
 Value test(const Napi::CallbackInfo &info)
 {
   nm_init;
-  using namespace asmjit::x86;
 
-  JitRuntime rt;
-  CodeHolder code;
-  code.init(rt.environment());
+  // Napi::String jsStr = Napi::String::New(env, "xx()");
+  // napi_value result;
+  // napi_run_script(env, jsStr, &result);
+  // return Napi::Value::From(env, result);
 
-  x86::Assembler a(&code);
-  AsmParser p(&a);
-
-  asmjit::Error err = p.parse(nmi_str(0).c_str());
-  if (err)
-  {
-    nm_jserr("AsmParser Error: " + std::string(DebugUtils::errorAsString(err)));
-    nm_retu;
-  }
-
-  Func fn;
-  rt.add(&fn, &code);
-
-  uintptr_t v = nm_is_nullishOr(info[1], nm_qword, 0);
-  uintptr_t r = fn(v);
-  rt.release(fn);
-  nm_ret(r);
+  auto eval = env.Global().Get("eval").As<Napi::Function>();
+  return eval.Call({Napi::String::New(env, "xx()")});
 }

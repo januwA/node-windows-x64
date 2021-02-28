@@ -264,11 +264,11 @@ Value getWindowCaption(const CallbackInfo &info)
 {
   nm_init;
   uintptr_t hWnd = nmi_qword(0);
-  char sCaption[1024];
-  int r = GetWindowTextA((HWND)hWnd, sCaption, sizeof(sCaption));
-  if (r == NULL)
+  u16string usCaption;
+  usCaption.resize(1024);
+  if (GetWindowTextW((HWND)hWnd, (LPWSTR)usCaption.data(), usCaption.size()) == NULL)
     nm_retu;
-  nm_rets(sCaption);
+  nm_rets(usCaption);
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclassname
@@ -276,9 +276,9 @@ Value getWindowClassName(const CallbackInfo &info)
 {
   nm_init;
   uintptr_t hWnd = nmi_qword(0);
-  char sClassName[1024];
-  int r = GetClassNameA((HWND)hWnd, sClassName, sizeof(sClassName));
-  if (r == NULL)
+  u16string sClassName;
+  sClassName.resize(1024);
+  if (GetClassNameW((HWND)hWnd, (LPWSTR)sClassName.data(), sClassName.size()) == NULL)
     nm_retu;
   nm_rets(sClassName);
 }
@@ -365,5 +365,5 @@ Value getAddress(const CallbackInfo &info)
 Value aa(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret(ajanuw::Asm::AutoAsm::aa(nmi_str(0), nm_is_nullishOr(info[1], nm_qword, 0)));
+  nm_ret(ajanuw::Asm::AAScript::aa(nmi_str(0), nm_is_nullishOr(info[1], nm_qword, 0)));
 }

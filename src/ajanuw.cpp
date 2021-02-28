@@ -948,15 +948,15 @@ BOOL ajanuw::Mem::VAManage::destroy()
     return FALSE;
 }
 
-ajanuw::Asm::AutoAsm::AutoAsm(std::string script) : script_(script)
+ajanuw::Asm::AAScript::AAScript(std::string script) : script_(script)
 {
 }
 
-ajanuw::Asm::AutoAsm::~AutoAsm()
+ajanuw::Asm::AAScript::~AAScript()
 {
 }
 
-uintptr_t ajanuw::Asm::AutoAsm::aa(std::string asmString, uintptr_t rcx = 0)
+uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
 {
   JitRuntime rt;
   CodeHolder code;

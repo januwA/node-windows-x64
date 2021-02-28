@@ -8,11 +8,10 @@ export declare function mem_alloc(opt: {
 
 export declare function mem_free(lpAddress: number): boolean;
 
-
 export function mem_write_str(
   lpAddress: number,
   str: string,
-  isWideChar?: number
+  isWideChar?: boolean
 ): any;
 export function mem_write_bytes(lpAddress: number, table: number[]): any;
 export function mem_write_word(lpAddress: number, word: number): any;

@@ -13,6 +13,7 @@
     "install": "node-gyp rebuild"
   },
   "keywords": [
+    "windows",
     "windows x64",
     "memory",
     "win32 gui",

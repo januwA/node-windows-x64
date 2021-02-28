@@ -85,7 +85,7 @@ let r = nw.invoke({
   method: "EnumWindows",
   args: [
     (hwnd, param) => {
-      console.log(hwnd, param); // xxx 10 
+      console.log(hwnd, param, nw.getWindowCaption(hwnd));
       return true;
     },
     10,

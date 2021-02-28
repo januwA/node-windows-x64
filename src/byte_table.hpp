@@ -51,7 +51,7 @@ Value wstr_to_byte_table(const CallbackInfo &info)
   u16string ustr = nm_ustr(info[0]);
 
   uintptr_t size = ustr.size() * 2;
-  vector<uint8_t> bytes = Mem::read_bytes((void *)ustr.c_str(), size);
+  vector<uint8_t> bytes = ajanuw::Mem::read_bytes((void *)ustr.c_str(), size);
 
   nm_arr_form_vect(result, bytes);
   return result;

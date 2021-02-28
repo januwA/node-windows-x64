@@ -260,13 +260,13 @@ namespace ajanuw
     
     typedef uintptr_t (*Func)(uintptr_t lpParam);
 
-    class AutoAsm
+    class AAScript
     {
     private:
     public:
       std::string script_;
-      AutoAsm(std::string script);
-      ~AutoAsm();
+      AAScript(std::string script);
+      ~AAScript();
 
       // auto asm
       static uintptr_t aa(std::string, uintptr_t rcx);
