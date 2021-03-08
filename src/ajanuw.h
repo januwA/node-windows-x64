@@ -17,7 +17,7 @@
 
 namespace ajanuw
 {
-  LPVOID createCallback(void*  lpCallback, size_t index, void* vCC);
+  LPVOID createCallback(void *lpCallback, size_t index, void *vCC);
 
   namespace SSString
   {
@@ -143,7 +143,7 @@ namespace ajanuw
     {
     public:
       VAManage(size_t size);
-      ~VAManage();
+      inline ~VAManage(){};
       const uintptr_t size_;
       LPVOID memory_;
       size_t position_;
@@ -218,8 +218,14 @@ namespace ajanuw
       size_t height_;
       DWORD style_;
 
-      Win32(std::string className, std::string windowName);
-      ~Win32();
+      inline Win32(std::string className, std::string windowName) : x_(CW_USEDEFAULT),
+                                                                    y_(CW_USEDEFAULT),
+                                                                    width_(CW_USEDEFAULT), height_(CW_USEDEFAULT),
+                                                                    style_(WS_OVERLAPPEDWINDOW),
+                                                                    className_(className),
+                                                                    windowName_(windowName),
+                                                                    hWnd_(NULL){};
+      inline ~Win32() { DeleteObject(hWnd_); };
 
       // 消息循环
       int messageLoop();
@@ -257,7 +263,7 @@ namespace ajanuw
     using namespace asmjit;
     using namespace asmtk;
     using namespace asmjit::x86;
-    
+
     typedef uintptr_t (*Func)(uintptr_t lpParam);
 
     class AAScript
@@ -265,8 +271,8 @@ namespace ajanuw
     private:
     public:
       std::string script_;
-      AAScript(std::string script);
-      ~AAScript();
+      inline AAScript(std::string script) : script_(script){};
+      inline ~AAScript(){};
 
       // auto asm
       static uintptr_t aa(std::string, uintptr_t rcx);
@@ -285,46 +291,53 @@ namespace ajanuw
     static std::map<std::string, LPVOID> _symbolMap;
   };
 
-  namespace CEString
+  class CEString
   {
+  public:
+    /* example
+
+    struct _TestData
+    {
+      DWORD hp = 10;
+      DWORD mp = 2;
+      char* name = "abc";
+    } TestData;
+
+    ajanuw::Symbol::registerSymbol("ttt", &TestData);
+    LPVOID addr = ajanuw::CEStringe::getAddress("[ttt+8]+2");
+    printf("%p\n", addr);
+    printf("%c\n", *(char*)addr); // c
+
+
+
+    LPVOID addr = ajanuw::CEStringe::getAddress("user32.MessageBoxA");
+    printf("%p\n", addr);
+    printf("%p\n", MessageBoxA);
+
+
+
+    LPVOID addr = ajanuw::CEStringe::getAddress("MessageBoxA");
+    printf("%p\n", addr);
+    printf("%p\n", MessageBoxA);
+    */
+    static LPVOID getAddress(std::string address, LPVOID nextValue = NULL);
+
+  private:
     struct SplitListItem
     {
       std::string key;
       std::string value;
     };
 
-    /* example
+    inline static const std::regex readExp{".*\\[([^\\[\\]]+)\\].*"};
+    inline static const std::regex offsetKeyExp{"[+-]"};
+    inline static const std::regex notHexExp{"[^0-9a-fA-F]"};
+    inline static const std::regex mmExp{"^(\\w+)\\.(\\w+)$"};
+    inline static const std::regex methodExp{"^(\\w+)$"};
 
-struct _TestData
-{
-  DWORD hp = 10;
-  DWORD mp = 2;
-  char* name = "abc";
-} TestData;
-
-  ajanuw::Symbol::registerSymbol("ttt", &TestData);
-  LPVOID addr = ajanuw::CEStringe::getAddress("[ttt+8]+2");
-  printf("%p\n", addr);
-  printf("%c\n", *(char*)addr); // c
-
-
-
-  LPVOID addr = ajanuw::CEStringe::getAddress("user32.MessageBoxA");
-  printf("%p\n", addr);
-  printf("%p\n", MessageBoxA);
-
-
-
-  LPVOID addr = ajanuw::CEStringe::getAddress("MessageBoxA");
-  printf("%p\n", addr);
-  printf("%p\n", MessageBoxA);
-
-
-    */
-    LPVOID getAddress(std::string address, LPVOID nextValue = NULL);
-    std::string replaceString(std::string origenString, std::string replaceString, std::string newValue);
-    std::vector<SplitListItem> splitString(std::string origenString);
-    LPVOID getData(std::string str);
-  }
+    static std::string replaceString(std::string origenString, std::string replaceString, std::string newValue);
+    static std::vector<SplitListItem> splitString(std::string origenString);
+    static LPVOID getData(std::string str);
+  };
 
 }

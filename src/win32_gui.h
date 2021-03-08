@@ -12,7 +12,7 @@ public:
   Napi::FunctionReference click;
   Napi::FunctionReference keydown;
   Win32GuiEvent(Napi::Object o);
-  ~Win32GuiEvent();
+  inline ~Win32GuiEvent(){};
 };
 
 class Win32Gui : public Napi::ObjectWrap<Win32Gui>,
@@ -36,7 +36,7 @@ public:
   static Napi::Value rgb(const Napi::CallbackInfo &info);
 
   Win32Gui(const Napi::CallbackInfo &info);
-  ~Win32Gui();
+  inline ~Win32Gui(){};
 
   Napi::Value GetX(const Napi::CallbackInfo &info);
   void SetX(const Napi::CallbackInfo &info, const Napi::Value &value);

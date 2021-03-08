@@ -122,6 +122,8 @@ Value invoke(const CallbackInfo &info)
     ZeroMemory(stringMem, strSizeCount);
   }
 
+  size_t argsStackSize = max(args.Length() * sizeof(uintptr_t), Globals::kMaxPhysRegs);
+
   JitRuntime rt;
   CodeHolder code;
   code.init(rt.environment());
@@ -129,7 +131,7 @@ Value invoke(const CallbackInfo &info)
 
   a.push(rbp);
   a.mov(rbp, rsp);
-  a.sub(rsp, 0x190);
+  a.sub(rsp, argsStackSize);
 
   for (size_t i = 0; i < args.Length(); i++)
   {
@@ -188,7 +190,7 @@ Value invoke(const CallbackInfo &info)
   a.mov(rax, lpMethod);
   a.call(rax);
 
-  a.add(rsp, 0x190);
+  a.add(rsp, argsStackSize);
   a.mov(rsp, rbp);
   a.pop(rbp);
   a.ret();

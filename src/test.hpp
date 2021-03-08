@@ -10,15 +10,16 @@
 #include <asmjit/asmjit.h>
 #include <asmtk/asmtk.h>
 
+typedef int (*Func)();
+
 Value test(const Napi::CallbackInfo &info)
 {
   nm_init;
 
-  // Napi::String jsStr = Napi::String::New(env, "xx()");
-  // napi_value result;
-  // napi_run_script(env, jsStr, &result);
-  // return Napi::Value::From(env, result);
+  using namespace asmjit;
+  using namespace asmtk;
+  using namespace asmjit::x86;
 
-  auto eval = env.Global().Get("eval").As<Napi::Function>();
-  return eval.Call({Napi::String::New(env, "xx()")});
+
+  nm_retu;
 }

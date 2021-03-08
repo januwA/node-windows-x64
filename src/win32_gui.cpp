@@ -1,17 +1,13 @@
 #include "win32_gui.h"
 
 #define SET_EVENT(type) \
-  if (o.Has(#type))    \
+  if (o.Has(#type))     \
   ##type = nm_get_to(#type, funref)
 
 Win32GuiEvent::Win32GuiEvent(Napi::Object o)
 {
   SET_EVENT(click);
   SET_EVENT(keydown);
-}
-
-Win32GuiEvent::~Win32GuiEvent()
-{
 }
 
 LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -102,10 +98,6 @@ Win32Gui::Win32Gui(const Napi::CallbackInfo &info)
     if (o.Has("style"))
       ajanuw::Gui::Win32::style_ = nm_get_to("style", dword);
   }
-}
-
-Win32Gui::~Win32Gui()
-{
 }
 
 Napi::Value Win32Gui::getHLMessage(const Napi::CallbackInfo &info)

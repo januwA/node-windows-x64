@@ -197,7 +197,7 @@ size_t ajanuw::SSString::count(std::u16string str)
   return len(str) * 2;
 }
 
-LPVOID ajanuw::createCallback(void* lpCallback, size_t index, void* vCC)
+LPVOID ajanuw::createCallback(void *lpCallback, size_t index, void *vCC)
 {
   using namespace asmjit;
   using namespace asmjit::x86;
@@ -218,7 +218,7 @@ LPVOID ajanuw::createCallback(void* lpCallback, size_t index, void* vCC)
 
   a.sub(rsp, 32);
 
-  a.mov(rcx, vCC);       // callback 列表
+  a.mov(rcx, vCC);           // callback 列表
   a.mov(rdx, imm(index));    // callback index
   a.lea(r8, ptr(rsp, 32));   // 前4个参数指针
   a.lea(r9, ptr(rbp, 0x30)); // 之后的参数指针
@@ -613,21 +613,6 @@ void ajanuw::Mem::read_region_from_file(std::string fileame, std::string CEAddre
 
 std::map<HWND, uintptr_t> ajanuw::Gui::Win32::Win32::hwndMap;
 
-ajanuw::Gui::Win32::Win32(std::string className, std::string windowName)
-    : x_(CW_USEDEFAULT), y_(CW_USEDEFAULT),
-      width_(CW_USEDEFAULT), height_(CW_USEDEFAULT),
-      style_(WS_OVERLAPPEDWINDOW),
-      className_(className),
-      windowName_(windowName),
-      hWnd_(NULL)
-{
-}
-
-ajanuw::Gui::Win32::~Win32()
-{
-  DeleteObject(hWnd_);
-}
-
 int ajanuw::Gui::Win32::messageLoop()
 {
   MSG msg;
@@ -794,18 +779,15 @@ HWND ajanuw::Gui::Win32::select(Win32CreateOption opt)
   return ajanuw::Gui::Win32::createWindow(opt);
 }
 
-ajanuw::Mem::VAManage::VAManage(size_t size) : size_(size), position_(0)
+ajanuw::Mem::VAManage::VAManage(size_t size) : size_(size),
+                                               position_(0),
+                                               memory_(ajanuw::Mem::alloc(size))
 {
-  memory_ = ajanuw::Mem::alloc(size);
   if (memory_ == NULL)
   {
     printf("VAManage alloc fail.");
     throw 1;
   }
-}
-
-ajanuw::Mem::VAManage::~VAManage()
-{
 }
 
 uint8_t *ajanuw::Mem::VAManage::ptr_()
@@ -948,14 +930,6 @@ BOOL ajanuw::Mem::VAManage::destroy()
     return FALSE;
 }
 
-ajanuw::Asm::AAScript::AAScript(std::string script) : script_(script)
-{
-}
-
-ajanuw::Asm::AAScript::~AAScript()
-{
-}
-
 uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
 {
   JitRuntime rt;
@@ -966,7 +940,8 @@ uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
   AsmParser p(&a);
 
   asmjit::Error err = p.parse(asmString.c_str());
-  if (err) return NULL;
+  if (err)
+    return NULL;
 
   Func fn;
   rt.add(&fn, &code);
@@ -1003,8 +978,7 @@ LPVOID ajanuw::CEString::getAddress(std::string CEAddressString, LPVOID nextValu
 {
   CEAddressString = std::regex_replace(CEAddressString, std::regex("\\s"), "");
   std::smatch m;
-  std::regex pattern(".*\\[([^\\[\\]]+)\\].*");
-  std::regex_match(CEAddressString, m, pattern);
+  std::regex_match(CEAddressString, m, readExp);
   if (m.size() == 0)
   {
     if (CEAddressString.size() == 0)
@@ -1034,9 +1008,8 @@ std::string ajanuw::CEString::replaceString(std::string origenString, std::strin
 
 std::vector<ajanuw::CEString::SplitListItem> ajanuw::CEString::splitString(std::string origenString)
 {
-  std::regex pattern{"[+-]"};
   std::vector<ajanuw::CEString::SplitListItem> resultSplitList;
-  if (!ajanuw::SSString::search(origenString, pattern))
+  if (!ajanuw::SSString::search(origenString, offsetKeyExp))
   {
     // 单符号，不包含偏移
     resultSplitList.push_back(ajanuw::CEString::SplitListItem{"", origenString});
@@ -1049,7 +1022,7 @@ std::vector<ajanuw::CEString::SplitListItem> ajanuw::CEString::splitString(std::
   std::vector<std::string> splitList = {};
   std::vector<std::string> splitKeys = {};
 
-  while (regex_search(iterStart, iterEnd, result, pattern))
+  while (regex_search(iterStart, iterEnd, result, offsetKeyExp))
   {
     splitList.emplace_back(iterStart, result[0].first);
     splitKeys.push_back(result[0].str());
@@ -1073,7 +1046,7 @@ LPVOID ajanuw::CEString::getData(std::string str)
     uintptr_t v;
     std::stringstream(x.value) >> std::hex >> v;
     if (
-        ajanuw::SSString::search(x.value, std::regex("[^0-9a-fA-F]")) ||
+        ajanuw::SSString::search(x.value, notHexExp) ||
         ajanuw::Symbol::has(x.value) ||
         v == 0 && x.value != "0")
     {
@@ -1085,7 +1058,7 @@ LPVOID ajanuw::CEString::getData(std::string str)
       else
       {
         std::smatch m;
-        if (std::regex_match(x.value, m, std::regex("^(\\w+)\\.(\\w+)$")))
+        if (std::regex_match(x.value, m, mmExp))
         {
           // user32.MessageBoxA
           std::string mod = m[1].str() + ".dll";
@@ -1095,7 +1068,7 @@ LPVOID ajanuw::CEString::getData(std::string str)
             return NULL;
           data += (uintptr_t)GetProcAddress(hModule, met.c_str());
         }
-        else if (std::regex_match(x.value, m, std::regex("^(\\w+)$")))
+        else if (std::regex_match(x.value, m, methodExp))
         {
           // MessageBoxA
           std::string met = m[1].str();
@@ -1122,6 +1095,7 @@ LPVOID ajanuw::CEString::getData(std::string str)
     }
     else
     {
+      // TODO: 考虑使用js的eval来解释算术运算
       if (x.key.empty())
         data = v;
       if (x.key == "+")
