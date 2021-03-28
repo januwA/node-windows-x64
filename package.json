@@ -1,6 +1,6 @@
 {
   "name": "node-windows-x64",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "node windows x64",
   "private": false,
   "main": "./index.js",
@@ -21,6 +21,7 @@
     "asm",
     "asmjit",
     "asmtk",
+    "CEAddresSstring",
     "Ajanuw"
   ],
   "author": "Ajanuw",

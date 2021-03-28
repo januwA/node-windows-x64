@@ -78,6 +78,15 @@ namespace ajanuw
     size_t count(std::u16string str);
 
     std::string strFormNumber(uintptr_t number, bool isHex = false);
+
+    std::string tolower(std::string s);
+    std::string toupper(std::string s);
+
+    std::string pad(std::string str, size_t size, std::string padStr, bool isStart);
+    std::string padStart(std::string str, size_t size, std::string padStr);
+    std::string padEnd(std::string str, size_t size, std::string padStr);
+
+    std::string repeat(std::string str, size_t len);
   }
   namespace Mem
   {
@@ -143,7 +152,7 @@ namespace ajanuw
     {
     public:
       VAManage(size_t size);
-      inline ~VAManage(){};
+      ~VAManage(){};
       const uintptr_t size_;
       LPVOID memory_;
       size_t position_;
@@ -218,14 +227,14 @@ namespace ajanuw
       size_t height_;
       DWORD style_;
 
-      inline Win32(std::string className, std::string windowName) : x_(CW_USEDEFAULT),
-                                                                    y_(CW_USEDEFAULT),
-                                                                    width_(CW_USEDEFAULT), height_(CW_USEDEFAULT),
-                                                                    style_(WS_OVERLAPPEDWINDOW),
-                                                                    className_(className),
-                                                                    windowName_(windowName),
-                                                                    hWnd_(NULL){};
-      inline ~Win32() { DeleteObject(hWnd_); };
+      Win32(std::string className, std::string windowName) : x_(CW_USEDEFAULT),
+                                                             y_(CW_USEDEFAULT),
+                                                             width_(CW_USEDEFAULT), height_(CW_USEDEFAULT),
+                                                             style_(WS_OVERLAPPEDWINDOW),
+                                                             className_(className),
+                                                             windowName_(windowName),
+                                                             hWnd_(NULL){};
+      ~Win32() { DeleteObject(hWnd_); };
 
       // 消息循环
       int messageLoop();
@@ -271,8 +280,8 @@ namespace ajanuw
     private:
     public:
       std::string script_;
-      inline AAScript(std::string script) : script_(script){};
-      inline ~AAScript(){};
+      AAScript(std::string script) : script_(script){};
+      ~AAScript(){};
 
       // auto asm
       static uintptr_t aa(std::string, uintptr_t rcx);
@@ -291,53 +300,978 @@ namespace ajanuw
     static std::map<std::string, LPVOID> _symbolMap;
   };
 
-  class CEString
+  class CEAddressString
   {
   public:
-    /* example
-
-    struct _TestData
-    {
-      DWORD hp = 10;
-      DWORD mp = 2;
-      char* name = "abc";
-    } TestData;
-
-    ajanuw::Symbol::registerSymbol("ttt", &TestData);
-    LPVOID addr = ajanuw::CEStringe::getAddress("[ttt+8]+2");
-    printf("%p\n", addr);
-    printf("%c\n", *(char*)addr); // c
-
-
-
-    LPVOID addr = ajanuw::CEStringe::getAddress("user32.MessageBoxA");
-    printf("%p\n", addr);
-    printf("%p\n", MessageBoxA);
-
-
-
-    LPVOID addr = ajanuw::CEStringe::getAddress("MessageBoxA");
-    printf("%p\n", addr);
-    printf("%p\n", MessageBoxA);
-    */
-    static LPVOID getAddress(std::string address, LPVOID nextValue = NULL);
+    static LPVOID getAddress(std::string address);
 
   private:
-    struct SplitListItem
+#define TT_HEX "HEX"
+#define TT_MODULE "MODULE"   // a.exe or "a b.exe" or 'a b.exe'
+#define TT_MMETHOD "MMETHOD" // user32.MessageBoxA, 指定了模块的方法地址
+#define TT_METHOD "METHOD"   // MessageBoxA
+#define TT_SYMBOL "SYMBOL"   // s1 or s2
+#define TT_PLUS "PLUS"       // +
+#define TT_MINUS "MINUS"     // -
+#define TT_MUL "MUL"         // *
+#define TT_DIV "DIV"         // /
+#define TT_POW "POW"         // **
+#define TT_LPAREN "LPAREN"   // (
+#define TT_RPAREN "RPAREN"   // )
+#define TT_LSQUARE "LSQUARE" // [
+#define TT_RSQUARE "RSQUARE" // ]
+#define TT_EOF "EOF"
+
+    class Position
     {
-      std::string key;
-      std::string value;
+
+    public:
+      size_t index;
+      size_t row;
+      size_t col;
+      std::string text;
+
+      Position(size_t index,
+               size_t row,
+               size_t col,
+               std::string text)
+      {
+        this->index = index;
+        this->row = row;
+        this->col = col;
+        this->text = text;
+      }
+
+      void advance(char c)
+      {
+        index++;
+        col++;
+        if (c == '\n')
+        {
+          col = 0;
+          row++;
+        }
+      }
+
+      Position *copy()
+      {
+        return new Position(index, row, col, text);
+      }
     };
 
-    inline static const std::regex readExp{".*\\[([^\\[\\]]+)\\].*"};
-    inline static const std::regex offsetKeyExp{"[+-]"};
-    inline static const std::regex notHexExp{"[^0-9a-fA-F]"};
-    inline static const std::regex mmExp{"^(\\w+)\\.(\\w+)$"};
-    inline static const std::regex methodExp{"^(\\w+)$"};
+    static std::string stringsWithArrows(
+        std::string text,
+        Position *posStart,
+        Position *posEnd)
+    {
+      std::string result;
+      std::vector<std::string> lines = ajanuw::SSString::split(text, std::regex("\n"));
+      result += lines.at(posStart->row);
+      result += "\n";
+      result +=
+          (posStart->col ? ajanuw::SSString::padStart(" ", posStart->col, " ") : "") +
+          ajanuw::SSString::repeat("^", posEnd->col - posStart->col);
+      return result;
+    }
 
-    static std::string replaceString(std::string origenString, std::string replaceString, std::string newValue);
-    static std::vector<SplitListItem> splitString(std::string origenString);
-    static LPVOID getData(std::string str);
+    class CEAddressStringError
+    {
+    public:
+      std::string errorName;
+      Position *posStart;
+      Position *posEnd;
+      std::string message;
+
+      CEAddressStringError(
+          std::string errorName,
+          Position *posStart,
+          Position *posEnd,
+          std::string message)
+      {
+        this->errorName = errorName;
+        this->posStart = posStart;
+        this->posEnd = posEnd;
+        this->message = message;
+      }
+
+      virtual std::string toString()
+      {
+        std::string err = errorName + ": " + message + "\n";
+        err += stringsWithArrows(posStart->text, posStart, posEnd);
+        err += "\n";
+        return err;
+      };
+    };
+
+    class IllegalCharError : public CEAddressStringError
+    {
+    public:
+      IllegalCharError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Illegal Char Error",
+                                                                                                         posStart, posEnd, message) {}
+    };
+
+    class InvalidSyntaxError : public CEAddressStringError
+    {
+    public:
+      InvalidSyntaxError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Invalid Syntax Error",
+                                                                                                           posStart, posEnd, message) {}
+    };
+
+    class RuntimeError : public CEAddressStringError
+    {
+    public:
+      RuntimeError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Runtime Error",
+                                                                                                     posStart, posEnd, message) {}
+    };
+
+    class Token
+    {
+    public:
+      std::string type;
+      std::string value;
+      Position *posStart;
+      Position *posEnd;
+
+      Token(
+          std::string type,
+          std::string value,
+          Position *posStart,
+          Position *posEnd)
+      {
+        this->type = type;
+        this->value = value;
+        this->posStart = posStart->copy();
+        this->posEnd = posEnd->copy();
+      }
+
+      Token(
+          std::string type,
+          std::string value,
+          Position *posStart)
+      {
+        this->type = type;
+        this->value = value;
+        this->posStart = posStart->copy();
+        this->posEnd = posStart->copy();
+        this->posEnd->advance(NULL);
+      }
+
+      ~Token()
+      {
+        delete posStart;
+        delete posEnd;
+      }
+
+      std::string toString()
+      {
+        return value.empty() ? type : type + ":" + value;
+      }
+    };
+
+    class Lexer
+    {
+    public:
+      Position *pos;
+      char curChar;
+      std::string text;
+      Lexer(std::string text)
+      {
+        this->text = text;
+        this->pos = new Position(-1, 0, -1, this->text);
+        advance();
+      }
+
+      ~Lexer()
+      {
+        delete pos;
+      }
+
+      void advance()
+      {
+        pos->advance(curChar);
+        if (pos->index < text.size())
+        {
+          curChar = text.at(pos->index);
+        }
+        else
+        {
+          curChar = NULL;
+        }
+      }
+
+      std::vector<Token *> makeTokens()
+      {
+        std::vector<Token *> tokens;
+
+        while (curChar != NULL)
+        {
+          switch (curChar)
+          {
+          case ' ':
+          case '\t':
+            advance();
+            break;
+
+          case '+':
+            tokens.push_back(new Token(TT_PLUS, "+", pos));
+            advance();
+            break;
+
+          case '-':
+            tokens.push_back(new Token(TT_MINUS, "-", pos));
+            advance();
+            break;
+
+          case '*':
+            tokens.push_back(makeMulOrPow());
+            break;
+          case '/':
+            tokens.push_back(new Token(TT_DIV, "", pos));
+            advance();
+            break;
+          case '(':
+            tokens.push_back(new Token(TT_LPAREN, "(", pos));
+            advance();
+            break;
+          case ')':
+            tokens.push_back(new Token(TT_RPAREN, ")", pos));
+            advance();
+            break;
+          case '[':
+            tokens.push_back(new Token(TT_LSQUARE, "[", pos));
+            advance();
+            break;
+          case ']':
+            tokens.push_back(new Token(TT_RSQUARE, "]", pos));
+            advance();
+            break;
+
+          case '\'':
+          case '"':
+            makeString(&tokens);
+            break;
+
+          case '0':
+            tokens.push_back(makeHex());
+            break;
+
+          default:
+            if (!std::regex_search(std::string(1, curChar), std::regex("[^\u4e00-\u9fa5\\w-.]", std::regex::icase)))
+            {
+              tokens.push_back(makeModuleOrSymbolOrHex());
+              break;
+            }
+            break;
+          }
+        }
+
+        tokens.push_back(new Token(TT_EOF, "", pos));
+        return tokens;
+      }
+
+      bool isHex(std::string str)
+      {
+        return !std::regex_search(str, std::regex("[^0-9a-f]", std::regex::icase));
+      };
+
+    private:
+      // 0a or 0x0a
+      Token *makeHex()
+      {
+        std::string str;
+        str.push_back(curChar);
+        Position *posStart = pos->copy();
+
+        auto getHex = [=]() {
+          std::string _str;
+
+          while (curChar != NULL && isHex(std::string(1, curChar)))
+          {
+            _str += curChar;
+            advance();
+          }
+          return _str;
+        };
+
+        advance();
+        if (curChar == 'x')
+        {
+          str.push_back(curChar);
+          advance();
+          str += getHex();
+        }
+        else
+          str += getHex();
+
+        return new Token(TT_HEX, str, posStart, pos);
+      }
+
+      Token *makeModuleOrSymbolOrHex()
+      {
+        std::string str;
+        std::string method;
+        std::string type = TT_SYMBOL;
+        Position *posStart = pos->copy();
+
+        while (curChar != NULL && !std::regex_search(std::string(1, curChar), std::regex("[^\u4e00-\u9fa5\\w-.]", std::regex::icase)))
+        {
+          if (type == TT_MODULE)
+            method += curChar;
+          if (curChar == '.')
+            type = TT_MODULE;
+          str += curChar;
+          advance();
+        }
+
+        // 优先级: SYMBOL > HEX > METHOD
+        if (type == TT_SYMBOL && !ajanuw::Symbol::has(str))
+        {
+          if (isHex(str))
+            type = TT_HEX;
+          else
+            type = TT_METHOD;
+        }
+
+        // is MODULE_NAME.METHOD?
+        if (type == TT_MODULE)
+        {
+          method = ajanuw::SSString::tolower(method);
+          if (method != "dll" && method != "exe")
+            type = TT_MMETHOD;
+        }
+
+        return new Token(type, str, posStart, pos);
+      }
+
+      Token *makeMulOrPow()
+      {
+        Position *posStart = pos->copy();
+        std::string type = TT_MUL;
+        std::string value = "*";
+
+        advance();
+        if (curChar == '*')
+        {
+          advance();
+          type = TT_POW;
+          value += "*";
+        }
+        return new Token(type, value, posStart, pos);
+      }
+
+      /**
+   * "user32.dll"
+   * "user32.MessageBoxA"
+   * "MessageBoxA"
+   * "s1" => 优先级: SYMBOL > HEX > METHOD
+   * "1+1" => 2
+   * "0xaa"
+   * "a b.exe"
+   *
+   * ## error
+   * "user32.dll+1"
+   * "user32.MessageBoxA+1"
+   * "MessageBoxA+1"
+   * "s1+1"
+   *
+   * ## test
+   * 1+'user32.MessageBoxA'-0xabc+MessageBoxA+'0x22'+'MessageboxA'
+   */
+      void makeString(std::vector<Token *> *tokens)
+      {
+        std::string str;
+        std::string type = TT_MODULE;
+        char s = curChar; // " or '
+        Position *posStart = pos->copy();
+
+        advance();
+        while (curChar != NULL && curChar != s)
+        {
+          str += curChar;
+          advance();
+        }
+        advance();
+
+        if (ajanuw::SSString::search(str, std::regex("\\.")))
+        {
+          auto r = ajanuw::SSString::split(str, std::regex("\\."));
+          std::string method = r.at(1);
+          if (method != "exe" || method != "dll")
+          {
+            type = TT_MMETHOD;
+          }
+        }
+        else
+        {
+          if (ajanuw::Symbol::has(str))
+          {
+            type = TT_SYMBOL;
+          }
+          else if (std::regex_search(str, std::regex("[\\+\\-\\*\\/]")))
+          {
+            auto lexer = ajanuw::CEAddressString::Lexer(str);
+            auto _tokens = lexer.makeTokens();
+            for (auto tok : _tokens)
+              tokens->push_back(tok);
+            return;
+          }
+          else if (ajanuw::SSString::startWith(str, "0x") || isHex(str))
+          {
+            type = TT_HEX;
+          }
+          else
+          {
+            type = TT_METHOD;
+          }
+        }
+
+        tokens->push_back(new Token(type, str, posStart, pos));
+      }
+    };
+
+#define CESNT_MODULE 1
+#define CESNT_SYMBOL 2
+#define CESNT_HEX 3
+#define CESNT_MMETHOD 4
+#define CESNT_METHOD 5
+#define CESNT_UNARY_OP 6
+#define CESNT_BIN_OP 7
+#define CESNT_POINTER 8
+
+    class CEAddressStringNode
+    {
+    public:
+      Position *posStart;
+      Position *posEnd;
+      CEAddressStringNode(Position *posStart, Position *posEnd) : posStart(posStart), posEnd(posEnd) {}
+      virtual size_t id() { return NULL; };
+    };
+
+    static void deleteCEAddressStringNode(CEAddressStringNode *node)
+    {
+      switch (node->id())
+      {
+      case CESNT_HEX:
+        delete reinterpret_cast<HexNode *>(node);
+        break;
+
+      case CESNT_SYMBOL:
+        delete reinterpret_cast<SymbolNode *>(node);
+        break;
+
+      case CESNT_MODULE:
+        delete reinterpret_cast<ModuleNode *>(node);
+        break;
+
+      case CESNT_MMETHOD:
+        delete reinterpret_cast<MMethodNode *>(node);
+        break;
+
+      case CESNT_METHOD:
+        delete reinterpret_cast<MethodNode *>(node);
+        break;
+
+      case CESNT_UNARY_OP:
+        delete reinterpret_cast<UnaryOpNode *>(node);
+        break;
+
+      case CESNT_POINTER:
+        delete reinterpret_cast<PointerNode *>(node);
+        break;
+
+      case CESNT_BIN_OP:
+        delete reinterpret_cast<BinOpNode *>(node);
+        break;
+
+      default:
+        delete node;
+        break;
+      }
+    }
+
+    class ModuleNode : public CEAddressStringNode
+    {
+    public:
+      Token *token;
+      ModuleNode(Token *token) : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+
+      ~ModuleNode()
+      {
+        delete token;
+      }
+
+      size_t id()
+      {
+        return CESNT_MODULE;
+      }
+    };
+
+    class SymbolNode : public CEAddressStringNode
+    {
+    public:
+      Token *token;
+      SymbolNode(Token *token)
+          : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+
+      ~SymbolNode()
+      {
+        delete token;
+      }
+      size_t id()
+      {
+        return CESNT_SYMBOL;
+      }
+    };
+
+    class HexNode : public CEAddressStringNode
+    {
+    public:
+      Token *token;
+      HexNode(Token *token)
+          : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+      ~HexNode()
+      {
+        delete token;
+      }
+      size_t id()
+      {
+        return CESNT_HEX;
+      }
+    };
+
+    class MMethodNode : public CEAddressStringNode
+    {
+    public:
+      Token *token;
+      MMethodNode(Token *token)
+          : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+      ~MMethodNode()
+      {
+        delete token;
+      }
+      size_t id()
+      {
+        return CESNT_MMETHOD;
+      }
+    };
+
+    class MethodNode : public CEAddressStringNode
+    {
+    public:
+      Token *token;
+      MethodNode(Token *token)
+          : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+      ~MethodNode()
+      {
+        delete token;
+      }
+
+      size_t id()
+      {
+        return CESNT_METHOD;
+      }
+    };
+
+    class UnaryOpNode : public CEAddressStringNode
+    {
+    public:
+      Token *token;
+      CEAddressStringNode *node;
+      UnaryOpNode(Token *token, CEAddressStringNode *node)
+          : CEAddressStringNode(token->posStart, token->posEnd), token(token), node(node) {}
+
+      ~UnaryOpNode()
+      {
+        delete token;
+        deleteCEAddressStringNode(node);
+      }
+
+      size_t id()
+      {
+        return CESNT_UNARY_OP;
+      }
+    };
+
+    class BinOpNode : public CEAddressStringNode
+    {
+    public:
+      CEAddressStringNode *leftNode;
+      Token *token;
+      CEAddressStringNode *rightNode;
+      BinOpNode(
+          CEAddressStringNode *leftNode,
+          Token *token,
+          CEAddressStringNode *rightNode)
+          : CEAddressStringNode(leftNode->posStart, rightNode->posEnd), leftNode(leftNode), token(token), rightNode(rightNode) {}
+      ~BinOpNode()
+      {
+        deleteCEAddressStringNode(leftNode);
+        delete token;
+        deleteCEAddressStringNode(rightNode);
+      }
+
+      size_t id()
+      {
+        return CESNT_BIN_OP;
+      }
+    };
+
+    class PointerNode : public CEAddressStringNode
+    {
+    public:
+      CEAddressStringNode *node;
+      PointerNode(CEAddressStringNode *node)
+          : CEAddressStringNode(node->posStart, node->posEnd), node(node) {}
+      ~PointerNode()
+      {
+        deleteCEAddressStringNode(node);
+      }
+      size_t id()
+      {
+        return CESNT_POINTER;
+      }
+    };
+
+    class Parser
+    {
+    public:
+      size_t index = -1;
+      Token *curToken = nullptr;
+      std::vector<Token *> tokens;
+      Parser(std::vector<Token *> tokens) : tokens(tokens)
+      {
+        advance();
+      }
+
+      void advance()
+      {
+        index++;
+        if (index < tokens.size())
+        {
+          curToken = tokens.at(index);
+        }
+        else
+        {
+          curToken = nullptr;
+        }
+      }
+
+      CEAddressStringNode *parse()
+      {
+        CEAddressStringNode *node = expr();
+
+        if (curToken->type != TT_EOF)
+        {
+          throw std::exception(
+              InvalidSyntaxError(
+                  curToken->posStart,
+                  curToken->posEnd,
+                  "Wrong EOF")
+                  .toString()
+                  .c_str());
+        }
+
+        return node;
+      }
+
+      CEAddressStringNode *expr()
+      {
+        CEAddressStringNode *leftNode = term();
+
+        while (curToken->type == TT_PLUS || curToken->type == TT_MINUS)
+        {
+          Token *token = curToken;
+          advance();
+          CEAddressStringNode *rightNode = term();
+          leftNode = new BinOpNode(leftNode, token, rightNode);
+        }
+
+        return leftNode;
+      }
+
+      CEAddressStringNode *term()
+      {
+        CEAddressStringNode *leftNode = factor();
+
+        while (curToken->type == TT_MUL || curToken->type == TT_DIV)
+        {
+          Token *token = curToken;
+          advance();
+          CEAddressStringNode *rightNode = factor();
+          leftNode = new BinOpNode(leftNode, token, rightNode);
+        }
+
+        return leftNode;
+      }
+
+      CEAddressStringNode *factor()
+      {
+        Token *token = curToken;
+
+        if (curToken->type == TT_PLUS || curToken->type == TT_MINUS)
+        {
+          advance();
+          return new UnaryOpNode(token, factor());
+        }
+
+        return power();
+      }
+
+      CEAddressStringNode *power()
+      {
+        CEAddressStringNode *leftNode = atom();
+
+        while (curToken->type == TT_POW)
+        {
+          Token *token = curToken;
+          advance();
+          CEAddressStringNode *rightNode = factor();
+          leftNode = new BinOpNode(leftNode, token, rightNode);
+        }
+
+        return leftNode;
+      }
+
+      CEAddressStringNode *atom()
+      {
+        Token *token = curToken;
+        if (token->type == TT_MODULE)
+        {
+          advance();
+          return new ModuleNode(token);
+        }
+        else if (token->type == TT_SYMBOL)
+        {
+          advance();
+          return new SymbolNode(token);
+        }
+        else if (token->type == TT_HEX)
+        {
+          advance();
+          return new HexNode(token);
+        }
+        else if (token->type == TT_MMETHOD)
+        {
+          advance();
+          return new MMethodNode(token);
+        }
+        else if (token->type == TT_METHOD)
+        {
+          advance();
+          return new MethodNode(token);
+        }
+        else if (token->type == TT_LPAREN)
+        {
+          advance();
+          CEAddressStringNode *_expr = expr();
+          if (curToken->type == TT_RPAREN)
+          {
+            advance();
+            return _expr;
+          }
+          else
+          {
+            throw std::exception(InvalidSyntaxError(
+                                     curToken->posStart,
+                                     curToken->posEnd,
+                                     "Expected ')'")
+                                     .toString()
+                                     .c_str());
+          }
+        }
+        else if (token->type == TT_LSQUARE)
+        {
+          advance();
+          CEAddressStringNode *_expr = expr();
+          if (curToken->type == TT_RSQUARE)
+          {
+            advance();
+            return new PointerNode(_expr);
+          }
+          else
+          {
+            throw std::exception(InvalidSyntaxError(
+                                     curToken->posStart,
+                                     curToken->posEnd,
+                                     "Expected ']'")
+                                     .toString()
+                                     .c_str());
+          }
+        }
+        else
+        {
+          throw std::exception(InvalidSyntaxError(
+                                   curToken->posStart,
+                                   curToken->posEnd,
+                                   "Expected '+', '-', '*', '/', MODULE, SYMBOL, HEX or MODULE_NAME.METHOD")
+                                   .toString()
+                                   .c_str());
+        }
+      }
+    };
+
+    class Interpreter
+    {
+    public:
+      uintptr_t visit(CEAddressStringNode *node)
+      {
+        switch (node->id())
+        {
+        case CESNT_HEX:
+          return std::stoull(reinterpret_cast<HexNode *>(node)->token->value, nullptr, 16);
+
+        case CESNT_SYMBOL:
+          return (uintptr_t)ajanuw::Symbol::get(reinterpret_cast<SymbolNode *>(node)->token->value);
+
+        case CESNT_MODULE:
+        {
+          auto hModule = LoadLibraryA(reinterpret_cast<ModuleNode *>(node)->token->value.c_str());
+
+          if (hModule == NULL)
+          {
+            throw std::exception(
+                RuntimeError(
+                    node->posStart,
+                    node->posEnd,
+                    "Not module \"" + reinterpret_cast<ModuleNode *>(node)->token->value + "\"")
+                    .toString()
+                    .c_str());
+          }
+
+          return (uintptr_t)hModule;
+        }
+
+        case CESNT_MMETHOD:
+        {
+          std::vector<std::string> r = ajanuw::SSString::split(reinterpret_cast<MMethodNode *>(node)->token->value, std::regex("\\."));
+          std::string mod = r.at(0);
+          std::string met = r.at(1);
+          auto hModule = LoadLibraryA(mod.c_str());
+          if (!hModule)
+          {
+            throw std::exception(
+                RuntimeError(
+                    node->posStart,
+                    node->posEnd,
+                    "Not module \"" + mod + "\"")
+                    .toString()
+                    .c_str());
+          }
+          auto hMethod = GetProcAddress(hModule, met.c_str());
+
+          if (hMethod == NULL)
+          {
+            throw std::exception(
+                RuntimeError(
+                    node->posStart,
+                    node->posEnd,
+                    "Not method \"" + met + "\"")
+                    .toString()
+                    .c_str());
+          }
+          return (uintptr_t)hMethod;
+        }
+
+        case CESNT_METHOD:
+        {
+          std::string met = reinterpret_cast<MethodNode *>(node)->token->value;
+          uintptr_t r = NULL;
+          HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetCurrentProcessId());
+          if (hSnap != INVALID_HANDLE_VALUE)
+          {
+            MODULEENTRY32 me;
+            me.dwSize = sizeof(me);
+            if (Module32First(hSnap, &me))
+            {
+              do
+              {
+                r = (uintptr_t)GetProcAddress((HMODULE)me.modBaseAddr, met.c_str());
+                if (r != NULL)
+                  break;
+              } while (Module32Next(hSnap, &me));
+            }
+          }
+          CloseHandle(hSnap);
+
+          if (r == NULL)
+          {
+            throw std::exception(
+                RuntimeError(
+                    node->posStart,
+                    node->posEnd,
+                    "Not defined symbol \"" + met + "\"")
+                    .toString()
+                    .c_str());
+          }
+
+          return r;
+        }
+
+        case CESNT_UNARY_OP:
+        {
+          uintptr_t value = visit(reinterpret_cast<UnaryOpNode *>(node)->node);
+          if (reinterpret_cast<UnaryOpNode *>(node)->token->type == TT_MINUS)
+          {
+            return value * -1;
+          }
+          return value;
+        }
+
+        case CESNT_POINTER:
+        {
+          uintptr_t address = visit(reinterpret_cast<PointerNode *>(node)->node);
+          return *(uintptr_t *)address;
+        }
+
+        case CESNT_BIN_OP:
+        {
+          uintptr_t left = visit(reinterpret_cast<BinOpNode *>(node)->leftNode);
+          uintptr_t right = visit(reinterpret_cast<BinOpNode *>(node)->rightNode);
+
+          std::string type = reinterpret_cast<BinOpNode *>(node)->token->type;
+          if (type == TT_PLUS)
+          {
+            return left + right;
+          }
+          else if (type == TT_MINUS)
+          {
+            return left - right;
+          }
+          else if (type == TT_MUL)
+          {
+            return left * right;
+          }
+          else if (type == TT_DIV)
+          {
+            if (right == 0)
+            {
+              throw std::exception(
+                  RuntimeError(
+                      node->posStart,
+                      node->posEnd,
+                      "Division by zero")
+                      .toString()
+                      .c_str());
+            }
+            return left / right;
+          }
+          else if (type == TT_POW)
+          {
+            return pow(left, right);
+          }
+        }
+
+        default:
+          throw std::exception(RuntimeError(
+                                   node->posStart,
+                                   node->posEnd,
+                                   "Unexpected CEAddressStringNode")
+                                   .toString()
+                                   .c_str());
+          return NULL;
+        }
+      }
+    };
   };
 
 }

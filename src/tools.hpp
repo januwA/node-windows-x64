@@ -359,7 +359,15 @@ Value unregisterSymbol(const CallbackInfo &info)
 Value getAddress(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret((uintptr_t)ajanuw::CEString::getAddress(nmi_str(0)));
+  try
+  {
+    nm_ret((uintptr_t)ajanuw::CEAddressString::getAddress(nmi_str(0)));
+  }
+  catch (const std::exception &e)
+  {
+    nm_jserr(e.what());
+    nm_retu;
+  }
 }
 
 Value aa(const CallbackInfo &info)

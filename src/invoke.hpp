@@ -95,7 +95,7 @@ Value invoke(const CallbackInfo &info)
     if (hModule != NULL)
       lpMethod = (BYTE *)GetProcAddress(hModule, sMethod.c_str());
     else
-      lpMethod = (BYTE *)ajanuw::CEString::getAddress(sMethod);
+      lpMethod = (BYTE *)ajanuw::CEAddressString::getAddress(sMethod);
   }
 
   if (lpMethod == NULL)

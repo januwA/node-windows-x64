@@ -14,9 +14,76 @@ std::string ajanuw::SSString::strFormNumber(uintptr_t number, bool isHex)
   return stream.str();
 }
 
+std::string ajanuw::SSString::tolower(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(),
+                 // static_cast<int(*)(int)>(std::tolower)         // wrong
+                 // [](int c){ return std::tolower(c); }           // wrong
+                 // [](char c){ return std::tolower(c); }          // wrong
+                 [](unsigned char c) { return std::tolower(c); } // correct
+  );
+  return s;
+}
+
+std::string ajanuw::SSString::toupper(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(),
+                 // static_cast<int(*)(int)>(std::tolower)         // wrong
+                 // [](int c){ return std::tolower(c); }           // wrong
+                 // [](char c){ return std::tolower(c); }          // wrong
+                 [](unsigned char c) { return std::toupper(c); } // correct
+  );
+  return s;
+}
+
+std::string ajanuw::SSString::pad(std::string str, size_t size, std::string padStr = " ", bool isStart = true)
+{
+  if (str.size() >= size)
+    return std::string(str.begin(), str.end());
+
+  std::string pad = "";
+  while (true)
+  {
+    size_t overflowSize = padStr.size() + pad.size() + str.size() - size;
+    if (overflowSize > 0)
+    {
+      pad += padStr.substr(0, padStr.size() - overflowSize);
+    }
+    else
+    {
+      pad += padStr;
+    }
+    if (pad.size() + str.size() >= size)
+      return isStart ? pad + str : str + pad;
+  }
+}
+
+std::string ajanuw::SSString::padStart(std::string str, size_t size, std::string padStr = " ")
+{
+  return ajanuw::SSString::pad(str, size, padStr);
+}
+
+std::string ajanuw::SSString::padEnd(std::string str, size_t size, std::string padStr = " ")
+{
+  return ajanuw::SSString::pad(str, size, padStr, false);
+}
+
+std::string ajanuw::SSString::repeat(std::string str, size_t len)
+{
+  std::string r;
+
+  while (len > 0)
+  {
+    r += str;
+    len--;
+  }
+
+  return r;
+}
+
 bool ajanuw::SSString::startWith(std::string str, const char *s2)
 {
-  return ajanuw::SSString::search(str, std::regex("$" + std::string(s2)));
+  return ajanuw::SSString::search(str, std::regex("^" + std::string(s2)));
 }
 
 bool ajanuw::SSString::endWith(std::string str, const char *s2)
@@ -363,7 +430,7 @@ BOOL ajanuw::Mem::free(LPVOID lpAddress)
 
 BOOL ajanuw::Mem::free(std::string CEAddressString)
 {
-  return ajanuw::Mem::free(ajanuw::CEString::getAddress(CEAddressString));
+  return ajanuw::Mem::free(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 void ajanuw::Mem::write_str(void *lpAddress, std::string str)
@@ -421,57 +488,57 @@ void ajanuw::Mem::write_region_to_file(std::string filename, void *lpAddress, ui
 
 void ajanuw::Mem::write_str(std::string CEAddressString, std::string str)
 {
-  ajanuw::Mem::write_str(ajanuw::CEString::getAddress(CEAddressString), str);
+  ajanuw::Mem::write_str(ajanuw::CEAddressString::getAddress(CEAddressString), str);
 }
 
 void ajanuw::Mem::write_wstr(std::string CEAddressString, std::wstring str)
 {
-  ajanuw::Mem::write_wstr(ajanuw::CEString::getAddress(CEAddressString), str);
+  ajanuw::Mem::write_wstr(ajanuw::CEAddressString::getAddress(CEAddressString), str);
 }
 
 void ajanuw::Mem::write_ustr(std::string CEAddressString, std::u16string str)
 {
-  ajanuw::Mem::write_ustr(ajanuw::CEString::getAddress(CEAddressString), str);
+  ajanuw::Mem::write_ustr(ajanuw::CEAddressString::getAddress(CEAddressString), str);
 }
 
 void ajanuw::Mem::write_byte(std::string CEAddressString, BYTE byte)
 {
-  ajanuw::Mem::write_byte(ajanuw::CEString::getAddress(CEAddressString), byte);
+  ajanuw::Mem::write_byte(ajanuw::CEAddressString::getAddress(CEAddressString), byte);
 }
 
 void ajanuw::Mem::write_bytes(std::string CEAddressString, std::vector<BYTE> bytes)
 {
-  ajanuw::Mem::write_bytes(ajanuw::CEString::getAddress(CEAddressString), bytes);
+  ajanuw::Mem::write_bytes(ajanuw::CEAddressString::getAddress(CEAddressString), bytes);
 }
 
 void ajanuw::Mem::write_word(std::string CEAddressString, WORD value)
 {
-  ajanuw::Mem::write_word(ajanuw::CEString::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_word(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_dword(std::string CEAddressString, DWORD value)
 {
-  ajanuw::Mem::write_dword(ajanuw::CEString::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_dword(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_qword(std::string CEAddressString, uint64_t value)
 {
-  ajanuw::Mem::write_qword(ajanuw::CEString::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_qword(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_float(std::string CEAddressString, float value)
 {
-  ajanuw::Mem::write_float(ajanuw::CEString::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_float(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_double(std::string CEAddressString, double value)
 {
-  ajanuw::Mem::write_double(ajanuw::CEString::getAddress(CEAddressString), value);
+  ajanuw::Mem::write_double(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
 
 void ajanuw::Mem::write_region_to_file(std::string filename, std::string CEAddressString, uintptr_t size)
 {
-  ajanuw::Mem::write_region_to_file(filename, ajanuw::CEString::getAddress(CEAddressString), size);
+  ajanuw::Mem::write_region_to_file(filename, ajanuw::CEAddressString::getAddress(CEAddressString), size);
 }
 
 std::string ajanuw::Mem::read_str(char *lpAddress, uintptr_t max)
@@ -488,15 +555,15 @@ std::u16string ajanuw::Mem::read_ustr(char16_t *lpAddress, uintptr_t max)
 }
 std::string ajanuw::Mem::read_str(std::string CEAddressString, uintptr_t max)
 {
-  return ajanuw::Mem::read_str((char *)ajanuw::CEString::getAddress(CEAddressString), max);
+  return ajanuw::Mem::read_str((char *)ajanuw::CEAddressString::getAddress(CEAddressString), max);
 }
 std::wstring ajanuw::Mem::read_wstr(std::string CEAddressString, uintptr_t max)
 {
-  return ajanuw::Mem::read_wstr((wchar_t *)ajanuw::CEString::getAddress(CEAddressString), max);
+  return ajanuw::Mem::read_wstr((wchar_t *)ajanuw::CEAddressString::getAddress(CEAddressString), max);
 }
 std::u16string ajanuw::Mem::read_ustr(std::string CEAddressString, uintptr_t max)
 {
-  return ajanuw::Mem::read_ustr((char16_t *)ajanuw::CEString::getAddress(CEAddressString), max);
+  return ajanuw::Mem::read_ustr((char16_t *)ajanuw::CEAddressString::getAddress(CEAddressString), max);
 }
 std::vector<BYTE> ajanuw::Mem::read_bytes(void *lpAddress, uintptr_t size)
 {
@@ -563,52 +630,52 @@ void ajanuw::Mem::read_region_from_file(std::string fileame, void *lpAddress, si
 
 std::vector<BYTE> ajanuw::Mem::read_bytes(std::string CEAddressString, uintptr_t size)
 {
-  return ajanuw::Mem::read_bytes(ajanuw::CEString::getAddress(CEAddressString), size);
+  return ajanuw::Mem::read_bytes(ajanuw::CEAddressString::getAddress(CEAddressString), size);
 }
 
 BYTE ajanuw::Mem::read_byte(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_byte(ajanuw::CEString::getAddress(CEAddressString));
+  return ajanuw::Mem::read_byte(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 WORD ajanuw::Mem::read_word(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_word(ajanuw::CEString::getAddress(CEAddressString));
+  return ajanuw::Mem::read_word(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 DWORD ajanuw::Mem::read_dword(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_dword(ajanuw::CEString::getAddress(CEAddressString));
+  return ajanuw::Mem::read_dword(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 uint64_t ajanuw::Mem::read_qword(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_qword(ajanuw::CEString::getAddress(CEAddressString));
+  return ajanuw::Mem::read_qword(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 uintptr_t ajanuw::Mem::read_pointer(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_pointer(ajanuw::CEString::getAddress(CEAddressString));
+  return ajanuw::Mem::read_pointer(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 float ajanuw::Mem::read_float(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_float(ajanuw::CEString::getAddress(CEAddressString));
+  return ajanuw::Mem::read_float(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 double ajanuw::Mem::read_double(std::string CEAddressString)
 {
-  return ajanuw::Mem::read_double(ajanuw::CEString::getAddress(CEAddressString));
+  return ajanuw::Mem::read_double(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 void ajanuw::Mem::read_region_from_file(std::string fileame, std::string CEAddressString)
 {
-  ajanuw::Mem::read_region_from_file(fileame, ajanuw::CEString::getAddress(CEAddressString));
+  ajanuw::Mem::read_region_from_file(fileame, ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 void ajanuw::Mem::read_region_from_file(std::string fileame, std::string CEAddressString, size_t *fileSize)
 {
-  ajanuw::Mem::read_region_from_file(fileame, ajanuw::CEString::getAddress(CEAddressString), fileSize);
+  ajanuw::Mem::read_region_from_file(fileame, ajanuw::CEAddressString::getAddress(CEAddressString), fileSize);
 }
 
 std::map<HWND, uintptr_t> ajanuw::Gui::Win32::Win32::hwndMap;
@@ -974,135 +1041,30 @@ bool ajanuw::Symbol::has(std::string symbolname)
   return ajanuw::Symbol::_symbolMap.count(symbolname) != NULL;
 }
 
-LPVOID ajanuw::CEString::getAddress(std::string CEAddressString, LPVOID nextValue)
+LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString)
 {
-  CEAddressString = std::regex_replace(CEAddressString, std::regex("\\s"), "");
-  std::smatch m;
-  std::regex_match(CEAddressString, m, readExp);
-  if (m.size() == 0)
+  try
   {
-    if (CEAddressString.size() == 0)
-      return nextValue;
-    return getData(CEAddressString);
+    Lexer lexer = ajanuw::CEAddressString::Lexer(CEAddressString);
+    std::vector<Token *> tokens = lexer.makeTokens();
+
+    // for (auto token : tokens)
+    //   printf("%s ", token->toString().c_str());
+    // printf("\n");
+
+    Parser parser = Parser(tokens);
+    CEAddressStringNode *node = parser.parse();
+    // printf("node id: %d\n", node->id());
+
+    Interpreter interpreter = Interpreter();
+    LPVOID addr = (LPVOID)interpreter.visit(node);
+
+    deleteCEAddressStringNode(node);
+    
+    return addr;
   }
-
-  LPVOID data = getData(m[1].str());
-  if (data == NULL)
-    return NULL;
-
-  // TODO: 现在根据编译器读取指针大小，以后可以确定PE是x86还是x64确定指针大小
-  ReadProcessMemory(GetCurrentProcess(), data, &data, sizeof(uintptr_t), 0);
-
-  std::stringstream hexStr;
-  hexStr << std::hex << data;
-  std::string newOrigenString = replaceString(CEAddressString, m[1], hexStr.str());
-  return getAddress(newOrigenString, data);
-}
-
-std::string ajanuw::CEString::replaceString(std::string origenString, std::string replaceString, std::string newValue)
-{
-  size_t startIndex = origenString.find(replaceString);
-  size_t endIndex = replaceString.size();
-  return origenString.replace(startIndex - 1, endIndex + 2, newValue);
-}
-
-std::vector<ajanuw::CEString::SplitListItem> ajanuw::CEString::splitString(std::string origenString)
-{
-  std::vector<ajanuw::CEString::SplitListItem> resultSplitList;
-  if (!ajanuw::SSString::search(origenString, offsetKeyExp))
+  catch (const std::exception &e)
   {
-    // 单符号，不包含偏移
-    resultSplitList.push_back(ajanuw::CEString::SplitListItem{"", origenString});
-    return resultSplitList;
+    throw e;
   }
-
-  std::smatch result;
-  std::string::const_iterator iterStart = origenString.begin();
-  std::string::const_iterator iterEnd = origenString.end();
-  std::vector<std::string> splitList = {};
-  std::vector<std::string> splitKeys = {};
-
-  while (regex_search(iterStart, iterEnd, result, offsetKeyExp))
-  {
-    splitList.emplace_back(iterStart, result[0].first);
-    splitKeys.push_back(result[0].str());
-    iterStart = result[0].second;
-  }
-  splitList.emplace_back(iterStart, iterEnd);
-
-  for (size_t i = 0; i < splitList.size(); i++)
-  {
-    resultSplitList.push_back(ajanuw::CEString::SplitListItem{i > 0 ? splitKeys[i - 1] : "", splitList[i]});
-  }
-  return resultSplitList;
-}
-
-LPVOID ajanuw::CEString::getData(std::string str)
-{
-  std::vector<SplitListItem> r = ajanuw::CEString::splitString(str);
-  uintptr_t data = 0;
-  for (auto x : r)
-  {
-    uintptr_t v;
-    std::stringstream(x.value) >> std::hex >> v;
-    if (
-        ajanuw::SSString::search(x.value, notHexExp) ||
-        ajanuw::Symbol::has(x.value) ||
-        v == 0 && x.value != "0")
-    {
-      // 符号
-      if (ajanuw::Symbol::has(x.value))
-      {
-        data += (uintptr_t)ajanuw::Symbol::get(x.value);
-      }
-      else
-      {
-        std::smatch m;
-        if (std::regex_match(x.value, m, mmExp))
-        {
-          // user32.MessageBoxA
-          std::string mod = m[1].str() + ".dll";
-          std::string met = m[2].str();
-          auto hModule = LoadLibraryA(mod.c_str());
-          if (!hModule)
-            return NULL;
-          data += (uintptr_t)GetProcAddress(hModule, met.c_str());
-        }
-        else if (std::regex_match(x.value, m, methodExp))
-        {
-          // MessageBoxA
-          std::string met = m[1].str();
-          uintptr_t r = NULL;
-          HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetCurrentProcessId());
-          if (hSnap != INVALID_HANDLE_VALUE)
-          {
-            MODULEENTRY32 me;
-            me.dwSize = sizeof(me);
-            if (Module32First(hSnap, &me))
-            {
-              do
-              {
-                r = (uintptr_t)GetProcAddress((HMODULE)me.modBaseAddr, met.c_str());
-                if (r != NULL)
-                  break;
-              } while (Module32Next(hSnap, &me));
-            }
-          }
-          CloseHandle(hSnap);
-          data += r;
-        }
-      }
-    }
-    else
-    {
-      // TODO: 考虑使用js的eval来解释算术运算
-      if (x.key.empty())
-        data = v;
-      if (x.key == "+")
-        data += v;
-      if (x.key == "-")
-        data -= v;
-    }
-  }
-  return reinterpret_cast<LPVOID>(data);
 }

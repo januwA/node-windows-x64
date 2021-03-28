@@ -64,7 +64,10 @@
     "xlocnum": "cpp",
     "xstddef": "cpp",
     "xtr1common": "cpp",
-    "xtree": "cpp"
+    "xtree": "cpp",
+    "bit": "cpp",
+    "clocale": "cpp",
+    "stop_token": "cpp"
   },
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "python.formatting.provider": "yapf"

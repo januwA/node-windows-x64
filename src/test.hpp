@@ -20,6 +20,5 @@ Value test(const Napi::CallbackInfo &info)
   using namespace asmtk;
   using namespace asmjit::x86;
 
-
   nm_retu;
 }

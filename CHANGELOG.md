@@ -3,6 +3,7 @@
 - *test version*
 - perf: Use asmjit to rewrite invoke
 - fix: fix globalDefineScript.js
+- perf: Improve CEAddresSstring parser
 
 ## 0.0.6 [2021-2-27]
 
