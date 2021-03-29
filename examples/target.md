@@ -1,5 +1,22 @@
+
 ```js
-const t = new nw.Target("game2.exe");
+const t = new nw.Target(5384);
+if (t.pid && t.hProcess) {
+  console.log(t.name);
+  console.log(t.pid);
+  console.log(t.hProcess);
+}
+
+
+const t = nw.createTargetWithPID(5384);
+if (t.pid && t.hProcess) {
+  console.log(t.name);
+  console.log(t.pid);
+  console.log(t.hProcess);
+}
+
+
+const t = nw.createTargetWithName("Tutorial-i386.exe");
 if (t.pid && t.hProcess) {
   console.log(t.name);
   console.log(t.pid);

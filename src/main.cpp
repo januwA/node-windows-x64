@@ -18,6 +18,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   VAManage::Init(env, exports);
   Win32Gui::Init(env, exports);
   Target::Init(env, exports);
+  __EXPORT("createTargetWithName", createTargetWithName);
+  __EXPORT("createTargetWithPID", createTargetWithPID);
 
   __EXPORT("invoke", invoke);
   __EXPORT("test", test);

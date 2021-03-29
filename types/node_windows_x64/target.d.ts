@@ -2,7 +2,7 @@ export class Target {
   name: string;
   pid: string;
   hProcess: number;
-  constructor(name: string);
+  constructor(pid: number);
 
   setNop(
     addr: number,
@@ -20,3 +20,6 @@ export class Target {
     origenBytes: ArrayBuffer;
   };
 }
+
+export function createTargetWithName(name: string): Target;
+export function createTargetWithPID(pid: number): Target;
