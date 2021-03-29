@@ -361,7 +361,14 @@ Value getAddress(const CallbackInfo &info)
   nm_init_cal(1);
   try
   {
-    nm_ret((uintptr_t)ajanuw::CEAddressString::getAddress(nmi_str(0)));
+    if (info.Length() == 1)
+    {
+      nm_ret((uintptr_t)ajanuw::CEAddressString::getAddress(nmi_str(0)));
+    }
+    else
+    {
+      nm_ret((uintptr_t)ajanuw::CEAddressString::getAddress(nmi_str(0), (HANDLE)nmi_dword(1)));
+    }
   }
   catch (const std::exception &e)
   {

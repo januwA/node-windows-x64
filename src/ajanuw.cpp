@@ -1021,7 +1021,7 @@ uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
 std::map<std::string, LPVOID> ajanuw::Symbol::_symbolMap;
 void ajanuw::Symbol::registerSymbol(std::string symbolname, LPVOID address)
 {
-  ajanuw::Symbol::_symbolMap.insert(std::pair<std::string, LPVOID>(symbolname, address));
+  ajanuw::Symbol::_symbolMap[symbolname] = address;
 }
 
 void ajanuw::Symbol::unregisterSymbol(std::string symbolname)
@@ -1041,26 +1041,28 @@ bool ajanuw::Symbol::has(std::string symbolname)
   return ajanuw::Symbol::_symbolMap.count(symbolname) != NULL;
 }
 
-LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString)
+LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE hProcess)
 {
   try
   {
     Lexer lexer = ajanuw::CEAddressString::Lexer(CEAddressString);
     std::vector<Token *> tokens = lexer.makeTokens();
 
-    // for (auto token : tokens)
-    //   printf("%s ", token->toString().c_str());
-    // printf("\n");
+    /*
+     for (auto token : tokens)
+       printf("%s ", token->toString().c_str());
+     printf("\n");
+    */
 
     Parser parser = Parser(tokens);
     CEAddressStringNode *node = parser.parse();
     // printf("node id: %d\n", node->id());
 
-    Interpreter interpreter = Interpreter();
+    Interpreter interpreter{hProcess};
     LPVOID addr = (LPVOID)interpreter.visit(node);
 
     deleteCEAddressStringNode(node);
-    
+
     return addr;
   }
   catch (const std::exception &e)

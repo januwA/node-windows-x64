@@ -44,7 +44,7 @@ size_t getStringsCount(Napi::Array args, bool isWideChar)
     auto it = args.Get(i);
     if (it.IsString())
     {
-      count += isWideChar ? SSString::count(nm_ustr(it)) : nm_str(it).length();
+      count += isWideChar ? ajanuw::SSString::count(nm_ustr(it)) : nm_str(it).length();
       count++;
     }
   }
@@ -77,7 +77,7 @@ Value invoke(const CallbackInfo &info)
   else
   {
     string sMethod = nm_get_to("method", str);
-    bWideChar = SSString::endWith(sMethod, "W");
+    bWideChar = ajanuw::SSString::endWith(sMethod, "W");
     Napi::Value js_isWideChar = o.Get("isWideChar");
     if (!nm_is_nullish(js_isWideChar))
       bWideChar = nm_bool(js_isWideChar);
@@ -140,7 +140,7 @@ Value invoke(const CallbackInfo &info)
     {
       auto CC = new CallbackContext(env,
                                     args.Get(i).As<Function>(),
-                                    createCallback(&cccccc, i, &vCC));
+                                    ajanuw::createCallback(&cccccc, i, &vCC));
       vCC.push_back(CC);
       value = (uintptr_t)CC->address;
     }

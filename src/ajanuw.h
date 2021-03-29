@@ -300,10 +300,248 @@ namespace ajanuw
     static std::map<std::string, LPVOID> _symbolMap;
   };
 
+  class PE
+  {
+  public:
+    static DWORD GetPID(std::wstring name)
+    {
+      DWORD pid = NULL;
+      HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+      if (hSnap != INVALID_HANDLE_VALUE)
+      {
+        PROCESSENTRY32W pe;
+        pe.dwSize = sizeof(pe);
+        if (Process32FirstW(hSnap, &pe))
+        {
+          do
+          {
+            if (!_wcsicmp(pe.szExeFile, name.c_str()))
+            {
+              pid = pe.th32ProcessID;
+              break;
+            }
+          } while (Process32NextW(hSnap, &pe));
+        }
+      }
+
+      CloseHandle(hSnap);
+      return pid;
+    }
+
+    // exe module
+    static MODULEINFO GetModuleBase(DWORD pid)
+    {
+      MODULEINFO mi{0};
+      HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
+      if (hSnap != INVALID_HANDLE_VALUE)
+      {
+        MODULEENTRY32W me;
+        me.dwSize = sizeof(me);
+        if (Module32FirstW(hSnap, &me))
+        {
+          mi.lpBaseOfDll = (LPVOID)me.modBaseAddr;
+          mi.SizeOfImage = me.modBaseSize;
+        }
+      }
+      CloseHandle(hSnap);
+      return mi;
+    }
+
+    static MODULEINFO GetModuleInfo(std::wstring moduleName, DWORD pid)
+    {
+      MODULEINFO mi{0};
+      HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
+      if (hSnap != INVALID_HANDLE_VALUE)
+      {
+        MODULEENTRY32W me;
+        me.dwSize = sizeof(me);
+        if (Module32FirstW(hSnap, &me))
+        {
+          do
+          {
+            if (!_wcsicmp(me.szModule, moduleName.c_str()))
+            {
+              mi.lpBaseOfDll = (LPVOID)me.modBaseAddr;
+              mi.SizeOfImage = me.modBaseSize;
+              break;
+            }
+          } while (Module32NextW(hSnap, &me));
+        }
+      }
+      CloseHandle(hSnap);
+      return mi;
+    }
+
+    static bool isX64(DWORD pid, HMODULE hModule)
+    {
+      BYTE *buf = new BYTE[0x1000];
+      HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+      ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
+
+      PIMAGE_DOS_HEADER dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(buf);
+      PIMAGE_NT_HEADERS ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(buf + dosHeader->e_lfanew);
+      PIMAGE_FILE_HEADER fileHeader = reinterpret_cast<PIMAGE_FILE_HEADER>(&ntHeader->FileHeader);
+
+      // e0是32位PE，f0是64位PE
+      bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
+
+      CloseHandle(hProcess);
+      delete[] buf;
+      return isX64;
+    }
+
+    static bool isX86(DWORD pid, HMODULE hModule)
+    {
+      return !isX64(pid, hModule);
+    }
+
+    // 获取模块的导出表,通常一个模块会导出函数
+    static std::map<std::string, uintptr_t> exports(DWORD pid, HMODULE hModule)
+    {
+      std::map<std::string, uintptr_t> result;
+      BYTE *buf = new BYTE[0x1000];
+      HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+      ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
+
+      PIMAGE_DOS_HEADER dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(buf);
+      PIMAGE_NT_HEADERS ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(buf + dosHeader->e_lfanew);
+      PIMAGE_FILE_HEADER fileHeader = reinterpret_cast<PIMAGE_FILE_HEADER>(&ntHeader->FileHeader);
+      bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
+      auto RVA2VA = [&](size_t rva) {
+        return (BYTE *)hModule + rva;
+      };
+
+      IMAGE_DATA_DIRECTORY exportEntry;
+      if (isX64)
+      {
+        PIMAGE_OPTIONAL_HEADER64 optHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER64>(&ntHeader->OptionalHeader);
+        exportEntry = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+      }
+      else
+      {
+        PIMAGE_OPTIONAL_HEADER32 optHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER32>(&ntHeader->OptionalHeader);
+        exportEntry = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+      }
+
+      if (exportEntry.Size == NULL)
+      {
+        delete hProcess;
+        delete[] buf;
+        return result;
+      }
+
+      BYTE *src = RVA2VA(exportEntry.VirtualAddress);
+      IMAGE_EXPORT_DIRECTORY exportDes{0};
+      ReadProcessMemory(hProcess, src, &exportDes, sizeof(IMAGE_EXPORT_DIRECTORY), NULL);
+
+      // 以函数名称导出数量,指针列表
+      DWORD *AddressOfNames = (DWORD *)RVA2VA(exportDes.AddressOfNames);             // 函数名称表
+      DWORD *AddressOfFunctions = (DWORD *)RVA2VA(exportDes.AddressOfFunctions);     // 函数地址表
+      WORD *AddressOfNameOrdinals = (WORD *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
+
+      size_t i = 0;
+      DWORD namePtrRVA = 0;
+      while (i < exportDes.NumberOfNames)
+      {
+        char funme[MAX_PATH] = {0};
+        ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(DWORD), NULL);
+        ReadProcessMemory(hProcess, RVA2VA(namePtrRVA), &funme, MAX_PATH, NULL);
+
+        // get function address index
+        WORD AddressOfFunctionsIndex = 0;
+        ReadProcessMemory(hProcess, AddressOfNameOrdinals + i, &AddressOfFunctionsIndex, sizeof(WORD), NULL);
+
+        // get function address
+        DWORD funAddrRVA = 0;
+        ReadProcessMemory(hProcess, AddressOfFunctions + AddressOfFunctionsIndex, &funAddrRVA, sizeof(DWORD), NULL);
+
+        BYTE *funPtr = RVA2VA(funAddrRVA);
+        result[funme] = (uintptr_t)funPtr;
+        //printf("name: %s-%p\n", funme, funPtr);
+        i++;
+      }
+
+      CloseHandle(hProcess);
+      delete[] buf;
+      return result;
+    }
+
+    static BYTE *GetProcAddress(DWORD pid, HMODULE hModule, std::string method)
+    {
+      BYTE *buf = new BYTE[0x1000];
+      HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+      ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
+
+      PIMAGE_DOS_HEADER dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(buf);
+      PIMAGE_NT_HEADERS ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(buf + dosHeader->e_lfanew);
+      PIMAGE_FILE_HEADER fileHeader = reinterpret_cast<PIMAGE_FILE_HEADER>(&ntHeader->FileHeader);
+      bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
+      auto RVA2VA = [&](size_t rva) {
+        return (BYTE *)hModule + rva;
+      };
+
+      IMAGE_DATA_DIRECTORY exportEntry;
+      if (isX64)
+      {
+        PIMAGE_OPTIONAL_HEADER64 optHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER64>(&ntHeader->OptionalHeader);
+        exportEntry = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+      }
+      else
+      {
+        PIMAGE_OPTIONAL_HEADER32 optHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER32>(&ntHeader->OptionalHeader);
+        exportEntry = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+      }
+
+      if (exportEntry.Size == NULL)
+      {
+        delete hProcess;
+        delete[] buf;
+        return NULL;
+      }
+
+      BYTE *src = RVA2VA(exportEntry.VirtualAddress);
+      IMAGE_EXPORT_DIRECTORY exportDes{0};
+      ReadProcessMemory(hProcess, src, &exportDes, sizeof(IMAGE_EXPORT_DIRECTORY), NULL);
+
+      // 以函数名称导出数量,指针列表
+      DWORD *AddressOfNames = (DWORD *)RVA2VA(exportDes.AddressOfNames);             // 函数名称表
+      DWORD *AddressOfFunctions = (DWORD *)RVA2VA(exportDes.AddressOfFunctions);     // 函数地址表
+      WORD *AddressOfNameOrdinals = (WORD *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
+
+      size_t i = 0;
+      DWORD namePtrRVA = 0;
+      while (i < exportDes.NumberOfNames)
+      {
+        char funme[MAX_PATH] = {0};
+        ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(DWORD), NULL);
+        ReadProcessMemory(hProcess, RVA2VA(namePtrRVA), &funme, MAX_PATH, NULL);
+
+        if (!_stricmp(funme, method.c_str()))
+        {
+          // get function address index
+          WORD AddressOfFunctionsIndex = 0;
+          ReadProcessMemory(hProcess, AddressOfNameOrdinals + i, &AddressOfFunctionsIndex, sizeof(WORD), NULL);
+
+          // get function address
+          DWORD funAddrRVA = 0;
+          ReadProcessMemory(hProcess, AddressOfFunctions + AddressOfFunctionsIndex, &funAddrRVA, sizeof(DWORD), NULL);
+
+          BYTE *funPtr = RVA2VA(funAddrRVA);
+          return funPtr;
+        }
+        i++;
+      }
+
+      CloseHandle(hProcess);
+      delete[] buf;
+      return NULL;
+    }
+  };
+
   class CEAddressString
   {
   public:
-    static LPVOID getAddress(std::string address);
+    static LPVOID getAddress(std::string address, HANDLE hProcess = NULL);
 
   private:
 #define TT_HEX "HEX"
@@ -696,7 +934,7 @@ namespace ajanuw
         {
           auto r = ajanuw::SSString::split(str, std::regex("\\."));
           std::string method = r.at(1);
-          if (method != "exe" || method != "dll")
+          if (method != "exe" && method != "dll")
           {
             type = TT_MMETHOD;
           }
@@ -1113,6 +1351,23 @@ namespace ajanuw
     class Interpreter
     {
     public:
+      HANDLE hProcess;
+      DWORD pid = NULL;
+      bool isX86;
+      Interpreter(HANDLE hProcess) : hProcess(hProcess)
+      {
+        if (hProcess != NULL)
+        {
+          pid = GetProcessId(hProcess);
+          isX86 = PE::isX86(pid, (HMODULE)(PE::GetModuleBase(pid).lpBaseOfDll));
+        }
+        else
+        {
+          pid = GetCurrentProcessId();
+          isX86 = PE::isX86(pid, (HMODULE)(PE::GetModuleBase(pid).lpBaseOfDll));
+        }
+      }
+
       uintptr_t visit(CEAddressStringNode *node)
       {
         switch (node->id())
@@ -1125,7 +1380,17 @@ namespace ajanuw
 
         case CESNT_MODULE:
         {
-          auto hModule = LoadLibraryA(reinterpret_cast<ModuleNode *>(node)->token->value.c_str());
+          HMODULE hModule = NULL;
+          std::string moduleName = reinterpret_cast<ModuleNode *>(node)->token->value;
+
+          if (hProcess == NULL)
+          {
+            hModule = LoadLibraryA(reinterpret_cast<ModuleNode *>(node)->token->value.c_str());
+          }
+          else
+          {
+            hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(moduleName), pid).lpBaseOfDll);
+          }
 
           if (hModule == NULL)
           {
@@ -1133,7 +1398,7 @@ namespace ajanuw
                 RuntimeError(
                     node->posStart,
                     node->posEnd,
-                    "Not module \"" + reinterpret_cast<ModuleNode *>(node)->token->value + "\"")
+                    "MODULE not module \"" + reinterpret_cast<ModuleNode *>(node)->token->value + "\"")
                     .toString()
                     .c_str());
           }
@@ -1146,18 +1411,38 @@ namespace ajanuw
           std::vector<std::string> r = ajanuw::SSString::split(reinterpret_cast<MMethodNode *>(node)->token->value, std::regex("\\."));
           std::string mod = r.at(0);
           std::string met = r.at(1);
-          auto hModule = LoadLibraryA(mod.c_str());
+
+          HMODULE hModule = NULL;
+
+          if (hProcess == NULL)
+          {
+            hModule = LoadLibraryA(mod.c_str());
+          }
+          else
+          {
+            hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(mod), pid).lpBaseOfDll);
+          }
+
           if (!hModule)
           {
             throw std::exception(
                 RuntimeError(
                     node->posStart,
                     node->posEnd,
-                    "Not module \"" + mod + "\"")
+                    "MMETHOD not module \"" + mod + "\"")
                     .toString()
                     .c_str());
           }
-          auto hMethod = GetProcAddress(hModule, met.c_str());
+
+          uintptr_t hMethod = NULL;
+          if (hProcess == NULL)
+          {
+            hMethod = (uintptr_t)GetProcAddress(hModule, met.c_str());
+          }
+          else
+          {
+            hMethod = (uintptr_t)PE::GetProcAddress(pid, hModule, met);
+          }
 
           if (hMethod == NULL)
           {
@@ -1176,7 +1461,7 @@ namespace ajanuw
         {
           std::string met = reinterpret_cast<MethodNode *>(node)->token->value;
           uintptr_t r = NULL;
-          HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetCurrentProcessId());
+          HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
           if (hSnap != INVALID_HANDLE_VALUE)
           {
             MODULEENTRY32 me;
@@ -1185,7 +1470,14 @@ namespace ajanuw
             {
               do
               {
-                r = (uintptr_t)GetProcAddress((HMODULE)me.modBaseAddr, met.c_str());
+                if (hProcess == NULL)
+                {
+                  r = (uintptr_t)GetProcAddress((HMODULE)me.modBaseAddr, met.c_str());
+                }
+                else
+                {
+                  r = (uintptr_t)PE::GetProcAddress(pid, (HMODULE)me.modBaseAddr, met);
+                }
                 if (r != NULL)
                   break;
               } while (Module32Next(hSnap, &me));
@@ -1220,7 +1512,27 @@ namespace ajanuw
         case CESNT_POINTER:
         {
           uintptr_t address = visit(reinterpret_cast<PointerNode *>(node)->node);
-          return *(uintptr_t *)address;
+          if (hProcess == NULL)
+          {
+            return *(uintptr_t *)address;
+          }
+          else
+          {
+            uintptr_t result = NULL;
+            if (ReadProcessMemory(hProcess, (LPCVOID)address, (LPVOID)&result, isX86 ? 4 : 8, NULL))
+            {
+              return result;
+            }
+            else
+            {
+              throw std::exception(RuntimeError(
+                                       node->posStart,
+                                       node->posEnd,
+                                       "Read Pointer Error.")
+                                       .toString()
+                                       .c_str());
+            }
+          }
         }
 
         case CESNT_BIN_OP:
@@ -1274,4 +1586,139 @@ namespace ajanuw
     };
   };
 
+  class Target
+  {
+  public:
+    class HookBase
+    {
+    public:
+      HookBase() {}
+      HANDLE hProcess = NULL;
+
+      // 拷贝的原始字节
+      std::vector<BYTE> origenBytes = {};
+
+      // hook的地址
+      BYTE *addr = NULL;
+
+      // 字节大小
+      size_t size = NULL;
+
+      // 是否开启
+      bool bEnable = false;
+
+      // hook过程 是否成功
+      bool bSuccess = false;
+
+      std::string msg;
+
+      void enable()
+      {
+        if (!bSuccess)
+        {
+          throw std::exception(("HOOK ERROR: " + msg).c_str());
+        }
+
+        printf("enable: hProcess(%p), addr(%p), size(%d)", hProcess, addr, size);
+
+        DWORD oldProc;
+        VirtualProtectEx(hProcess, addr, size, PAGE_EXECUTE_READWRITE, &oldProc);
+        ajanuw::Target::memsetEx(hProcess, addr, 0x90, size);
+        enableHook();
+        VirtualProtectEx(hProcess, addr, size, oldProc, &oldProc);
+
+        if (!msg.empty())
+          printf("[enable]  %s\n", msg.c_str());
+      }
+
+      void disable()
+      {
+        if (!bSuccess)
+        {
+          throw std::exception(("HOOK ERROR: " + msg).c_str());
+        }
+
+        DWORD oldProc;
+        VirtualProtectEx(hProcess, addr, size, PAGE_EXECUTE_READWRITE, &oldProc);
+        WriteProcessMemory(hProcess, addr, origenBytes.data(), size, 0);
+        VirtualProtectEx(hProcess, addr, size, oldProc, &oldProc);
+
+        if (!msg.empty())
+          printf("[disable] %s\n", msg.c_str());
+      }
+
+      void toggle()
+      {
+        bEnable = !bEnable;
+        if (bEnable)
+          enable();
+        else
+          disable();
+      }
+      virtual void enableHook(){};
+    };
+    class SetNop : public HookBase
+    {
+    public:
+      SetNop() {}
+    };
+
+    static BYTE *memsetEx(HANDLE hProcess, BYTE *targetAddr, BYTE val, size_t size)
+    {
+      for (size_t i = 0; i < size; i++)
+        WriteProcessMemory(hProcess, targetAddr + i, &val, sizeof(BYTE), NULL);
+      return targetAddr;
+    }
+
+    std::wstring name;
+    DWORD pid = NULL;
+    HANDLE hProcess = NULL;
+    MODULEINFO mi;
+
+    Target(std::wstring name) : name(name)
+    {
+      pid = ajanuw::PE::GetPID(name);
+      if (pid != NULL)
+      {
+        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+        if (hProcess != NULL)
+        {
+          mi = ajanuw::PE::GetModuleInfo(name, pid);
+        }
+      }
+    }
+
+    Target(DWORD pid) : pid(pid)
+    {
+      hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+      if (hProcess)
+      {
+        wchar_t text[1024];
+        GetModuleBaseNameW(hProcess, 0, text, sizeof(text));
+        name = std::wstring(text);
+        mi = ajanuw::PE::GetModuleInfo(name, pid);
+      }
+    }
+
+    ~Target()
+    {
+      if (hProcess)
+        CloseHandle(hProcess);
+    }
+
+    ajanuw::Target::SetNop* setNop(BYTE *addr, size_t size)
+    {
+      ajanuw::Target::SetNop* r = new ajanuw::Target::SetNop();
+      std::vector<BYTE> origenBytes;
+      origenBytes.resize(size);
+      ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
+
+      r->hProcess = hProcess;
+      r->origenBytes = origenBytes;
+      r->addr = addr;
+      r->size = size;
+      r->bSuccess = true;
+      return r;
+    }
+  };
 }

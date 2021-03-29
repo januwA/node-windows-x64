@@ -7,6 +7,7 @@
             "sources": [
                 "src/ajanuw.cpp",
                 "src/mem.hpp",
+                "src/target.hpp",
                 "src/test.hpp",
                 "src/invoke.hpp",
                 "src/tools.hpp",

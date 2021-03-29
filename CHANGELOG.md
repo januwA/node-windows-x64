@@ -1,3 +1,10 @@
+## 0.0.8 [2021-3-29]
+
+- *test version*
+- perf: CEAddresSstring
+- perf: getAddress
+- feat: Target
+
 ## 0.0.7 [2021-2-28]
 
 - *test version*

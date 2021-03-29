@@ -33,7 +33,6 @@ nw.globalDefine();
 
 const className = "Node Win32 Gui";
 const windowName = "window caption";
-const btnid = 10;
 
 const wui = new nw.Win32Gui(className, windowName, {
   x: 100,
@@ -44,31 +43,19 @@ const wui = new nw.Win32Gui(className, windowName, {
 });
 
 if (wui.initRegisterClass() && wui.initWindow()) {
+
   // create a button
-  wui.createWindow({
-    className: "button",
+  wui.button({
+    id: 1,
     windowName: "click me",
-    style: WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 50,
-    id: btnid,
+    events: {
+      click() {
+        console.log('button clicked.');
+      },
+    },
   });
 
-  wui.messageLoop((hWnd, message, wParam, lParam) => {
-    const [wh, wl] = nw.Win32Gui.getHLMessage(wParam);
-    switch (message) {
-      case WM_COMMAND:
-        if (wl === btnid) {
-          console.log("click button.");
-        }
-        break;
-
-      default:
-        break;
-    }
-  });
+  wui.messageLoop((hWnd, message, wParam, lParam) => {});
 }
 ```
 
@@ -84,6 +71,43 @@ const r = nw.aa(
 );
 
 console.log(r); // 2
+```
+
+## Target
+```js
+/**
+define(address,"Tutorial-i386.exe"+2578F)
+define(bytes,29 83 AC 04 00 00)
+
+[ENABLE]
+address:
+  db 90 90 90 90 90 90
+
+[DISABLE]
+address:
+  db bytes
+ 
+*/
+
+const t = new nw.Target("Tutorial-i386.exe");
+if (t.pid && t.hProcess) {
+
+  const address = nw.getAddress(`"Tutorial-i386.exe"+2578F`, t.hProcess);
+  const handle = t.setNop(address, 6);
+  console.log(handle);
+  
+  if (handle.bSuccess) {
+    handle.enable();
+
+    setTimeout(() => {
+      handle.disable();
+
+      // 如果不在使用handle，那么一定要调用delete函数
+      handle.delete();
+    }, 1000 * 10);
+  }
+  
+}
 ```
 
 

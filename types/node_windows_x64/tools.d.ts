@@ -103,10 +103,10 @@ export function unregisterSymbol(symbolname: string): void;
  *
  * @param CEAddressString
  */
-export function getAddress(CEAddressString: string): number;
+export function getAddress(CEAddressString: string, hProcess?: number): number;
 
 /**
- * 
+ *
  * @param global 如果设置了这个参数，会将所有数据定义到这个对象中，否者将定义到全局的global中
  */
 export function globalDefine(global?: { [k: string]: number }): number;

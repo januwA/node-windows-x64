@@ -9,6 +9,7 @@
 #include "va_manage.h"
 #include "win32_gui.h"
 #include "global_define.hpp"
+#include "target.hpp"
 
 #define __EXPORT(name, func) exports.Set(Napi::String::New(env, name), Napi::Function::New(env, func))
 
@@ -16,6 +17,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
   VAManage::Init(env, exports);
   Win32Gui::Init(env, exports);
+  Target::Init(env, exports);
 
   __EXPORT("invoke", invoke);
   __EXPORT("test", test);
