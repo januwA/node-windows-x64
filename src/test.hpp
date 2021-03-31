@@ -16,9 +16,7 @@ Value test(const Napi::CallbackInfo &info)
 {
   nm_init;
 
-  using namespace asmjit;
-  using namespace asmtk;
-  using namespace asmjit::x86;
+  std::vector<BYTE> r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0));
 
-  nm_retu;
+  return Napi::ArrayBuffer::New(env, r.data(), r.size());
 }

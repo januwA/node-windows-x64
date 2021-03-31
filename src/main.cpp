@@ -59,6 +59,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   __EXPORT("globalDefine", globalDefine);
 
   __EXPORT("aa", aa);
+  __EXPORT("asmBytes", asmBytes);
 
   __EXPORT("mem_alloc", mem_alloc);
   __EXPORT("mem_free", mem_free);

@@ -2,8 +2,9 @@
 
 - *test version*
 - perf: CEAddresSstring
-- perf: getAddress
-- feat: Target
+- perf: function getAddress(CEAddressString: string, hProcess?: number): number;
+- feat: class Target
+- feat: function asmBytes(asmString: string): ArrayBuffer; 
 
 ## 0.0.7 [2021-2-28]
 

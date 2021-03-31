@@ -91,7 +91,7 @@ public:
     result.Set("bEnable", r->bEnable);
     result.Set("addr", (uintptr_t)r->addr);
     result.Set("size", r->size);
-    result.Set("origenBytes", ArrayBuffer::New(env, r->origenBytes.data(), r->origenBytes.size()));
+    result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->origenBytes.data(), r->origenBytes.size())));
 
     return result;
   }

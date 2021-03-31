@@ -1018,6 +1018,24 @@ uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
   return r;
 }
 
+std::vector<BYTE> ajanuw::Asm::AAScript::asmBytes(std::string asmString)
+{
+  std::vector<BYTE> r;
+  CodeHolder code;
+  Environment env = hostEnvironment();
+  code.init(env);
+
+  x86::Assembler a(&code);
+  AsmParser p(&a);
+  asmjit::Error err = p.parse(asmString.c_str());
+  if (err)
+    return r;
+
+  r.resize(a.offset());
+  memcpy_s(r.data(), r.size(), a.bufferData(), r.size());
+  return r;
+}
+
 std::map<std::string, LPVOID> ajanuw::Symbol::_symbolMap;
 void ajanuw::Symbol::registerSymbol(std::string symbolname, LPVOID address)
 {

@@ -382,3 +382,12 @@ Value aa(const CallbackInfo &info)
   nm_init_cal(1);
   nm_ret(ajanuw::Asm::AAScript::aa(nmi_str(0), nm_is_nullishOr(info[1], nm_qword, 0)));
 }
+
+Value asmBytes(const CallbackInfo &info)
+{
+  nm_init_cal(1);
+  std::vector<BYTE> r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0));
+  auto buf = Napi::ArrayBuffer::New(env, r.size());
+  memcpy_s((BYTE *)buf.Data(), buf.ByteLength(), r.data(), buf.ByteLength());
+  return buf;
+}

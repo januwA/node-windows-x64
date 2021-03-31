@@ -285,6 +285,7 @@ namespace ajanuw
 
       // auto asm
       static uintptr_t aa(std::string, uintptr_t rcx);
+      static std::vector<BYTE> asmBytes(std::string);
     };
   }
 
@@ -1588,6 +1589,10 @@ namespace ajanuw
 
   class Target
   {
+#define JMP_BYTE 0xE9
+#define CALL_BYTE 0xE9
+#define NOP_BYTE 0x90
+
   public:
     class HookBase
     {
@@ -1623,7 +1628,7 @@ namespace ajanuw
 
         DWORD oldProc;
         VirtualProtectEx(hProcess, addr, size, PAGE_EXECUTE_READWRITE, &oldProc);
-        ajanuw::Target::memsetEx(hProcess, addr, 0x90, size);
+        ajanuw::Target::memsetEx(hProcess, addr, NOP_BYTE, size);
         enableHook();
         VirtualProtectEx(hProcess, addr, size, oldProc, &oldProc);
 
@@ -1659,8 +1664,19 @@ namespace ajanuw
     };
     class SetNop : public HookBase
     {
+    };
+
+    class SetHook : public HookBase
+    {
     public:
-      SetNop() {}
+      BYTE *hookAddr = NULL;
+      DWORD jmpHookBytes = NULL;
+      void enableHook()
+      {
+        BYTE b = JMP_BYTE;
+        WriteProcessMemory(hProcess, (LPVOID)addr, (LPCVOID)&b, sizeof(BYTE), 0);
+        WriteProcessMemory(hProcess, (LPVOID)(addr + 1), (LPCVOID)&jmpHookBytes, sizeof(DWORD), 0);
+      }
     };
 
     static BYTE *memsetEx(HANDLE hProcess, BYTE *targetAddr, BYTE val, size_t size)
@@ -1675,6 +1691,9 @@ namespace ajanuw
     HANDLE hProcess = NULL;
     MODULEINFO mi;
 
+    bool isX86;
+    bool isX64;
+
     Target(std::wstring name) : name(name)
     {
       pid = ajanuw::PE::GetPID(name);
@@ -1684,6 +1703,8 @@ namespace ajanuw
         if (hProcess != NULL)
         {
           mi = ajanuw::PE::GetModuleInfo(name, pid);
+          isX86 = ajanuw::PE::isX86(pid, (HMODULE)mi.lpBaseOfDll);
+          isX64 = !isX86;
         }
       }
     }
@@ -1696,7 +1717,16 @@ namespace ajanuw
         wchar_t text[1024];
         GetModuleBaseNameW(hProcess, 0, text, sizeof(text));
         name = std::wstring(text);
+        printf("name: %s\n", name.c_str());
+
         mi = ajanuw::PE::GetModuleInfo(name, pid);
+
+        isX86 = ajanuw::PE::isX86(pid, (HMODULE)mi.lpBaseOfDll);
+        isX64 = !isX86;
+      }
+      else
+      {
+        printf("OpenProcess error: %d\n", GetLastError());
       }
     }
 
@@ -1706,9 +1736,9 @@ namespace ajanuw
         CloseHandle(hProcess);
     }
 
-    ajanuw::Target::SetNop* setNop(BYTE *addr, size_t size)
+    ajanuw::Target::SetNop *setNop(BYTE *addr, size_t size)
     {
-      ajanuw::Target::SetNop* r = new ajanuw::Target::SetNop();
+      ajanuw::Target::SetNop *r = new ajanuw::Target::SetNop();
       std::vector<BYTE> origenBytes;
       origenBytes.resize(size);
       ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
@@ -1717,6 +1747,51 @@ namespace ajanuw
       r->origenBytes = origenBytes;
       r->addr = addr;
       r->size = size;
+      r->bSuccess = true;
+      return r;
+    }
+
+    ajanuw::Target::SetHook *setHook(BYTE *addr, size_t size, std::vector<BYTE> hookBytes)
+    {
+      ajanuw::Target::SetHook *r = new ajanuw::Target::SetHook();
+      r->bSuccess = false;
+      if (size < 5)
+      {
+        printf("setHook 设置Hook最少需要5字节\n");
+        return r;
+      }
+
+      // 1. 拷贝原始字节集，保存起来
+      std::vector<BYTE> origenBytes = {};
+      origenBytes.resize(size);
+      ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
+
+      //2. 申请虚拟空间存hook代码
+      BYTE *returnAddr = addr + size;
+      size_t codeSize = hookBytes.size() + 100;
+
+      BYTE *newmem = (BYTE *)ajanuw::Mem::alloc(codeSize);
+      if (!newmem)
+      {
+        printf("setHook 分配虚拟内存失败。addr: %p\n", addr);
+        return r;
+      }
+      WriteProcessMemory(hProcess, newmem, hookBytes.data(), codeSize, NULL);
+
+      // 3. 从hook jmp回addr的字节集
+      BYTE *newmemJmpReturnAddr = newmem + hookBytes.size();
+      DWORD returnBytes = (DWORD)(returnAddr - newmemJmpReturnAddr - 5);
+      BYTE b = JMP_BYTE;
+      WriteProcessMemory(hProcess, newmemJmpReturnAddr, (LPCVOID)&b, sizeof(BYTE), NULL);
+      WriteProcessMemory(hProcess, newmemJmpReturnAddr + 1, (LPCVOID)&returnBytes, sizeof(DWORD), NULL);
+
+      DWORD jmpHookBytes = newmem - addr - 5;
+      r->hProcess = hProcess;
+      r->origenBytes = origenBytes;
+      r->addr = addr;
+      r->size = size;
+      r->hookAddr = newmem;
+      r->jmpHookBytes = jmpHookBytes;
       r->bSuccess = true;
       return r;
     }

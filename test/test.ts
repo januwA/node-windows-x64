@@ -1,9 +1,7 @@
 import { node_windows_x64 as nw } from "../";
 
-const t = nw.createTargetWithName("Tutorial-i386.exe");
+console.log( nw.asmBytes(`
+  mov eax,1
+  ret
+`) );
 
-if (t.pid && t.hProcess) {
-  console.log(t.name);
-  console.log(t.pid);
-  console.log(t.hProcess);
-}

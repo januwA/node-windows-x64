@@ -40,7 +40,7 @@ address:
  
   */
 
-const t = new nw.Target("Tutorial-i386.exe");
+const t = nw.createTargetWithName("Tutorial-i386.exe");
 if (t.pid && t.hProcess) {
 
   const address = nw.getAddress(`"Tutorial-i386.exe"+2578F`, t.hProcess);
