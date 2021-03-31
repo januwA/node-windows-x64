@@ -15,8 +15,5 @@ typedef int (*Func)();
 Value test(const Napi::CallbackInfo &info)
 {
   nm_init;
-
-  std::vector<BYTE> r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0));
-
-  return Napi::ArrayBuffer::New(env, r.data(), r.size());
+  nm_retu;
 }

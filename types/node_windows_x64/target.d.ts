@@ -19,6 +19,23 @@ export class Target {
     size: number;
     origenBytes: ArrayBuffer;
   };
+
+  setHook(
+    addr: number,
+    size: number,
+    hookBytes: ArrayBuffer | string
+  ): {
+    enable: Function;
+    disable: Function;
+    toggle: Function;
+    delete: Function;
+
+    bSuccess: boolean;
+    bEnable: boolean;
+    addr: number;
+    size: number;
+    origenBytes: ArrayBuffer;
+  };
 }
 
 export function createTargetWithName(name: string): Target;

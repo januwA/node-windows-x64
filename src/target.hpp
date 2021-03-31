@@ -19,6 +19,7 @@ public:
             InstanceAccessor<&Target::GethProcess>("hProcess"),
 
             InstanceMethod<&Target::setNop>("setNop"),
+            InstanceMethod<&Target::setHook>("setHook"),
         });
     Napi::FunctionReference *constructor = new Napi::FunctionReference();
     *constructor = Napi::Persistent(func);
@@ -90,6 +91,59 @@ public:
     result.Set("bSuccess", r->bSuccess);
     result.Set("bEnable", r->bEnable);
     result.Set("addr", (uintptr_t)r->addr);
+    result.Set("size", r->size);
+    result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->origenBytes.data(), r->origenBytes.size())));
+
+    return result;
+  }
+
+  Napi::Value setHook(const Napi::CallbackInfo &info)
+  {
+    nm_init_cal(2);
+    BYTE *addr = (BYTE *)nmi_qword(0);
+    size_t size = nmi_dword(1);
+
+    std::vector<BYTE> hookBytes;
+    if (nmi_is_str(2))
+    {
+      hookBytes = ajanuw::Asm::AAScript::asmBytes(nmi_str(2), isX64);
+    }
+    else
+    {
+      Napi::ArrayBuffer buf = info[2].As<Napi::ArrayBuffer>();
+      hookBytes.resize(buf.ByteLength());
+      memcpy_s(hookBytes.data(), hookBytes.size(), buf.Data(), hookBytes.size());
+    }
+
+    ajanuw::Target::SetHook *r = ajanuw::Target::setHook(addr, size, hookBytes);
+
+    Napi::Object result = Napi::Object::New(env);
+
+    result.Set("enable", Napi::Function::New(
+                             env, [=](const Napi::CallbackInfo &info) { r->enable(); },
+                             "enable"));
+
+    result.Set("disable", Napi::Function::New(
+                              env, [=](const Napi::CallbackInfo &info) { r->disable(); },
+                              "disable"));
+
+    result.Set("toggle", Napi::Function::New(
+                             env, [=](const Napi::CallbackInfo &info) {
+                               r->toggle();
+                             },
+                             "toggle"));
+
+    result.Set("delete", Napi::Function::New(
+                             env, [=](const Napi::CallbackInfo &info) {
+                               ajanuw::Mem::freeEx(hProcess, r->newmem);
+                               delete r;
+                             },
+                             "delete"));
+
+    result.Set("bSuccess", r->bSuccess);
+    result.Set("bEnable", r->bEnable);
+    result.Set("addr", (uintptr_t)r->addr);
+    result.Set("newmem", (uintptr_t)r->newmem);
     result.Set("size", r->size);
     result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->origenBytes.data(), r->origenBytes.size())));
 

@@ -380,14 +380,37 @@ Value getAddress(const CallbackInfo &info)
 Value aa(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  nm_ret(ajanuw::Asm::AAScript::aa(nmi_str(0), nm_is_nullishOr(info[1], nm_qword, 0)));
+  try
+  {
+    nm_ret(ajanuw::Asm::AAScript::aa(nmi_str(0), nm_is_nullishOr(info[1], nm_qword, 0)));
+  }
+  catch (const std::exception &e)
+  {
+    nm_jserr(e.what());
+    nm_retu;
+  }
 }
 
 Value asmBytes(const CallbackInfo &info)
 {
   nm_init_cal(1);
-  std::vector<BYTE> r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0));
-  auto buf = Napi::ArrayBuffer::New(env, r.size());
-  memcpy_s((BYTE *)buf.Data(), buf.ByteLength(), r.data(), buf.ByteLength());
-  return buf;
+  try
+  {
+    bool isX64 = true;
+
+    if( info.Length() > 1 )
+    {
+      isX64 = nmi_bool(1);
+    }
+
+    std::vector<BYTE> r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0), isX64);
+    auto buf = Napi::ArrayBuffer::New(env, r.size());
+    memcpy_s((BYTE *)buf.Data(), buf.ByteLength(), r.data(), buf.ByteLength());
+    return buf;
+  }
+  catch (const std::exception &e)
+  {
+    nm_jserr(e.what());
+    nm_retu;
+  }
 }

@@ -422,6 +422,10 @@ LPVOID ajanuw::Mem::alloc(SIZE_T dwSize, LPVOID lpAddress, DWORD flAllocationTyp
 {
   return VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 }
+LPVOID ajanuw::Mem::allocEx(HANDLE hProcess, SIZE_T dwSize, LPVOID lpAddress, DWORD flAllocationType, DWORD flProtect)
+{
+  return VirtualAllocEx(hProcess, lpAddress, dwSize, flAllocationType, flProtect);
+}
 
 BOOL ajanuw::Mem::free(LPVOID lpAddress)
 {
@@ -431,6 +435,16 @@ BOOL ajanuw::Mem::free(LPVOID lpAddress)
 BOOL ajanuw::Mem::free(std::string CEAddressString)
 {
   return ajanuw::Mem::free(ajanuw::CEAddressString::getAddress(CEAddressString));
+}
+
+BOOL ajanuw::Mem::freeEx(HANDLE hProcess, LPVOID lpAddress)
+{
+  return VirtualFreeEx(hProcess, lpAddress, 0, MEM_RELEASE);
+}
+
+BOOL ajanuw::Mem::freeEx(HANDLE hProcess, std::string CEAddressString)
+{
+  return ajanuw::Mem::freeEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
 void ajanuw::Mem::write_str(void *lpAddress, std::string str)
@@ -1008,7 +1022,11 @@ uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
 
   asmjit::Error err = p.parse(asmString.c_str());
   if (err)
-    return NULL;
+  {
+    char msg[100];
+    sprintf(msg, "AsmParser ERROR: %08x (%s)\n", err, DebugUtils::errorAsString(err));
+    throw std::exception(msg);
+  }
 
   Func fn;
   rt.add(&fn, &code);
@@ -1018,20 +1036,32 @@ uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
   return r;
 }
 
-std::vector<BYTE> ajanuw::Asm::AAScript::asmBytes(std::string asmString)
+std::vector<BYTE> ajanuw::Asm::AAScript::asmBytes(std::string asmString, bool isX64)
 {
-  std::vector<BYTE> r;
+
   CodeHolder code;
   Environment env = hostEnvironment();
+  if (isX64)
+  {
+    env.setArch(Environment::kArchX64);
+  }
+  else
+  {
+    env.setArch(Environment::kArchX86);
+  }
   code.init(env);
 
   x86::Assembler a(&code);
   AsmParser p(&a);
   asmjit::Error err = p.parse(asmString.c_str());
   if (err)
-    return r;
+  {
+    char msg[100];
+    sprintf(msg, "AsmParser ERROR: %08x (%s)\n", err, DebugUtils::errorAsString(err));
+    throw std::exception(msg);
+  }
 
-  r.resize(a.offset());
+  std::vector<BYTE> r(a.offset());
   memcpy_s(r.data(), r.size(), a.bufferData(), r.size());
   return r;
 }

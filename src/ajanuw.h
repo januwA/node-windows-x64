@@ -91,8 +91,11 @@ namespace ajanuw
   namespace Mem
   {
     LPVOID alloc(SIZE_T dwSize, LPVOID lpAddress = 0, DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE, DWORD flProtect = PAGE_EXECUTE_READWRITE);
+    LPVOID allocEx(HANDLE hProcess, SIZE_T dwSize, LPVOID lpAddress = 0, DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE, DWORD flProtect = PAGE_EXECUTE_READWRITE);
     BOOL free(LPVOID lpAddress);
     BOOL free(std::string CEAddressString);
+    BOOL freeEx(HANDLE hProcess, LPVOID lpAddress);
+    BOOL freeEx(HANDLE hProcess, std::string CEAddressString);
 
     void write_str(void *lpAddress, std::string str);
     void write_wstr(void *lpAddress, std::wstring str);
@@ -285,7 +288,7 @@ namespace ajanuw
 
       // auto asm
       static uintptr_t aa(std::string, uintptr_t rcx);
-      static std::vector<BYTE> asmBytes(std::string);
+      static std::vector<BYTE> asmBytes(std::string, bool);
     };
   }
 
@@ -1624,7 +1627,7 @@ namespace ajanuw
           throw std::exception(("HOOK ERROR: " + msg).c_str());
         }
 
-        printf("enable: hProcess(%p), addr(%p), size(%d)", hProcess, addr, size);
+        // printf("enable: hProcess(%p), addr(%p), size(%d)\n", hProcess, addr, size);
 
         DWORD oldProc;
         VirtualProtectEx(hProcess, addr, size, PAGE_EXECUTE_READWRITE, &oldProc);
@@ -1669,7 +1672,7 @@ namespace ajanuw
     class SetHook : public HookBase
     {
     public:
-      BYTE *hookAddr = NULL;
+      BYTE *newmem = NULL;
       DWORD jmpHookBytes = NULL;
       void enableHook()
       {
@@ -1717,10 +1720,7 @@ namespace ajanuw
         wchar_t text[1024];
         GetModuleBaseNameW(hProcess, 0, text, sizeof(text));
         name = std::wstring(text);
-        printf("name: %s\n", name.c_str());
-
         mi = ajanuw::PE::GetModuleInfo(name, pid);
-
         isX86 = ajanuw::PE::isX86(pid, (HMODULE)mi.lpBaseOfDll);
         isX64 = !isX86;
       }
@@ -1757,26 +1757,22 @@ namespace ajanuw
       r->bSuccess = false;
       if (size < 5)
       {
-        printf("setHook 设置Hook最少需要5字节\n");
-        return r;
+        throw std::exception("setHook 设置Hook最少需要5字节");
       }
 
       // 1. 拷贝原始字节集，保存起来
-      std::vector<BYTE> origenBytes = {};
-      origenBytes.resize(size);
+      std::vector<BYTE> origenBytes(size);
       ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
 
       //2. 申请虚拟空间存hook代码
       BYTE *returnAddr = addr + size;
-      size_t codeSize = hookBytes.size() + 100;
-
-      BYTE *newmem = (BYTE *)ajanuw::Mem::alloc(codeSize);
+      size_t newmemSize = hookBytes.size() + 100;
+      BYTE *newmem = (BYTE *)ajanuw::Mem::allocEx(hProcess, newmemSize);
       if (!newmem)
       {
-        printf("setHook 分配虚拟内存失败。addr: %p\n", addr);
-        return r;
+        throw std::exception("setHook 分配虚拟内存失败");
       }
-      WriteProcessMemory(hProcess, newmem, hookBytes.data(), codeSize, NULL);
+      WriteProcessMemory(hProcess, newmem, hookBytes.data(), newmemSize, NULL);
 
       // 3. 从hook jmp回addr的字节集
       BYTE *newmemJmpReturnAddr = newmem + hookBytes.size();
@@ -1790,7 +1786,7 @@ namespace ajanuw
       r->origenBytes = origenBytes;
       r->addr = addr;
       r->size = size;
-      r->hookAddr = newmem;
+      r->newmem = newmem;
       r->jmpHookBytes = jmpHookBytes;
       r->bSuccess = true;
       return r;
