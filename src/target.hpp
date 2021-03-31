@@ -20,6 +20,7 @@ public:
 
             InstanceMethod<&Target::setNop>("setNop"),
             InstanceMethod<&Target::setHook>("setHook"),
+            InstanceMethod<&Target::moduleScan>("moduleScan"),
         });
     Napi::FunctionReference *constructor = new Napi::FunctionReference();
     *constructor = Napi::Persistent(func);
@@ -64,7 +65,7 @@ public:
     BYTE *addr = (BYTE *)nmi_qword(0);
     size_t size = nmi_dword(1);
 
-    ajanuw::Target::SetNop *r = ajanuw::Target::setNop(addr, size);
+    ajanuw::Target::SetNop *r = new ajanuw::Target::SetNop(hProcess, addr, size);
 
     Napi::Object result = Napi::Object::New(env);
 
@@ -93,7 +94,6 @@ public:
     result.Set("addr", (uintptr_t)r->addr);
     result.Set("size", r->size);
     result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->origenBytes.data(), r->origenBytes.size())));
-
     return result;
   }
 
@@ -115,7 +115,7 @@ public:
       memcpy_s(hookBytes.data(), hookBytes.size(), buf.Data(), hookBytes.size());
     }
 
-    ajanuw::Target::SetHook *r = ajanuw::Target::setHook(addr, size, hookBytes);
+    ajanuw::Target::SetHook *r = new ajanuw::Target::SetHook(hProcess, addr, size, hookBytes);
 
     Napi::Object result = Napi::Object::New(env);
 
@@ -148,6 +148,26 @@ public:
     result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->origenBytes.data(), r->origenBytes.size())));
 
     return result;
+  }
+
+  Napi::Value moduleScan(const Napi::CallbackInfo &info)
+  {
+    nm_init_cal(1);
+    std::string strbytes = nmi_str(0);
+    size_t offset = NULL;
+
+    if (info.Length() > 1)
+    {
+      offset = nmi_dword(2);
+    }
+
+    std::vector<BYTE *> addrs = ajanuw::Target::moduleScan(strbytes, offset);
+    Napi::Array r = Napi::Array::New(env, addrs.size());
+    for (size_t i = 0; i < addrs.size(); i++)
+    {
+      r.Set(i, (uintptr_t)addrs.at(i));
+    }
+    return r;
   }
 };
 

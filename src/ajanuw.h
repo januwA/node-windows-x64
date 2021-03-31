@@ -1600,7 +1600,6 @@ namespace ajanuw
     class HookBase
     {
     public:
-      HookBase() {}
       HANDLE hProcess = NULL;
 
       // 拷贝的原始字节
@@ -1618,14 +1617,17 @@ namespace ajanuw
       // hook过程 是否成功
       bool bSuccess = false;
 
-      std::string msg;
+      HookBase(HANDLE hProcess, BYTE *addr, size_t size) : hProcess(hProcess), addr(addr), size(size)
+      {
+        origenBytes.resize(size);
+        ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
+        bSuccess = true;
+      }
 
       void enable()
       {
         if (!bSuccess)
-        {
-          throw std::exception(("HOOK ERROR: " + msg).c_str());
-        }
+          return;
 
         // printf("enable: hProcess(%p), addr(%p), size(%d)\n", hProcess, addr, size);
 
@@ -1634,25 +1636,16 @@ namespace ajanuw
         ajanuw::Target::memsetEx(hProcess, addr, NOP_BYTE, size);
         enableHook();
         VirtualProtectEx(hProcess, addr, size, oldProc, &oldProc);
-
-        if (!msg.empty())
-          printf("[enable]  %s\n", msg.c_str());
       }
 
       void disable()
       {
         if (!bSuccess)
-        {
-          throw std::exception(("HOOK ERROR: " + msg).c_str());
-        }
-
+          return;
         DWORD oldProc;
         VirtualProtectEx(hProcess, addr, size, PAGE_EXECUTE_READWRITE, &oldProc);
         WriteProcessMemory(hProcess, addr, origenBytes.data(), size, 0);
         VirtualProtectEx(hProcess, addr, size, oldProc, &oldProc);
-
-        if (!msg.empty())
-          printf("[disable] %s\n", msg.c_str());
       }
 
       void toggle()
@@ -1667,6 +1660,10 @@ namespace ajanuw
     };
     class SetNop : public HookBase
     {
+    public:
+      SetNop(HANDLE hProcess, BYTE *addr, size_t size) : HookBase(hProcess, addr, size)
+      {
+      }
     };
 
     class SetHook : public HookBase
@@ -1674,6 +1671,37 @@ namespace ajanuw
     public:
       BYTE *newmem = NULL;
       DWORD jmpHookBytes = NULL;
+
+      SetHook(HANDLE hProcess, BYTE *addr, size_t size, std::vector<BYTE> hookBytes) : HookBase(hProcess, addr, size)
+      {
+        bSuccess = false;
+        if (size < 5)
+        {
+          throw std::exception("SetHook Error: At least 5 bytes are required to set the Hook");
+        }
+
+        // hook code
+        BYTE *returnAddr = addr + size;
+        size_t newmemSize = hookBytes.size() + 100;
+
+        newmem = (BYTE *)ajanuw::Mem::allocEx(hProcess, newmemSize);
+        if (!newmem)
+        {
+          throw std::exception("SetHook Error: allocEx Error.");
+        }
+        WriteProcessMemory(hProcess, newmem, hookBytes.data(), newmemSize, NULL);
+
+        // set return bytes
+        BYTE *newmemJmpReturnAddr = newmem + hookBytes.size();
+        DWORD returnBytes = (DWORD)(returnAddr - newmemJmpReturnAddr - 5);
+        BYTE b = JMP_BYTE;
+        WriteProcessMemory(hProcess, newmemJmpReturnAddr, (LPCVOID)&b, sizeof(BYTE), NULL);
+        WriteProcessMemory(hProcess, newmemJmpReturnAddr + 1, (LPCVOID)&returnBytes, sizeof(DWORD), NULL);
+
+        jmpHookBytes = newmem - addr - 5;
+        bSuccess = true;
+      }
+
       void enableHook()
       {
         BYTE b = JMP_BYTE;
@@ -1736,60 +1764,32 @@ namespace ajanuw
         CloseHandle(hProcess);
     }
 
-    ajanuw::Target::SetNop *setNop(BYTE *addr, size_t size)
+    std::vector<BYTE *> moduleScan(std::string strbytes, size_t offset = NULL)
     {
-      ajanuw::Target::SetNop *r = new ajanuw::Target::SetNop();
-      std::vector<BYTE> origenBytes;
-      origenBytes.resize(size);
-      ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
+      std::vector<std::string> maskList = ajanuw::SSString::split(strbytes, std::regex("\\s+"));
+      BYTE *base = (BYTE *)mi.lpBaseOfDll;
+      std::vector<BYTE *> addrs;
+      ;
 
-      r->hProcess = hProcess;
-      r->origenBytes = origenBytes;
-      r->addr = addr;
-      r->size = size;
-      r->bSuccess = true;
-      return r;
-    }
-
-    ajanuw::Target::SetHook *setHook(BYTE *addr, size_t size, std::vector<BYTE> hookBytes)
-    {
-      ajanuw::Target::SetHook *r = new ajanuw::Target::SetHook();
-      r->bSuccess = false;
-      if (size < 5)
+      BYTE v = NULL;
+      size_t eachSize = mi.SizeOfImage - maskList.size();
+      for (size_t i = 0; i < eachSize; i++)
       {
-        throw std::exception("setHook 设置Hook最少需要5字节");
+        bool found = true;
+        for (size_t j = 0; j < maskList.size(); j++)
+        {
+          ReadProcessMemory(hProcess, (LPCVOID)(base + i + j), (LPVOID)&v, sizeof(BYTE), 0);
+          bool notEqual = maskList[j] != "?" && maskList[j] != "??" && maskList[j] != "*" && maskList[j] != "**" && (BYTE)std::stol(maskList[j], nullptr, 16) != v;
+          if (notEqual)
+          {
+            found = false;
+            break;
+          }
+        }
+        if (found)
+          addrs.push_back(base + i + offset);
       }
-
-      // 1. 拷贝原始字节集，保存起来
-      std::vector<BYTE> origenBytes(size);
-      ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
-
-      //2. 申请虚拟空间存hook代码
-      BYTE *returnAddr = addr + size;
-      size_t newmemSize = hookBytes.size() + 100;
-      BYTE *newmem = (BYTE *)ajanuw::Mem::allocEx(hProcess, newmemSize);
-      if (!newmem)
-      {
-        throw std::exception("setHook 分配虚拟内存失败");
-      }
-      WriteProcessMemory(hProcess, newmem, hookBytes.data(), newmemSize, NULL);
-
-      // 3. 从hook jmp回addr的字节集
-      BYTE *newmemJmpReturnAddr = newmem + hookBytes.size();
-      DWORD returnBytes = (DWORD)(returnAddr - newmemJmpReturnAddr - 5);
-      BYTE b = JMP_BYTE;
-      WriteProcessMemory(hProcess, newmemJmpReturnAddr, (LPCVOID)&b, sizeof(BYTE), NULL);
-      WriteProcessMemory(hProcess, newmemJmpReturnAddr + 1, (LPCVOID)&returnBytes, sizeof(DWORD), NULL);
-
-      DWORD jmpHookBytes = newmem - addr - 5;
-      r->hProcess = hProcess;
-      r->origenBytes = origenBytes;
-      r->addr = addr;
-      r->size = size;
-      r->newmem = newmem;
-      r->jmpHookBytes = jmpHookBytes;
-      r->bSuccess = true;
-      return r;
+      return addrs;
     }
   };
 }

@@ -42,11 +42,9 @@ address:
 
 const t = nw.createTargetWithName("Tutorial-i386.exe");
 if (t.pid && t.hProcess) {
-
   const address = nw.getAddress(`"Tutorial-i386.exe"+2578F`, t.hProcess);
   const handle = t.setNop(address, 6);
   console.log(handle);
-  
 
   if (handle.bSuccess) {
     handle.enable();
@@ -58,7 +56,6 @@ if (t.pid && t.hProcess) {
       handle.delete();
     }, 1000 * 10);
   }
-  
 }
 ```
 
@@ -112,6 +109,35 @@ if (t.pid && t.hProcess) {
       // 如果不在使用handle，那么一定要调用delete函数
       handle.delete();
     }, 1000 * 10);
+  }
+}
+```
+
+## moduleScan
+```js
+const t = nw.createTargetWithName("Tutorial-i386.exe");
+if (t.pid && t.hProcess) {
+  const addrs = t.moduleScan("29 83 AC 04 00 00");
+  console.log(addrs); // [ 4347791 ]
+
+  t.moduleScan("? 83 AC 04 00 00"); // [ 4347791, 4347805, 4347895, 4347913, 4348372 ]
+}
+```
+
+```js
+const t = nw.createTargetWithName("Tutorial-i386.exe");
+if (t.pid && t.hProcess) {
+  const addrs = t.moduleScan("29 83 AC 04 00 00");
+  const handle = t.setNop(addrs[0], 6);
+  console.log(handle);
+
+  if (handle.bSuccess) {
+    handle.enable();
+
+    setTimeout(() => {
+      handle.disable();
+      handle.delete();
+    }, 1000 * 3);
   }
 }
 ```

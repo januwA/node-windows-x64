@@ -36,6 +36,8 @@ export class Target {
     size: number;
     origenBytes: ArrayBuffer;
   };
+
+  moduleScan(bytes: string, offset?: number): number[];
 }
 
 export function createTargetWithName(name: string): Target;
