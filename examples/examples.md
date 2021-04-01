@@ -8,10 +8,10 @@ nw.getProcessID()
 nw.getCurrentProcess()
 ```
 
-## mem_write_bytes
+## writeBytes
 ```js
-nw.mem_write_bytes(lpAddress, 1, 2, 3, 4, 0xff);
-nw.mem_write_bytes(lpAddress, [1, 2, 3, 4, 0xff]);
+nw.writeBytes(lpAddress, 1, 2, 3, 4, 0xff);
+nw.writeBytes(lpAddress, [1, 2, 3, 4, 0xff]);
 ```
 
 ## isKeyPressed

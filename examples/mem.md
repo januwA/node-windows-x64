@@ -1,129 +1,129 @@
-## mem_write_word
+## writeWord
 ```js
-nw.mem_write_word(lpAddress, 1);
+nw.writeWord(lpAddress, 1);
 ```
 
-## mem_write_dword
+## writeDword
 ```js
-nw.mem_write_dword(lpAddress, 1);
+nw.writeDword(lpAddress, 1);
 ```
 
-## mem_write_qword
+## writeQword
 ```js
-nw.mem_write_qword(lpAddress, 1);
+nw.writeQword(lpAddress, 1);
 ```
 
-## mem_write_float
+## writeFloat
 ```js
-nw.mem_write_float(lpAddress, 1.2);
+nw.writeFloat(lpAddress, 1.2);
 ```
 
-## mem_write_double
+## writeDouble
 ```js
-nw.mem_write_double(lpAddress, 1.2);
+nw.writeDouble(lpAddress, 1.2);
 ```
 
-## mem_write_region_to_file
+## readwriteRegionToFile
 ```js
-const newmem = nw.mem_alloc({
+const newmem = nw.alloc({
   size: 20,
 })
 
-nw.mem_write_str(newmem, "save file.")
+nw.writeStr(newmem, "save file.")
 
-nw.mem_write_region_to_file("C:\\Users\\ajanuw\\Desktop\\save.txt", newmem, 20);
+nw.readwriteRegionToFile("C:\\Users\\ajanuw\\Desktop\\save.txt", newmem, 20);
 
-nw.mem_free(newmem);
+nw.free(newmem);
 ```
 
-## mem_read_bytes
+## readBytes
 ```js
-const newmem = nw.mem_alloc({
+const newmem = nw.alloc({
   size: 20,
 })
 
-nw.mem_write_str(newmem, "abcd")
+nw.writeStr(newmem, "abcd")
 
-let bytes = nw.mem_read_bytes(newmem, 3);
+let bytes = nw.readBytes(newmem, 3);
 console.log(bytes); // [ 97, 98, 99 ]
 
-nw.mem_free(newmem);
+nw.free(newmem);
 ```
 
-## mem_read_word
+## readWord
 ```js
-const newmem = nw.mem_alloc({
+const newmem = nw.alloc({
   size: 20,
 })
 
-nw.mem_write_str(newmem, "abcd")
+nw.writeStr(newmem, "abcd")
 
-let bytes = nw.mem_read_word(newmem);
+let bytes = nw.readWord(newmem);
 console.log(bytes.toString('16')); // 6261
 
-nw.mem_free(newmem);
+nw.free(newmem);
 ```
 
-## mem_read_dword
+## readDword
 ```js
-nw.mem_read_dword(newmem)
+nw.readDword(newmem)
 ```
 
-## mem_read_qword
+## readQword
 ```js
-nw.mem_read_qword(newmem)
+nw.readQword(newmem)
 ```
 
-## mem_read_pointer
+## readPointer
 ```js
-nw.mem_read_pointer(newmem)
+nw.readPointer(newmem)
 ```
 
-## mem_read_float
+## readFloat
 ```js
-nw.mem_read_float(newmem)
+nw.readFloat(newmem)
 ```
 
-## mem_read_double
+## readDouble
 ```js
-nw.mem_read_double(newmem)
+nw.readDouble(newmem)
 ```
 
-## mem_read_str
+## readStr
 ```js
-nw.mem_read_str(newmem)
-nw.mem_read_str(newmem, null, true)
+nw.readStr(newmem)
+nw.readStr(newmem, null, true)
 ```
 
-## mem_read_region_from_file
+## readRegionFromFile
 ```js
-const newmem = nw.mem_alloc({
+const newmem = nw.alloc({
   size: 20,
 })
 
-nw.mem_read_region_from_file("C:\\Users\\ajanuw\\Desktop\\中文.txt", newmem);
-console.log( nw.mem_read_str(newmem) )
+nw.readRegionFromFile("C:\\Users\\ajanuw\\Desktop\\中文.txt", newmem);
+console.log( nw.readStr(newmem) )
 
-nw.mem_free(newmem);
+nw.free(newmem);
 ```
 
 ## use CEAddressString Example
 ```js
-const strMem = nw.mem_alloc(100);
-nw.mem_write_str(strMem, "node-windows-x64");
+const strMem = nw.alloc(100);
+nw.writeStr(strMem, "node-windows-x64");
 
-const addr = nw.mem_alloc(1024);
+const addr = nw.alloc(1024);
 nw.registerSymbol("newmem", addr);
 
-nw.mem_write_dword("newmem", 1);
-nw.mem_write_dword("newmem+4", 2);
-nw.mem_write_qword("newmem+8", strMem);
+nw.writeDword("newmem", 1);
+nw.writeDword("newmem+4", 2);
+nw.writeQword("newmem+8", strMem);
 
-console.log(nw.mem_read_dword("newmem"));   // 1
-console.log(nw.mem_read_dword("newmem+4")); //2
-console.log(nw.mem_read_str("[newmem+8]")); // node-windows-x64
+console.log(nw.readDword("newmem"));   // 1
+console.log(nw.readDword("newmem+4")); //2
+console.log(nw.readStr("[newmem+8]")); // node-windows-x64
 
-nw.mem_free(strMem);
-nw.mem_free("newmem");
+nw.free(strMem);
+nw.free("newmem");
 nw.unregisterSymbol("newmem");
 ```

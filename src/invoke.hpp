@@ -152,13 +152,13 @@ Value invoke(const CallbackInfo &info)
       if (bWideChar)
       {
         u16string str = text.Utf16Value();
-        ajanuw::Mem::write_ustr(addr, str);
+        ajanuw::Mem::wUstr(addr, str);
         strMemOffset += ajanuw::SSString::count(str) + 2;
       }
       else
       {
         string str = text.Utf8Value();
-        ajanuw::Mem::write_str(addr, str);
+        ajanuw::Mem::wStr(addr, str);
         strMemOffset += str.length() + 1;
       }
     }

@@ -281,7 +281,7 @@ const windowName = "window caption";
 const wui = new nw.Win32Gui(className, windowName);
 
 if (wui.initRegisterClass() && wui.initWindow()) {
-  const sInputValue = nw.mem_alloc(100);
+  const sInputValue = nw.alloc(100);
   wui.input({
     id: 1,
     windowName: "password...",
@@ -306,7 +306,7 @@ if (wui.initRegisterClass() && wui.initWindow()) {
           if (code === EN_CHANGE) {
             if (id == 1) {
               nw.GetWindowTextA(hwnd, sInputValue, 100);
-              console.log("input value change: ", nw.mem_read_str(sInputValue));
+              console.log("input value change: ", nw.read_str(sInputValue));
             }
             if (id == 2) {
               console.log("textarea value change..");
@@ -329,7 +329,7 @@ if (wui.initRegisterClass() && wui.initWindow()) {
     }
   });
 
-  nw.mem_free(sInputValue);
+  nw.free(sInputValue);
 }
 ```
 
@@ -354,7 +354,7 @@ if (wui.initRegisterClass() && wui.initWindow()) {
   }
   nw.sendMessage(hwnd, LB_INSERTSTRING, 1, "list insert");
 
-  const buf = nw.mem_alloc(100);
+  const buf = nw.alloc(100);
   wui.messageLoop((hWnd, message, wParam, lParam) => {
     const [wh, wl] = nw.Win32Gui.getHLMessage(wParam);
     const [lh, ll] = nw.Win32Gui.getHLMessage(lParam);
@@ -367,7 +367,7 @@ if (wui.initRegisterClass() && wui.initWindow()) {
         if (id === 1 && code === LBN_SELCHANGE) {
           const index = nw.sendMessage(hwnd, LB_GETCURSEL, 0, 0);
           nw.sendMessage(hwnd, LB_GETTEXT, index, buf);
-          console.log("select change(%d): ", index, nw.mem_read_str(buf));
+          console.log("select change(%d): ", index, nw.read_str(buf));
         }
         break;
       case WM_CTLCOLORLISTBOX:
@@ -385,7 +385,7 @@ if (wui.initRegisterClass() && wui.initWindow()) {
     }
   });
 
-  nw.mem_free(100);
+  nw.free(100);
 }
 ```
 
@@ -410,7 +410,7 @@ if (wui.initRegisterClass() && wui.initWindow()) {
   nw.sendMessage(hwnd, CB_INSERTSTRING, 1, "list insert");
   nw.sendMessage(hwnd, CB_SETCURSEL, 0, 0);
 
-  const buf = nw.mem_alloc(100);
+  const buf = nw.alloc(100);
   wui.messageLoop((hWnd, message, wParam, lParam) => {
     const [wh, wl] = nw.Win32Gui.getHLMessage(wParam);
     const [lh, ll] = nw.Win32Gui.getHLMessage(lParam);
@@ -423,12 +423,12 @@ if (wui.initRegisterClass() && wui.initWindow()) {
         if (id == 1 && code == CBN_SELCHANGE) {
           const index = nw.sendMessage(hwnd, CB_GETCURSEL, 0, 0);
           nw.sendMessage(hwnd, CB_GETLBTEXT, index, buf);
-          console.log("select change(%d): ", index, nw.mem_read_str(buf));
+          console.log("select change(%d): ", index, nw.read_str(buf));
         }
         break;
     }
   });
-  nw.mem_free(100);
+  nw.free(100);
 }
 ```
 

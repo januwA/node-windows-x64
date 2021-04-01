@@ -1,14 +1,14 @@
 ## MessageBoxA Example
 ```js
-const newmem = nw.mem_alloc(1024);
+const newmem = nw.alloc(1024);
 
 let title = "xxx";
 let body = "hello world";
 let lpTitle = newmem;
 let lpBody  = newmem + 100;
 
-nw.mem_write_str(lpTitle, title);
-nw.mem_write_str(lpBody, body);
+nw.writeStr(lpTitle, title);
+nw.writeStr(lpBody, body);
 
 let r = nw.invoke({
   module: "user32.dll",
@@ -18,12 +18,12 @@ let r = nw.invoke({
 
 console.log("result: ", r);
 
-nw.mem_free(newmem);
+nw.free(newmem);
 ```
 
 ## MessageBoxW Example
 ```js
-const newmem = nw.mem_alloc(1024);
+const newmem = nw.alloc(1024);
 
 let title = "xxx";
 let body = "hello world";
@@ -31,8 +31,8 @@ let body = "hello world";
 let lpTitle = newmem;
 let lpBody  = newmem + 100;
 
-nw.mem_write_str(lpTitle, title, true);
-nw.mem_write_str(lpBody, body, true);
+nw.writeStr(lpTitle, title, true);
+nw.writeStr(lpBody, body, true);
 
 let r = nw.invoke({
   module: "user32.dll",
@@ -41,18 +41,18 @@ let r = nw.invoke({
 });
 
 console.log("result: ", r);
-nw.mem_free(newmem);
+nw.free(newmem);
 ```
 
 
 ## SystemParametersInfoA Example
 ```js
-const newmem = nw.mem_alloc(100);
+const newmem = nw.alloc(100);
 
 const SPI_SETDESKWALLPAPER = 0x0014;
 const SPIF_SENDCHANGE = 0x02;
 
-nw.mem_write_str(newmem, "C:\\Users\\ajanuw\\Pictures\\Saved Pictures\\1.jpg");
+nw.writeStr(newmem, "C:\\Users\\ajanuw\\Pictures\\Saved Pictures\\1.jpg");
 
 nw.invoke({
   module: "user32.dll",
@@ -60,12 +60,12 @@ nw.invoke({
   args: [SPI_SETDESKWALLPAPER, 0, newmem, SPIF_SENDCHANGE],
 });
 
-nw.mem_free(newmem);
+nw.free(newmem);
 ```
 
 ## GetWindowTextW Example
 ```js
-const newmem = nw.mem_alloc(1024);
+const newmem = nw.alloc(1024);
 
 let r = nw.invoke({
   module: "User32.dll",
@@ -73,9 +73,9 @@ let r = nw.invoke({
   args: [0x20306, newmem, 1024],
 });
 console.log(r);
-console.log(nw.mem_read_str(newmem, null, true));
+console.log(nw.readStr(newmem, null, true));
 
-nw.mem_free(newmem);
+nw.free(newmem);
 ```
 
 ## EnumWindows

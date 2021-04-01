@@ -1,73 +1,73 @@
 # To table
 
-## word_to_byte_table
+## wordToByteTable
 ```js
-nw.word_to_byte_table(10) // [ 10, 0 ]
+nw.wordToByteTable(10) // [ 10, 0 ]
 ```
 
-## dword_to_byte_table
+## dwordToByteTable
 ```js
-nw.dword_to_byte_table(10) // [ 10, 0, 0, 0 ]
+nw.dwordToByteTable(10) // [ 10, 0, 0, 0 ]
 ```
 
-## qword_to_byte_table
+## qwordToByteTable
 ```js
-nw.qword_to_byte_table(10) // [ 10, 0, 0, 0, 0, 0, 0, 0 ]
+nw.qwordToByteTable(10) // [ 10, 0, 0, 0, 0, 0, 0, 0 ]
 ```
 
-## float_to_byte_table
+## floatToByteTable
 ```js
-nw.float_to_byte_table(1.2) // [ 154, 153, 153, 63 ]
+nw.floatToByteTable(1.2) // [ 154, 153, 153, 63 ]
 ```
 
-## double_to_byte_table
+## doubleToByteTable
 ```js
-nw.double_to_byte_table(1.2) // [ 51, 51, 51, 51, 51, 51, 243, 63 ]
+nw.doubleToByteTable(1.2) // [ 51, 51, 51, 51, 51, 51, 243, 63 ]
 ```
 
-## str_to_byte_table
+## strToByteTable
 ```js
-nw.str_to_byte_table('abc') // [ 97, 98, 99 ]
+nw.strToByteTable('abc') // [ 97, 98, 99 ]
 ```
 
-## wstr_to_byte_table
+## wstrToByteTable
 ```js
-nw.wstr_to_byte_table('abc') // [ 97, 0, 98, 0, 99, 0 ]
+nw.wstrToByteTable('abc') // [ 97, 0, 98, 0, 99, 0 ]
 ```
 
 # Form table
 
-## byte_table_to_word
+## byteTableToWord
 ```js
-nw.byte_table_to_word([ 10, 0 ]) // 10
+nw.byteTableToWord([ 10, 0 ]) // 10
 ```
 
-## byte_table_to_dword
+## byteTableToDword
 ```js
-nw.byte_table_to_dword([ 10, 0, 0, 0 ]) // 10
+nw.byteTableToDword([ 10, 0, 0, 0 ]) // 10
 ```
 
-## byte_table_to_qword
+## byteTableToQword
 ```js
-nw.byte_table_to_qword([ 10, 0, 0, 0, 0, 0, 0, 0 ]) // 10
+nw.byteTableToQword([ 10, 0, 0, 0, 0, 0, 0, 0 ]) // 10
 ```
 
-## byte_table_to_float
+## byteTableToFloat
 ```js
-nw.byte_table_to_float([ 154, 153, 153, 63 ]) // 1.2000000476837158
+nw.byteTableToFloat([ 154, 153, 153, 63 ]) // 1.2000000476837158
 ```
 
-## byte_table_to_double
+## byteTableToDouble
 ```js
-nw.byte_table_to_double([ 51, 51, 51, 51, 51, 51, 243, 63 ]) // 1.2
+nw.byteTableToDouble([ 51, 51, 51, 51, 51, 51, 243, 63 ]) // 1.2
 ```
 
-## byte_table_to_str
+## byteTableToStr
 ```js
-nw.byte_table_to_str([ 97, 98, 99 ]) // abc
+nw.byteTableToStr([ 97, 98, 99 ]) // abc
 ```
 
-## byte_table_to_wstr
+## byteTableToWstr
 ```js
-nw.byte_table_to_wstr([ 97, 0, 98, 0, 99, 0 ]) // abc
+nw.byteTableToWstr([ 97, 0, 98, 0, 99, 0 ]) // abc
 ```

@@ -3,7 +3,7 @@ export class VAManage {
    *
    * @param size 默认大小 1024
    */
-  constructor(size?: number);
+  constructor(size?: number, hProcess?: number);
   /**
    * 管理内存的大小，初始化时设置
    */

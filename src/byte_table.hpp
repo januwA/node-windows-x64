@@ -1,57 +1,54 @@
-#pragma once
 #include <iostream>
 #include <Windows.h>
 #include <napi.h>
 #include "_napi_macro.h"
 #include "ajanuw.h"
 
-using namespace Napi;
-
-Array _toTable(Env env, void *lpData, size_t size)
+Napi::Array _toTable(Napi::Env env, void *lpData, size_t size)
 {
-  auto r = Array::New(env, size);
+  auto r = Napi::Array::New(env, size);
   for (size_t i = 0; i < size; i++)
-    r.Set(i, Number::New(env, *((uint8_t *)lpData + i)));
+    r.Set(i, Napi::Number::New(env, *((uint8_t *)lpData + i)));
   return r;
 }
-Value word_to_byte_table(const CallbackInfo &info)
+Napi::Value wordToByteTable(const Napi::CallbackInfo &info)
 {
   nm_init;
   uint32_t data = nm_dword(info[0]);
   return _toTable(env, &data, sizeof(uint16_t));
 }
-Value dword_to_byte_table(const CallbackInfo &info)
+Napi::Value dwordToByteTable(const Napi::CallbackInfo &info)
 {
   uint32_t data = nm_dword(info[0]);
   return _toTable(info.Env(), &data, sizeof(uint32_t));
 }
-Value qword_to_byte_table(const CallbackInfo &info)
+Napi::Value qwordToByteTable(const Napi::CallbackInfo &info)
 {
   uint64_t data = nm_qword(info[0]);
   return _toTable(info.Env(), &data, sizeof(uint64_t));
 }
-Value float_to_byte_table(const CallbackInfo &info)
+Napi::Value floatToByteTable(const Napi::CallbackInfo &info)
 {
   float data = nm_float(info[0]);
   return _toTable(info.Env(), &data, sizeof(float));
 }
-Value double_to_byte_table(const CallbackInfo &info)
+Napi::Value doubleToByteTable(const Napi::CallbackInfo &info)
 {
   double data = nm_double(info[0]);
   return _toTable(info.Env(), &data, sizeof(double));
 }
-Value str_to_byte_table(const CallbackInfo &info)
+Napi::Value strToByteTable(const Napi::CallbackInfo &info)
 {
-  string data = nm_str(info[0]);
+  std::string data = nm_str(info[0]);
   return _toTable(info.Env(), &data, data.length());
 }
-Value wstr_to_byte_table(const CallbackInfo &info)
+Napi::Value wstrToByteTable(const Napi::CallbackInfo &info)
 {
   nm_init;
-  u16string ustr = nm_ustr(info[0]);
+  std::u16string ustr = nm_ustr(info[0]);
 
   uintptr_t size = ustr.size() * 2;
-  vector<uint8_t> bytes = ajanuw::Mem::read_bytes((void *)ustr.c_str(), size);
+  std::vector<uint8_t> bytes = ajanuw::Mem::rBytes((void *)ustr.c_str(), size);
 
   nm_arr_form_vect(result, bytes);
   return result;
@@ -59,7 +56,7 @@ Value wstr_to_byte_table(const CallbackInfo &info)
 
 #define BYTE_TABEL_TO(type)                      \
   nm_init;                                       \
-  Array data = nm_arr(info[0]);                  \
+  Napi::Array data = nm_arr(info[0]);                  \
   size_t len = min(data.Length(), sizeof(type)); \
   BYTE *mem = (BYTE *)malloc(len);               \
   if (mem == NULL)                               \
@@ -73,35 +70,35 @@ Value wstr_to_byte_table(const CallbackInfo &info)
     auto v = nm_dword(data.Get(i));              \
     memset(mem + i, v, sizeof(BYTE));            \
   }                                              \
-  auto r = Number::From(env, *(type *)mem);      \
+  auto r = Napi::Number::From(env, *(type *)mem);      \
   free(mem);                                     \
   return r
 
-Value byte_table_to_word(const CallbackInfo &info)
+Napi::Value byteTableToWord(const Napi::CallbackInfo &info)
 {
   BYTE_TABEL_TO(WORD);
 }
-Value byte_table_to_dword(const CallbackInfo &info)
+Napi::Value byteTableToDword(const Napi::CallbackInfo &info)
 {
   BYTE_TABEL_TO(DWORD);
 }
 
-Value byte_table_to_qword(const CallbackInfo &info)
+Napi::Value byteTableToQword(const Napi::CallbackInfo &info)
 {
   BYTE_TABEL_TO(ULONGLONG);
 }
-Value byte_table_to_float(const CallbackInfo &info)
+Napi::Value byteTableToFloat(const Napi::CallbackInfo &info)
 {
   BYTE_TABEL_TO(float);
 }
-Value byte_table_to_double(const CallbackInfo &info)
+Napi::Value byteTableToDouble(const Napi::CallbackInfo &info)
 {
   BYTE_TABEL_TO(double);
 }
 
 #define BYTE_TABEL_TO_STR(type)                  \
   nm_init;                                       \
-  Array data = nmi_arr(0);                       \
+  Napi::Array data = nmi_arr(0);                       \
   size_t len = data.Length() + 1;                \
   BYTE *mem = (BYTE *)malloc(len);               \
   if (mem == NULL)                               \
@@ -119,12 +116,12 @@ Value byte_table_to_double(const CallbackInfo &info)
   free(mem);                                     \
   return r
 
-Value byte_table_to_str(const CallbackInfo &info)
+Napi::Value byteTableToStr(const Napi::CallbackInfo &info)
 {
   BYTE_TABEL_TO_STR(char);
 }
 
-Value byte_table_to_wstr(const CallbackInfo &info)
+Napi::Value byteTableToWstr(const Napi::CallbackInfo &info)
 {
   BYTE_TABEL_TO_STR(char16_t);
 }

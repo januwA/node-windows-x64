@@ -1,4 +1,4 @@
-export function getProcessID(): number;
+export function getProcessID(name?: string): number;
 export function getCurrentProcess(): number;
 export function openProcess(
   dwDesiredAccess?: number,
@@ -103,7 +103,10 @@ export function unregisterSymbol(symbolname: string): void;
  *
  * @param CEAddressString
  */
-export declare function getAddress(CEAddressString: string, hProcess?: number): number;
+export declare function getAddress(
+  CEAddressString: string,
+  hProcess?: number
+): number;
 
 /**
  *

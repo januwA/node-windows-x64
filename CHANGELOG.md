@@ -1,3 +1,10 @@
+## 0.0.9 [2021-4-1]
+
+- *test version*
+- feat: Add "Ex" series of functions, user operation target process memory
+- refactor: The underscore naming style is changed to the camel naming style
+- refactor: "mem" series of functions, delete the "mem" prefix `mem_read_byte` => `readByte`
+
 ## 0.0.8 [2021-3-29]
 
 - *test version*

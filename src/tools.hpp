@@ -12,7 +12,14 @@ using namespace Napi;
 Number getProcessID(const CallbackInfo &info)
 {
   nm_init;
-  nm_ret(GetCurrentProcessId());
+  if (info.Length() != NULL)
+  {
+    nm_ret(ajanuw::PE::GetPID(ajanuw::SSString::strToWstr(nmi_str(0))));
+  }
+  else
+  {
+    nm_ret(GetCurrentProcessId());
+  }
 }
 Number getCurrentProcess(const CallbackInfo &info)
 {
@@ -398,7 +405,7 @@ Value asmBytes(const CallbackInfo &info)
   {
     bool isX64 = true;
 
-    if( info.Length() > 1 )
+    if (info.Length() > 1)
     {
       isX64 = nmi_bool(1);
     }
