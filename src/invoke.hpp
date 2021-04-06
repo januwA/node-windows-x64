@@ -9,10 +9,10 @@ extern "C" typedef uintptr_t (*asm_fun_t)();
 
 struct CallbackContext
 {
-  CallbackContext(Napi::Env env_, Function cb_, LPVOID address_) : cb(cb_),
-                                                                   env(env_),
-                                                                   address(address_){};
-  Function cb;
+  CallbackContext(Napi::Env env_, Napi::Function cb_, LPVOID address_) : cb(cb_),
+                                                                         env(env_),
+                                                                         address(address_){};
+  Napi::Function cb;
   Napi::Env env;
   LPVOID address;
   int64_t call(uintptr_t *lpRcx, uintptr_t *lpP5)
@@ -22,16 +22,16 @@ struct CallbackContext
     uintptr_t *r8 = (lpRcx + 2);
     uintptr_t *r9 = (lpRcx + 3);
 
-    vector<napi_value> args;
-    args.push_back(Number::New(env, *rcx));
-    args.push_back(Number::New(env, *rdx));
-    args.push_back(Number::New(env, *r8));
-    args.push_back(Number::New(env, *r9));
+    std::vector<napi_value> args;
+    args.push_back(Napi::Number::New(env, *rcx));
+    args.push_back(Napi::Number::New(env, *rdx));
+    args.push_back(Napi::Number::New(env, *r8));
+    args.push_back(Napi::Number::New(env, *r9));
 
     // 第五个参数直接返回指针，用户需要自己读数据,如:
     // mem_read_dword(lpP5)
     // mem_read_str(mem_read_pointer(lpP5+8)) x64指针大小为8字节
-    args.push_back(Number::New(env, (uintptr_t)lpP5));
+    args.push_back(Napi::Number::New(env, (uintptr_t)lpP5));
     return cb.Call(args).ToNumber().Int64Value();
   }
 };
@@ -51,20 +51,20 @@ size_t getStringsCount(Napi::Array args, bool isWideChar)
   return count;
 }
 
-extern "C" uintptr_t cccccc(vector<CallbackContext *> *vect_cc, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
+extern "C" uintptr_t cccccc(std::vector<CallbackContext *> *vect_cc, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
 {
   return vect_cc->at((size_t)index)->call(lpRcx, lpP5);
 }
 
-Value invoke(const CallbackInfo &info)
+Napi::Value invoke(const Napi::CallbackInfo &info)
 {
   using namespace asmjit;
   using namespace asmtk;
   using namespace asmjit::x86;
 
   nm_init_cal(1);
-  vector<CallbackContext *> vCC;
-  Object o = nmi_obj(0);
+  std::vector<CallbackContext *> vCC;
+  Napi::Object o = nmi_obj(0);
   HMODULE hModule = NULL;
   BYTE *lpMethod = nullptr;
   bool bWideChar = false;
@@ -76,7 +76,7 @@ Value invoke(const CallbackInfo &info)
   }
   else
   {
-    string sMethod = nm_get_to("method", str);
+    std::string sMethod = nm_get_to("method", str);
     bWideChar = ajanuw::SSString::endWith(sMethod, "W");
     Napi::Value js_isWideChar = o.Get("isWideChar");
     if (!nm_is_nullish(js_isWideChar))
@@ -84,7 +84,7 @@ Value invoke(const CallbackInfo &info)
 
     if (o.Has("module"))
     {
-      string sModule = nm_get_to("module", str);
+      std::string sModule = nm_get_to("module", str);
       hModule = LoadLibraryA(sModule.c_str());
       if (hModule == NULL)
       {
@@ -104,22 +104,22 @@ Value invoke(const CallbackInfo &info)
     nm_retu;
   }
 
-  // args: number | pointer | string | function
-  Array args = nm_is_nullishOr(o.Get("args"), nm_arr, Array::New(env));
+  // args: number | pointer |std::string | function
+  Napi::Array args = nm_is_nullishOr(o.Get("args"), nm_arr, Napi::Array::New(env));
 
-  // save strings
-  BYTE *stringMem = NULL;
+  // savestd::strings
+  BYTE *strMem = NULL;
   size_t strSizeCount = getStringsCount(args, bWideChar);
   size_t strMemOffset = 0;
   if (strSizeCount)
   {
-    stringMem = (BYTE *)ajanuw::Mem::alloc(strSizeCount);
-    if (stringMem == NULL)
+    strMem = (BYTE *)ajanuw::Mem::alloc(strSizeCount);
+    if (strMem == NULL)
     {
-      nm_jserr("VirtualAlloc stringMem error.");
+      nm_jserr("VirtualAllocstd::stringMem error.");
       nm_retu;
     }
-    ZeroMemory(stringMem, strSizeCount);
+    ZeroMemory(strMem, strSizeCount);
   }
 
   size_t argsStackSize = max(args.Length() * sizeof(uintptr_t), Globals::kMaxPhysRegs);
@@ -135,11 +135,11 @@ Value invoke(const CallbackInfo &info)
 
   for (size_t i = 0; i < args.Length(); i++)
   {
-    uintptr_t value = 0;
+    uintptr_t value = NULL;
     if (nm_is_fun(args.Get(i)))
     {
       auto CC = new CallbackContext(env,
-                                    args.Get(i).As<Function>(),
+                                    args.Get(i).As<Napi::Function>(),
                                     ajanuw::createCallback(&cccccc, i, &vCC));
       vCC.push_back(CC);
       value = (uintptr_t)CC->address;
@@ -147,17 +147,17 @@ Value invoke(const CallbackInfo &info)
     else if (nm_is_str(args.Get(i)))
     {
       Napi::String text = args.Get(i).ToString();
-      BYTE *addr = stringMem + strMemOffset;
+      BYTE *addr = strMem + strMemOffset;
       value = (uintptr_t)addr;
       if (bWideChar)
       {
-        u16string str = text.Utf16Value();
+        std::u16string str = text.Utf16Value();
         ajanuw::Mem::wUstr(addr, str);
         strMemOffset += ajanuw::SSString::count(str) + 2;
       }
       else
       {
-        string str = text.Utf8Value();
+        std::string str = text.Utf8Value();
         ajanuw::Mem::wStr(addr, str);
         strMemOffset += str.length() + 1;
       }
@@ -199,8 +199,8 @@ Value invoke(const CallbackInfo &info)
   asmjit::Error err = rt.add(&fn, &code);
   if (err)
   {
-    if (stringMem)
-      ajanuw::Mem::free(stringMem);
+    if (strMem)
+      ajanuw::Mem::free(strMem);
 
     for (auto cc : vCC)
     {
@@ -213,8 +213,8 @@ Value invoke(const CallbackInfo &info)
   uintptr_t result = fn();
 
   rt.release(fn);
-  if (stringMem)
-    ajanuw::Mem::free(stringMem);
+  if (strMem)
+    ajanuw::Mem::free(strMem);
 
   for (auto cc : vCC)
   {

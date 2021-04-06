@@ -13,19 +13,19 @@ Win32GuiEvent::Win32GuiEvent(Napi::Object o)
 LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   const std::initializer_list<napi_value> args = {
-      Napi::Number::New(env_, (uintptr_t)hWnd),
-      Napi::Number::New(env_, (uintptr_t)message),
-      Napi::Number::New(env_, (uintptr_t)wParam),
-      Napi::Number::New(env_, (uintptr_t)lParam),
+      Napi::Number::New(env, (uintptr_t)hWnd),
+      Napi::Number::New(env, (uintptr_t)message),
+      Napi::Number::New(env, (uintptr_t)wParam),
+      Napi::Number::New(env, (uintptr_t)lParam),
   };
   switch (message)
   {
   case WM_COMMAND:
   {
     HMENU id = (HMENU)LOWORD(wParam);
-    if (_eventMap.count(id))
+    if (eventMap.count(id))
     {
-      Win32GuiEvent *e = _eventMap.at(id);
+      Win32GuiEvent *e = eventMap.at(id);
       if (e->click)
         e->click.Call(args);
     }
@@ -33,9 +33,9 @@ LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARA
   break;
   }
 
-  if (_messageCallback)
+  if (messageCallback)
   {
-    return _messageCallback.Call(args).ToNumber().Uint32Value();
+    return messageCallback.Call(args).ToNumber().Uint32Value();
   }
   return 0;
 }
@@ -80,7 +80,7 @@ Napi::Object Win32Gui::Init(Napi::Env env, Napi::Object exports)
 Win32Gui::Win32Gui(const Napi::CallbackInfo &info)
     : ObjectWrap<Win32Gui>(info),
       ajanuw::Gui::Win32(nmi_str(0), nmi_str(1)),
-      env_(info.Env())
+      env(info.Env())
 {
   nm_init;
 
@@ -88,15 +88,15 @@ Win32Gui::Win32Gui(const Napi::CallbackInfo &info)
   {
     Napi::Object o = nmi_obj(2);
     if (o.Has("x"))
-      ajanuw::Gui::Win32::x_ = nm_get_to("x", int);
+      ajanuw::Gui::Win32::x = nm_get_to("x", int);
     if (o.Has("y"))
-      ajanuw::Gui::Win32::y_ = nm_get_to("y", int);
+      ajanuw::Gui::Win32::y = nm_get_to("y", int);
     if (o.Has("width"))
-      ajanuw::Gui::Win32::width_ = nm_get_to("width", int);
+      ajanuw::Gui::Win32::width = nm_get_to("width", int);
     if (o.Has("height"))
-      ajanuw::Gui::Win32::height_ = nm_get_to("height", int);
+      ajanuw::Gui::Win32::height = nm_get_to("height", int);
     if (o.Has("style"))
-      ajanuw::Gui::Win32::style_ = nm_get_to("style", dword);
+      ajanuw::Gui::Win32::style = nm_get_to("style", dword);
   }
 }
 
@@ -123,56 +123,56 @@ Napi::Value Win32Gui::rgb(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::GetX(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret(ajanuw::Gui::Win32::x_);
+  nm_ret(ajanuw::Gui::Win32::x);
 }
 void Win32Gui::SetX(const Napi::CallbackInfo &info, const Napi::Value &value)
 {
   nm_init;
-  ajanuw::Gui::Win32::x_ = nm_int(value);
+  ajanuw::Gui::Win32::x = nm_int(value);
 }
 
 Napi::Value Win32Gui::GetY(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret(ajanuw::Gui::Win32::y_);
+  nm_ret(ajanuw::Gui::Win32::y);
 }
 void Win32Gui::SetY(const Napi::CallbackInfo &info, const Napi::Value &value)
 {
   nm_init;
-  ajanuw::Gui::Win32::y_ = nm_int(value);
+  ajanuw::Gui::Win32::y = nm_int(value);
 }
 
 Napi::Value Win32Gui::GetWidth(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret(ajanuw::Gui::Win32::width_);
+  nm_ret(ajanuw::Gui::Win32::width);
 }
 void Win32Gui::SetWidth(const Napi::CallbackInfo &info, const Napi::Value &value)
 {
   nm_init;
-  ajanuw::Gui::Win32::width_ = nm_int(value);
+  ajanuw::Gui::Win32::width = nm_int(value);
 }
 
 Napi::Value Win32Gui::GetHeight(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret(ajanuw::Gui::Win32::height_);
+  nm_ret(ajanuw::Gui::Win32::height);
 }
 void Win32Gui::SetHeight(const Napi::CallbackInfo &info, const Napi::Value &value)
 {
   nm_init;
-  ajanuw::Gui::Win32::height_ = nm_int(value);
+  ajanuw::Gui::Win32::height = nm_int(value);
 }
 
 Napi::Value Win32Gui::GetStyle(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret(ajanuw::Gui::Win32::style_);
+  nm_ret(ajanuw::Gui::Win32::style);
 }
 void Win32Gui::SetStyle(const Napi::CallbackInfo &info, const Napi::Value &value)
 {
   nm_init;
-  ajanuw::Gui::Win32::style_ = nm_int(value);
+  ajanuw::Gui::Win32::style = nm_int(value);
 }
 
 Napi::Value Win32Gui::initRegisterClass(const Napi::CallbackInfo &info)
@@ -189,7 +189,7 @@ Napi::Value Win32Gui::messageLoop(const Napi::CallbackInfo &info)
 {
   nm_init;
   if (info.Length() && nmi_is_fun(0))
-    _messageCallback = Napi::Persistent(nmi_fun(0));
+    messageCallback = Napi::Persistent(nmi_fun(0));
   nm_ret(ajanuw::Gui::Win32::messageLoop());
 }
 
@@ -305,7 +305,7 @@ Napi::Value Win32Gui::select(const Napi::CallbackInfo &info)
 
 ajanuw::Gui::Win32CreateOption Win32Gui::getCreateOption(Napi::Object o, int dw, int dh)
 {
-  return ajanuw::Gui::Win32CreateOption{
+  ajanuw::Gui::Win32CreateOption opt{
       nm_is_nullishOr(o.Get("className"), nm_str, ""),
       nm_is_nullishOr(o.Get("windowName"), nm_str, ""),
       nm_is_nullishOr(o.Get("style"), nm_dword, 0),
@@ -316,6 +316,8 @@ ajanuw::Gui::Win32CreateOption Win32Gui::getCreateOption(Napi::Object o, int dw,
       (HMENU)nm_qword(o.Get("id")),
       (HWND)(nm_is_nullishOr(o.Get("parent"), nm_qword, 0)),
   };
+
+  return opt;
 }
 
 void Win32Gui::setEvents(Napi::Object options)
@@ -323,7 +325,7 @@ void Win32Gui::setEvents(Napi::Object options)
   if (options.Has("events"))
   {
     HMENU id = (HMENU)nm_qword(options.Get("id"));
-    _eventMap.insert(std::pair<HMENU, Win32GuiEvent *>(
+    eventMap.insert(std::pair<HMENU, Win32GuiEvent *>(
         id,
         new Win32GuiEvent{nm_obj(options.Get("events"))}));
   }

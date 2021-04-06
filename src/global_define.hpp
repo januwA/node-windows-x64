@@ -3,8 +3,7 @@
 #include "_napi_macro.h"
 #include <Windows.h>
 
-using namespace Napi;
-Value globalDefine(const CallbackInfo &info)
+Napi::Value globalDefine(const Napi::CallbackInfo &info)
 {
   nm_init;
   Napi::Object g;

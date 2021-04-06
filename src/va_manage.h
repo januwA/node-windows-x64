@@ -6,8 +6,6 @@
 #include "_napi_macro.h"
 #include "ajanuw.h"
 
-using namespace Napi;
-
 class VAManage : public Napi::ObjectWrap<VAManage>, public ajanuw::Mem::VAManage
 {
 private:

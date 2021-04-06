@@ -29,13 +29,14 @@ namespace ajanuw
     std::wstring ustrToWstr(std::u16string ustr);
     std::u16string wstrToUstr(std::wstring wstr);
 
-    void strToMem(void *dst, std::string str);
-    void strToMem(void *dst, std::wstring str);
-    void strToMem(void *dst, std::u16string str);
+    // string data write to memry
+    void toMem(void *dst, std::string str);
+    void toMem(void *dst, std::wstring str);
+    void toMem(void *dst, std::u16string str);
 
-    void strToMemEx(HANDLE hProcess, void *dst, std::string str);
-    void strToMemEx(HANDLE hProcess, void *dst, std::wstring str);
-    void strToMemEx(HANDLE hProcess, void *dst, std::u16string str);
+    void toMemEx(HANDLE hProcess, void *dst, std::string str);
+    void toMemEx(HANDLE hProcess, void *dst, std::wstring str);
+    void toMemEx(HANDLE hProcess, void *dst, std::u16string str);
 
     // TODO: 按字节读取，读中文会出问题
     std::string strFormMem(void *src, size_t max);
@@ -46,15 +47,45 @@ namespace ajanuw
     std::wstring wstrFormMemEx(HANDLE hProcess, void *src, size_t max);
     std::u16string ustrFormMemEx(HANDLE hProcess, void *src, size_t max);
 
-    bool startWith(std::string str, const char *s2);
+    /*
+    * ajanuw::SSString::startWith("123", "12")   -> true
+    * ajanuw::SSString::startWith("123", "2")    -> false
+    * ajanuw::SSString::startWith("123", "2", 1) -> true
+    */
+    bool startWith(std::string str, const char *s2, size_t index = 0);
+
+    /*
+    * ajanuw::SSString::endWith("123", "23")     -> true
+    * ajanuw::SSString::endWith("123", "2")      -> false
+    * ajanuw::SSString::endWith("12333", "2", 2) -> true
+    */
     bool endWith(std::string str, const char *s2);
+    bool endWith(std::string str, const char *s2, size_t length);
     bool search(std::string str, std::regex reg);
+
+    /*
+    * ajanuw::SSString::trim("  abc  ")      -> "abc"
+    * ajanuw::SSString::trimStart("  abc  ") -> "abc  "
+    * ajanuw::SSString::trimEnd("  abc  ")   -> "  abc"
+    */
     std::string trim(std::string str);
     std::string trimStart(std::string str);
     std::string trimEnd(std::string str);
+
+    /*
+    * ajanuw::SSString::split("a,b-c", std::regex("[,\\-]")) -> ["a", "b", "c"]
+    */
     std::vector<std::string> split(std::string str, std::regex reg);
+
+    /*
+    * ajanuw::SSString::toBytes("00 01 02") -> [1,2,3]
+    */
     std::vector<BYTE> toBytes(std::string byteStr);
 
+    /*
+    * ajanuw::SSString::cmp("abc", "abc") -> true
+    * ajanuw::SSString::cmp("abc", "abx") -> false
+    */
     BOOL cmp(const char *s1, const char *s2);
     BOOL cmp(std::string s1, std::string s2);
     BOOL cmp(const wchar_t *s1, const wchar_t *s2);
@@ -62,6 +93,12 @@ namespace ajanuw
     BOOL cmp(const char16_t *s1, const char16_t *s2);
     BOOL cmp(std::u16string s1, std::u16string s2);
 
+    /*
+    * ajanuw::SSString::icmp("abc", "ABc")   -> true
+    * ajanuw::SSString::icmp("abc", "ABx")   -> false
+    * ajanuw::SSString::icmp(L"abc", L"ABc") -> true
+    * ajanuw::SSString::icmp(L"abc", L"ABx") -> false
+    */
     BOOL icmp(const char *s1, const char *s2);
     BOOL icmp(std::string s1, std::string s2);
     BOOL icmp(const wchar_t *s1, const wchar_t *s2);
@@ -69,6 +106,10 @@ namespace ajanuw
     BOOL icmp(const char16_t *s1, const char16_t *s2);
     BOOL icmp(std::u16string s1, std::u16string s2);
 
+    /*
+    * ajanuw::SSString::len("abc")  -> 3
+    * ajanuw::SSString::len(L"abc") -> 3
+    */
     size_t len(const char *str);
     size_t len(const char *str, size_t maxSize);
     size_t len(const wchar_t *str);
@@ -77,6 +118,10 @@ namespace ajanuw
     size_t len(std::wstring str);
     size_t len(std::u16string str);
 
+    /*
+    * ajanuw::SSString::count("abc")  -> 3
+    * ajanuw::SSString::count(L"abc") -> 6
+    */
     size_t count(const char *str);
     size_t count(const char *str, size_t maxSize);
     size_t count(const wchar_t *str);
@@ -85,15 +130,30 @@ namespace ajanuw
     size_t count(std::wstring str);
     size_t count(std::u16string str);
 
+    /*
+    * ajanuw::SSString::strFormNumber(255)       -> "255"
+    * ajanuw::SSString::strFormNumber(255, true) -> "ff"
+    */
     std::string strFormNumber(uintptr_t number, bool isHex = false);
 
+    /*
+    * ajanuw::SSString::tolower("ABC") -> "abc"
+    * ajanuw::SSString::toupper("abc") -> "ABC"
+    */
     std::string tolower(std::string s);
     std::string toupper(std::string s);
 
+    /*
+    * ajanuw::SSString::padStart("abc", 5, "^") -> "^^abc"
+    * ajanuw::SSString::padEnd("abc", 5, "^")   -> "abc^^"
+    */
     std::string pad(std::string str, size_t size, std::string padStr, bool isStart);
     std::string padStart(std::string str, size_t size, std::string padStr);
     std::string padEnd(std::string str, size_t size, std::string padStr);
 
+    /*
+    * ajanuw::SSString::repeat("abc", 3) -> "abcabcabc"
+    */
     std::string repeat(std::string str, size_t len);
   }
   namespace Mem
@@ -295,24 +355,24 @@ namespace ajanuw
       static DWORD rgb(DWORD r, DWORD g, DWORD b);
 
       // 主窗口句柄
-      HWND hWnd_;
+      HWND hWnd;
 
-      std::string windowName_;
-      std::string className_;
-      size_t x_;
-      size_t y_;
-      size_t width_;
-      size_t height_;
-      DWORD style_;
+      std::string windowName;
+      std::string className;
+      size_t x;
+      size_t y;
+      size_t width;
+      size_t height;
+      DWORD style;
 
-      Win32(std::string className, std::string windowName) : x_(CW_USEDEFAULT),
-                                                             y_(CW_USEDEFAULT),
-                                                             width_(CW_USEDEFAULT), height_(CW_USEDEFAULT),
-                                                             style_(WS_OVERLAPPEDWINDOW),
-                                                             className_(className),
-                                                             windowName_(windowName),
-                                                             hWnd_(NULL){};
-      ~Win32() { DeleteObject(hWnd_); };
+      Win32(std::string className, std::string windowName) : x(CW_USEDEFAULT),
+                                                             y(CW_USEDEFAULT),
+                                                             width(CW_USEDEFAULT), height(CW_USEDEFAULT),
+                                                             style(WS_OVERLAPPEDWINDOW),
+                                                             className(className),
+                                                             windowName(windowName),
+                                                             hWnd(NULL){};
+      ~Win32() { DeleteObject(hWnd); };
 
       // 消息循环
       int messageLoop();
@@ -382,239 +442,15 @@ namespace ajanuw
   class PE
   {
   public:
-    static DWORD GetPID(std::wstring name)
-    {
-      DWORD pid = NULL;
-      HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-      if (hSnap != INVALID_HANDLE_VALUE)
-      {
-        PROCESSENTRY32W pe;
-        pe.dwSize = sizeof(pe);
-        if (Process32FirstW(hSnap, &pe))
-        {
-          do
-          {
-            if (!_wcsicmp(pe.szExeFile, name.c_str()))
-            {
-              pid = pe.th32ProcessID;
-              break;
-            }
-          } while (Process32NextW(hSnap, &pe));
-        }
-      }
-
-      CloseHandle(hSnap);
-      return pid;
-    }
-
+    static DWORD GetPID(std::wstring name);
     // exe module
-    static MODULEINFO GetModuleBase(DWORD pid)
-    {
-      MODULEINFO mi{0};
-      HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
-      if (hSnap != INVALID_HANDLE_VALUE)
-      {
-        MODULEENTRY32W me;
-        me.dwSize = sizeof(me);
-        if (Module32FirstW(hSnap, &me))
-        {
-          mi.lpBaseOfDll = (LPVOID)me.modBaseAddr;
-          mi.SizeOfImage = me.modBaseSize;
-        }
-      }
-      CloseHandle(hSnap);
-      return mi;
-    }
-
-    static MODULEINFO GetModuleInfo(std::wstring moduleName, DWORD pid)
-    {
-      MODULEINFO mi{0};
-      HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
-      if (hSnap != INVALID_HANDLE_VALUE)
-      {
-        MODULEENTRY32W me;
-        me.dwSize = sizeof(me);
-        if (Module32FirstW(hSnap, &me))
-        {
-          do
-          {
-            if (!_wcsicmp(me.szModule, moduleName.c_str()))
-            {
-              mi.lpBaseOfDll = (LPVOID)me.modBaseAddr;
-              mi.SizeOfImage = me.modBaseSize;
-              break;
-            }
-          } while (Module32NextW(hSnap, &me));
-        }
-      }
-      CloseHandle(hSnap);
-      return mi;
-    }
-
-    static bool isX64(DWORD pid, HMODULE hModule)
-    {
-      BYTE *buf = new BYTE[0x1000];
-      HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-      ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
-
-      PIMAGE_DOS_HEADER dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(buf);
-      PIMAGE_NT_HEADERS ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(buf + dosHeader->e_lfanew);
-      PIMAGE_FILE_HEADER fileHeader = reinterpret_cast<PIMAGE_FILE_HEADER>(&ntHeader->FileHeader);
-
-      // e0是32位PE，f0是64位PE
-      bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
-
-      CloseHandle(hProcess);
-      delete[] buf;
-      return isX64;
-    }
-
-    static bool isX86(DWORD pid, HMODULE hModule)
-    {
-      return !isX64(pid, hModule);
-    }
-
+    static MODULEINFO GetModuleBase(DWORD pid);
+    static MODULEINFO GetModuleInfo(std::wstring moduleName, DWORD pid);
+    static bool isX64(DWORD pid, HMODULE hModule);
+    static bool isX86(DWORD pid, HMODULE hModule);
     // 获取模块的导出表,通常一个模块会导出函数
-    static std::map<std::string, uintptr_t> exports(DWORD pid, HMODULE hModule)
-    {
-      std::map<std::string, uintptr_t> result;
-      BYTE *buf = new BYTE[0x1000];
-      HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-      ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
-
-      PIMAGE_DOS_HEADER dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(buf);
-      PIMAGE_NT_HEADERS ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(buf + dosHeader->e_lfanew);
-      PIMAGE_FILE_HEADER fileHeader = reinterpret_cast<PIMAGE_FILE_HEADER>(&ntHeader->FileHeader);
-      bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
-      auto RVA2VA = [&](size_t rva) {
-        return (BYTE *)hModule + rva;
-      };
-
-      IMAGE_DATA_DIRECTORY exportEntry;
-      if (isX64)
-      {
-        PIMAGE_OPTIONAL_HEADER64 optHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER64>(&ntHeader->OptionalHeader);
-        exportEntry = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-      }
-      else
-      {
-        PIMAGE_OPTIONAL_HEADER32 optHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER32>(&ntHeader->OptionalHeader);
-        exportEntry = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-      }
-
-      if (exportEntry.Size == NULL)
-      {
-        delete hProcess;
-        delete[] buf;
-        return result;
-      }
-
-      BYTE *src = RVA2VA(exportEntry.VirtualAddress);
-      IMAGE_EXPORT_DIRECTORY exportDes{0};
-      ReadProcessMemory(hProcess, src, &exportDes, sizeof(IMAGE_EXPORT_DIRECTORY), NULL);
-
-      // 以函数名称导出数量,指针列表
-      DWORD *AddressOfNames = (DWORD *)RVA2VA(exportDes.AddressOfNames);             // 函数名称表
-      DWORD *AddressOfFunctions = (DWORD *)RVA2VA(exportDes.AddressOfFunctions);     // 函数地址表
-      WORD *AddressOfNameOrdinals = (WORD *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
-
-      size_t i = 0;
-      DWORD namePtrRVA = 0;
-      while (i < exportDes.NumberOfNames)
-      {
-        char funme[MAX_PATH] = {0};
-        ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(DWORD), NULL);
-        ReadProcessMemory(hProcess, RVA2VA(namePtrRVA), &funme, MAX_PATH, NULL);
-
-        // get function address index
-        WORD AddressOfFunctionsIndex = 0;
-        ReadProcessMemory(hProcess, AddressOfNameOrdinals + i, &AddressOfFunctionsIndex, sizeof(WORD), NULL);
-
-        // get function address
-        DWORD funAddrRVA = 0;
-        ReadProcessMemory(hProcess, AddressOfFunctions + AddressOfFunctionsIndex, &funAddrRVA, sizeof(DWORD), NULL);
-
-        BYTE *funPtr = RVA2VA(funAddrRVA);
-        result[funme] = (uintptr_t)funPtr;
-        //printf("name: %s-%p\n", funme, funPtr);
-        i++;
-      }
-
-      CloseHandle(hProcess);
-      delete[] buf;
-      return result;
-    }
-
-    static BYTE *GetProcAddress(DWORD pid, HMODULE hModule, std::string method)
-    {
-      BYTE *buf = new BYTE[0x1000];
-      HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-      ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
-
-      PIMAGE_DOS_HEADER dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(buf);
-      PIMAGE_NT_HEADERS ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(buf + dosHeader->e_lfanew);
-      PIMAGE_FILE_HEADER fileHeader = reinterpret_cast<PIMAGE_FILE_HEADER>(&ntHeader->FileHeader);
-      bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
-      auto RVA2VA = [&](size_t rva) {
-        return (BYTE *)hModule + rva;
-      };
-
-      IMAGE_DATA_DIRECTORY exportEntry;
-      if (isX64)
-      {
-        PIMAGE_OPTIONAL_HEADER64 optHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER64>(&ntHeader->OptionalHeader);
-        exportEntry = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-      }
-      else
-      {
-        PIMAGE_OPTIONAL_HEADER32 optHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER32>(&ntHeader->OptionalHeader);
-        exportEntry = optHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-      }
-
-      if (exportEntry.Size == NULL)
-      {
-        delete hProcess;
-        delete[] buf;
-        return NULL;
-      }
-
-      BYTE *src = RVA2VA(exportEntry.VirtualAddress);
-      IMAGE_EXPORT_DIRECTORY exportDes{0};
-      ReadProcessMemory(hProcess, src, &exportDes, sizeof(IMAGE_EXPORT_DIRECTORY), NULL);
-
-      // 以函数名称导出数量,指针列表
-      DWORD *AddressOfNames = (DWORD *)RVA2VA(exportDes.AddressOfNames);             // 函数名称表
-      DWORD *AddressOfFunctions = (DWORD *)RVA2VA(exportDes.AddressOfFunctions);     // 函数地址表
-      WORD *AddressOfNameOrdinals = (WORD *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
-
-      size_t i = 0;
-      DWORD namePtrRVA = 0;
-      while (i < exportDes.NumberOfNames)
-      {
-        char funme[MAX_PATH] = {0};
-        ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(DWORD), NULL);
-        ReadProcessMemory(hProcess, RVA2VA(namePtrRVA), &funme, MAX_PATH, NULL);
-
-        if (!_stricmp(funme, method.c_str()))
-        {
-          // get function address index
-          WORD AddressOfFunctionsIndex = 0;
-          ReadProcessMemory(hProcess, AddressOfNameOrdinals + i, &AddressOfFunctionsIndex, sizeof(WORD), NULL);
-
-          // get function address
-          DWORD funAddrRVA = 0;
-          ReadProcessMemory(hProcess, AddressOfFunctions + AddressOfFunctionsIndex, &funAddrRVA, sizeof(DWORD), NULL);
-
-          BYTE *funPtr = RVA2VA(funAddrRVA);
-          return funPtr;
-        }
-        i++;
-      }
-
-      CloseHandle(hProcess);
-      delete[] buf;
-      return NULL;
-    }
+    static std::map<std::string, uintptr_t> exports(DWORD pid, HMODULE hModule);
+    static BYTE *GetProcAddress(DWORD pid, HMODULE hModule, std::string method);
   };
 
   class CEAddressString
@@ -652,11 +488,8 @@ namespace ajanuw
                size_t row,
                size_t col,
                std::string text)
+          : index(index), row(row), col(col), text(text)
       {
-        this->index = index;
-        this->row = row;
-        this->col = col;
-        this->text = text;
       }
 
       void advance(char c)
@@ -704,11 +537,8 @@ namespace ajanuw
           Position *posStart,
           Position *posEnd,
           std::string message)
+          : errorName(errorName), posStart(posStart), posEnd(posEnd), message(message)
       {
-        this->errorName = errorName;
-        this->posStart = posStart;
-        this->posEnd = posEnd;
-        this->message = message;
       }
 
       virtual std::string toString()
@@ -723,22 +553,19 @@ namespace ajanuw
     class IllegalCharError : public CEAddressStringError
     {
     public:
-      IllegalCharError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Illegal Char Error",
-                                                                                                         posStart, posEnd, message) {}
+      IllegalCharError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Illegal Char Error", posStart, posEnd, message) {}
     };
 
     class InvalidSyntaxError : public CEAddressStringError
     {
     public:
-      InvalidSyntaxError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Invalid Syntax Error",
-                                                                                                           posStart, posEnd, message) {}
+      InvalidSyntaxError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Invalid Syntax Error", posStart, posEnd, message) {}
     };
 
     class RuntimeError : public CEAddressStringError
     {
     public:
-      RuntimeError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Runtime Error",
-                                                                                                     posStart, posEnd, message) {}
+      RuntimeError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Runtime Error", posStart, posEnd, message) {}
     };
 
     class Token
@@ -754,22 +581,15 @@ namespace ajanuw
           std::string value,
           Position *posStart,
           Position *posEnd)
+          : type(type), value(value), posStart(posStart), posEnd(posEnd->copy())
       {
-        this->type = type;
-        this->value = value;
-        this->posStart = posStart->copy();
-        this->posEnd = posEnd->copy();
       }
 
       Token(
           std::string type,
           std::string value,
-          Position *posStart)
+          Position *posStart) : type(type), value(value), posStart(posStart->copy()), posEnd(posStart->copy())
       {
-        this->type = type;
-        this->value = value;
-        this->posStart = posStart->copy();
-        this->posEnd = posStart->copy();
         this->posEnd->advance(NULL);
       }
 
@@ -791,10 +611,8 @@ namespace ajanuw
       Position *pos;
       char curChar;
       std::string text;
-      Lexer(std::string text)
+      Lexer(std::string text) : text(text), pos(new Position(-1, 0, -1, text))
       {
-        this->text = text;
-        this->pos = new Position(-1, 0, -1, this->text);
         advance();
       }
 
@@ -843,7 +661,7 @@ namespace ajanuw
             tokens.push_back(makeMulOrPow());
             break;
           case '/':
-            tokens.push_back(new Token(TT_DIV, "", pos));
+            tokens.push_back(new Token(TT_DIV, "/", pos));
             advance();
             break;
           case '(':
@@ -873,7 +691,7 @@ namespace ajanuw
             break;
 
           default:
-            if (!std::regex_search(std::string(1, curChar), std::regex("[^\u4e00-\u9fa5\\w-.]", std::regex::icase)))
+            if (isSymbol(curChar))
             {
               tokens.push_back(makeModuleOrSymbolOrHex());
               break;
@@ -886,10 +704,20 @@ namespace ajanuw
         return tokens;
       }
 
+      bool isHex(char c)
+      {
+        return isHex(std::string(1, c));
+      };
+
       bool isHex(std::string str)
       {
         return !std::regex_search(str, std::regex("[^0-9a-f]", std::regex::icase));
       };
+
+      bool isSymbol(char c)
+      {
+        return !std::regex_search(std::string(1, c), std::regex("[^\u4e00-\u9fa5\\w-.]", std::regex::icase));
+      }
 
     private:
       // 0a or 0x0a
@@ -899,15 +727,12 @@ namespace ajanuw
         str.push_back(curChar);
         Position *posStart = pos->copy();
 
-        auto getHex = [=]() {
-          std::string _str;
-
-          while (curChar != NULL && isHex(std::string(1, curChar)))
+        auto getHex = [=](std::string *s) {
+          while (curChar != NULL && isHex(curChar))
           {
-            _str += curChar;
+            *s += curChar;
             advance();
           }
-          return _str;
         };
 
         advance();
@@ -915,10 +740,10 @@ namespace ajanuw
         {
           str.push_back(curChar);
           advance();
-          str += getHex();
+          getHex(&str);
         }
         else
-          str += getHex();
+          getHex(&str);
 
         return new Token(TT_HEX, str, posStart, pos);
       }
@@ -930,7 +755,7 @@ namespace ajanuw
         std::string type = TT_SYMBOL;
         Position *posStart = pos->copy();
 
-        while (curChar != NULL && !std::regex_search(std::string(1, curChar), std::regex("[^\u4e00-\u9fa5\\w-.]", std::regex::icase)))
+        while (curChar != NULL && isSymbol(curChar))
         {
           if (type == TT_MODULE)
             method += curChar;
@@ -994,7 +819,7 @@ namespace ajanuw
    * ## test
    * 1+'user32.MessageBoxA'-0xabc+MessageBoxA+'0x22'+'MessageboxA'
    */
-      void makeString(std::vector<Token *> *tokens)
+      void makeString(std::vector<ajanuw::CEAddressString::Token *> *tokens)
       {
         std::string str;
         std::string type = TT_MODULE;
@@ -1061,7 +886,7 @@ namespace ajanuw
       Position *posStart;
       Position *posEnd;
       CEAddressStringNode(Position *posStart, Position *posEnd) : posStart(posStart), posEnd(posEnd) {}
-      virtual size_t id() { return NULL; };
+      virtual size_t id() = 0;
     };
 
     static void deleteCEAddressStringNode(CEAddressStringNode *node)
@@ -1695,8 +1520,7 @@ namespace ajanuw
       HookBase(HANDLE hProcess, BYTE *addr, size_t size) : hProcess(hProcess), addr(addr), size(size)
       {
         origenBytes.resize(size);
-        ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
-        bSuccess = true;
+        bSuccess = ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
       }
 
       void enable()
@@ -1731,7 +1555,7 @@ namespace ajanuw
         else
           disable();
       }
-      virtual void enableHook(){};
+      virtual void enableHook() = 0;
     };
     class SetNop : public HookBase
     {
@@ -1739,6 +1563,7 @@ namespace ajanuw
       SetNop(HANDLE hProcess, BYTE *addr, size_t size) : HookBase(hProcess, addr, size)
       {
       }
+      void enableHook(){};
     };
 
     class SetHook : public HookBase

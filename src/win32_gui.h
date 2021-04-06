@@ -19,13 +19,10 @@ class Win32Gui : public Napi::ObjectWrap<Win32Gui>,
                  public ajanuw::Gui::Win32
 {
 private:
-  Napi::FunctionReference _messageCallback;
-  Napi::Env env_;
-
+  Napi::FunctionReference messageCallback;
+  Napi::Env env;
   LRESULT OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-  std::map<HMENU, Win32GuiEvent *> _eventMap;
-
+  std::map<HMENU, Win32GuiEvent *> eventMap;
   ajanuw::Gui::Win32CreateOption getCreateOption(Napi::Object o, int dw, int dh);
   void setEvents(Napi::Object options);
 

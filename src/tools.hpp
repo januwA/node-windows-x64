@@ -7,9 +7,7 @@
 #include <sphelper.h>
 #include "_napi_macro.h"
 
-using namespace Napi;
-
-Number getProcessID(const CallbackInfo &info)
+Napi::Number getProcessID(const Napi::CallbackInfo &info)
 {
   nm_init;
   if (info.Length() != NULL)
@@ -21,12 +19,12 @@ Number getProcessID(const CallbackInfo &info)
     nm_ret(GetCurrentProcessId());
   }
 }
-Number getCurrentProcess(const CallbackInfo &info)
+Napi::Number getCurrentProcess(const Napi::CallbackInfo &info)
 {
   nm_init;
   nm_ret((uintptr_t)GetCurrentProcess());
 }
-Number openProcess(const CallbackInfo &info)
+Napi::Number openProcess(const Napi::CallbackInfo &info)
 {
   nm_init;
   DWORD dwDesiredAccess = nm_is_nullishOr(info[0], nm_dword, PROCESS_ALL_ACCESS);
@@ -34,25 +32,25 @@ Number openProcess(const CallbackInfo &info)
   DWORD dwProcessId = nm_is_nullishOr(info[2], nm_dword, GetCurrentProcessId());
   nm_ret((uintptr_t)OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId));
 }
-Value closeHandle(const CallbackInfo &info)
+Napi::Value closeHandle(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   nm_retb(CloseHandle((HANDLE)nmi_qword(0)));
 }
 
-Value getMousePos(const CallbackInfo &info)
+Napi::Value getMousePos(const Napi::CallbackInfo &info)
 {
   nm_init;
   POINT pos{0};
   if (GetCursorPos(&pos) == NULL)
     nm_retu;
-  auto r = Object::New(env);
+  auto r = Napi::Object::New(env);
   r.Set("x", pos.x);
   r.Set("y", pos.y);
   return r;
 }
 
-Value setMousePos(const CallbackInfo &info)
+Napi::Value setMousePos(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   int x, y;
@@ -69,27 +67,27 @@ Value setMousePos(const CallbackInfo &info)
   nm_retb(SetCursorPos(x, y));
 }
 
-Value isKeyPressed(const CallbackInfo &info)
+Napi::Value isKeyPressed(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   nm_retb(GetKeyState(nmi_int(0)));
 }
 
-Value keyDown(const CallbackInfo &info)
+Napi::Value keyDown(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   keybd_event(nmi_dword(0), 0, 0, 0);
   nm_retu;
 }
 
-Value keyUp(const CallbackInfo &info)
+Napi::Value keyUp(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   keybd_event(nmi_dword(0), 0, KEYEVENTF_KEYUP, 0);
   nm_retu;
 }
 
-Value doKeyPress(const CallbackInfo &info)
+Napi::Value doKeyPress(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   keyDown(info);
@@ -97,7 +95,7 @@ Value doKeyPress(const CallbackInfo &info)
   nm_retu;
 }
 
-Value e_mouse_event(const CallbackInfo &info)
+Napi::Value e_mouse_event(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   DWORD dwFlags = nmi_dword(0);
@@ -123,7 +121,7 @@ Value e_mouse_event(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/dataxchg/using-the-clipboard
-Value readFromClipboard(const CallbackInfo &info)
+Napi::Value readFromClipboard(const Napi::CallbackInfo &info)
 {
   nm_init;
   if (!OpenClipboard(nullptr))
@@ -143,7 +141,7 @@ Value readFromClipboard(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/dataxchg/using-the-clipboard
-Value writeToClipboard(const CallbackInfo &info)
+Napi::Value writeToClipboard(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
@@ -151,7 +149,7 @@ Value writeToClipboard(const CallbackInfo &info)
     nm_retbf;
   EmptyClipboard();
 
-  string output = nmi_str(0);
+  std::string output = nmi_str(0);
   HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, output.size());
   if (hMem == NULL)
     nm_retbf;
@@ -165,31 +163,31 @@ Value writeToClipboard(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value getScreenHeight(const CallbackInfo &info)
+Napi::Value getScreenHeight(const Napi::CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetSystemMetrics(SM_CYSCREEN));
 }
 
-Value getScreenWidth(const CallbackInfo &info)
+Napi::Value getScreenWidth(const Napi::CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetSystemMetrics(SM_CXSCREEN));
 }
 
-Value getWorkAreaWidth(const CallbackInfo &info)
+Napi::Value getWorkAreaWidth(const Napi::CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetSystemMetrics(SM_CXFULLSCREEN));
 }
 
-Value getWorkAreaHeight(const CallbackInfo &info)
+Napi::Value getWorkAreaHeight(const Napi::CallbackInfo &info)
 {
   nm_init;
   nm_ret(GetSystemMetrics(SM_CYFULLSCREEN));
 }
 
-Value getPixel(const CallbackInfo &info)
+Napi::Value getPixel(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   int x = nmi_int(0);
@@ -197,16 +195,16 @@ Value getPixel(const CallbackInfo &info)
 
   HDC dc = GetDC(NULL);
   COLORREF rgbColor = GetPixel(dc, x, y);
-  auto r = Object::New(env);
-  r.Set("r", Number::New(env, GetRValue(rgbColor)));
-  r.Set("g", Number::New(env, GetGValue(rgbColor)));
-  r.Set("b", Number::New(env, GetBValue(rgbColor)));
-  r.Set("rgb", Number::New(env, rgbColor));
+  auto r = Napi::Object::New(env);
+  r.Set("r", Napi::Number::New(env, GetRValue(rgbColor)));
+  r.Set("g", Napi::Number::New(env, GetGValue(rgbColor)));
+  r.Set("b", Napi::Number::New(env, GetBValue(rgbColor)));
+  r.Set("rgb", Napi::Number::New(env, rgbColor));
   ReleaseDC(NULL, dc);
   return r;
 }
 
-Value beep(const CallbackInfo &info)
+Napi::Value beep(const Napi::CallbackInfo &info)
 {
   nm_init;
   DWORD dwFreq = nmi_is_nullishOr(0, nm_dword, 750);
@@ -215,10 +213,10 @@ Value beep(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/previous-versions/office/developer/speech-technologies/jj127460(v=msdn.10)?redirectedfrom=MSDN
-Value speak(const CallbackInfo &info)
+Napi::Value speak(const Napi::CallbackInfo &info)
 {
   nm_init;
-  u16string pwcs = nmi_ustr(0);
+  std::u16string pwcs = nmi_ustr(0);
   DWORD dwFlags = SPF_DEFAULT;
   ULONG *pulStreamNumber = NULL;
 
@@ -233,7 +231,7 @@ Value speak(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value sleep(const CallbackInfo &info)
+Napi::Value sleep(const Napi::CallbackInfo &info)
 {
   nm_init;
   DWORD dwMilliseconds = nmi_dword(0);
@@ -242,11 +240,11 @@ Value sleep(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindowa
-Value findWindow(const CallbackInfo &info)
+Napi::Value findWindow(const Napi::CallbackInfo &info)
 {
   nm_init;
-  string sClassName = nmi_str(0);
-  string sWindowName = nmi_str(1);
+  std::string sClassName = nmi_str(0);
+  std::string sWindowName = nmi_str(1);
 
   BOOL hasLpClassName = info[0].ToBoolean();
   BOOL hasLpWindowName = info[0].ToBoolean();
@@ -258,7 +256,7 @@ Value findWindow(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindow
-Value getWindow(const CallbackInfo &info)
+Napi::Value getWindow(const Napi::CallbackInfo &info)
 {
   nm_init;
   uintptr_t hWnd = nmi_qword(0);
@@ -267,11 +265,11 @@ Value getWindow(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtexta
-Value getWindowCaption(const CallbackInfo &info)
+Napi::Value getWindowCaption(const Napi::CallbackInfo &info)
 {
   nm_init;
   uintptr_t hWnd = nmi_qword(0);
-  u16string usCaption;
+  std::u16string usCaption;
   usCaption.resize(1024);
   if (GetWindowTextW((HWND)hWnd, (LPWSTR)usCaption.data(), usCaption.size()) == NULL)
     nm_retu;
@@ -279,11 +277,11 @@ Value getWindowCaption(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclassname
-Value getWindowClassName(const CallbackInfo &info)
+Napi::Value getWindowClassName(const Napi::CallbackInfo &info)
 {
   nm_init;
   uintptr_t hWnd = nmi_qword(0);
-  u16string sClassName;
+  std::u16string sClassName;
   sClassName.resize(1024);
   if (GetClassNameW((HWND)hWnd, (LPWSTR)sClassName.data(), sClassName.size()) == NULL)
     nm_retu;
@@ -291,7 +289,7 @@ Value getWindowClassName(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowthreadprocessid
-Value getWindowProcessID(const CallbackInfo &info)
+Napi::Value getWindowProcessID(const Napi::CallbackInfo &info)
 {
   nm_init;
   uintptr_t hWnd = nmi_qword(0);
@@ -299,22 +297,22 @@ Value getWindowProcessID(const CallbackInfo &info)
   int lpdwProcessId;
   int id = GetWindowThreadProcessId((HWND)hWnd, (LPDWORD)&lpdwProcessId);
 
-  Object r = Object::New(env);
-  r.Set("pid", Number::New(env, lpdwProcessId));
-  r.Set("tid", Number::New(env, id));
+  Napi::Object r = Napi::Object::New(env);
+  r.Set("pid", Napi::Number::New(env, lpdwProcessId));
+  r.Set("tid", Napi::Number::New(env, id));
 
   return r;
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
-Value getForegroundWindow(const CallbackInfo &info)
+Napi::Value getForegroundWindow(const Napi::CallbackInfo &info)
 {
   nm_init;
   nm_ret((uintptr_t)GetForegroundWindow());
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage
-Value sendMessage(const CallbackInfo &info)
+Napi::Value sendMessage(const Napi::CallbackInfo &info)
 {
   nm_init_cal(4);
   uintptr_t hWnd = nmi_qword(0);
@@ -341,29 +339,29 @@ Value sendMessage(const CallbackInfo &info)
 }
 
 // https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/setlocale-wsetlocale?view=msvc-160&viewFallbackFrom=vs-2019
-Value e_setlocale(const CallbackInfo &info)
+Napi::Value e_setlocale(const Napi::CallbackInfo &info)
 {
   nm_init;
   int _Category = nmi_is_nullishOr(0, nm_dword, LC_ALL);
-  string _Locale = nmi_is_nullishOr(1, nm_str, "chs");
+  std::string _Locale = nmi_is_nullishOr(1, nm_str, "chs");
   nm_rets(ajanuw::SSString::setLocale(_Category, _Locale.c_str()));
 }
 
-Value registerSymbol(const CallbackInfo &info)
+Napi::Value registerSymbol(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   ajanuw::Symbol::registerSymbol(nmi_str(0), (LPVOID)nmi_qword(1));
   nm_retu;
 }
 
-Value unregisterSymbol(const CallbackInfo &info)
+Napi::Value unregisterSymbol(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   ajanuw::Symbol::unregisterSymbol(nmi_str(0));
   nm_retu;
 }
 
-Value getAddress(const CallbackInfo &info)
+Napi::Value getAddress(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   try
@@ -374,7 +372,7 @@ Value getAddress(const CallbackInfo &info)
     }
     else
     {
-      nm_ret((uintptr_t)ajanuw::CEAddressString::getAddress(nmi_str(0), (HANDLE)nmi_dword(1)));
+      nm_ret((uintptr_t)ajanuw::CEAddressString::getAddress(nmi_str(0), (HANDLE)nmi_qword(1)));
     }
   }
   catch (const std::exception &e)
@@ -384,7 +382,7 @@ Value getAddress(const CallbackInfo &info)
   }
 }
 
-Value aa(const CallbackInfo &info)
+Napi::Value aa(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   try
@@ -398,7 +396,7 @@ Value aa(const CallbackInfo &info)
   }
 }
 
-Value asmBytes(const CallbackInfo &info)
+Napi::Value asmBytes(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   try

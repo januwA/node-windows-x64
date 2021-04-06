@@ -8,10 +8,7 @@
 #include "_napi_macro.h"
 #include "ajanuw.h"
 
-using namespace std;
-using namespace Napi;
-
-Value memAlloc(const CallbackInfo &info)
+Napi::Value memAlloc(const Napi::CallbackInfo &info)
 {
   nm_init;
 
@@ -27,7 +24,7 @@ Value memAlloc(const CallbackInfo &info)
   }
   else
   {
-    Object opt = nmi_obj(0);
+    Napi::Object opt = nmi_obj(0);
     dwSize = nm_qword(opt.Get("dwSize"));
     lpAddress = nm_is_nullishOr(opt.Get("lpAddress"), nm_qword, lpAddress);
     flAllocationType = nm_is_nullishOr(opt.Get("flAllocationType"), nm_dword, flAllocationType);
@@ -36,7 +33,7 @@ Value memAlloc(const CallbackInfo &info)
   }
 }
 
-Value memAllocEx(const CallbackInfo &info)
+Napi::Value memAllocEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
@@ -54,7 +51,7 @@ Value memAllocEx(const CallbackInfo &info)
   }
   else
   {
-    Object opt = nmi_obj(0);
+    Napi::Object opt = nmi_obj(0);
     hProcess = (HANDLE)nm_qword(opt.Get("hProcess"));
     dwSize = nm_qword(opt.Get("dwSize"));
     lpAddress = nm_is_nullishOr(opt.Get("lpAddress"), nm_qword, lpAddress);
@@ -64,7 +61,7 @@ Value memAllocEx(const CallbackInfo &info)
   }
 }
 
-Value memFree(const CallbackInfo &info)
+Napi::Value memFree(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
@@ -73,7 +70,7 @@ Value memFree(const CallbackInfo &info)
     nm_retb(ajanuw::Mem::free((LPVOID)nmi_qword(0)));
 }
 
-Value memFreeEx(const CallbackInfo &info)
+Napi::Value memFreeEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(1))
@@ -82,11 +79,11 @@ Value memFreeEx(const CallbackInfo &info)
     nm_retb(ajanuw::Mem::freeEx((HANDLE)nmi_qword(0), (LPVOID)nmi_qword(1)));
 }
 
-Value memWriteStr(const CallbackInfo &info)
+Napi::Value memWriteStr(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
-  String text = info[1].As<String>();
-  Boolean isWideChar = info[2].ToBoolean();
+  Napi::String text = info[1].As<Napi::String>();
+  Napi::Boolean isWideChar = info[2].ToBoolean();
   if (isWideChar)
   {
     if (nmi_is_str(0))
@@ -104,14 +101,14 @@ Value memWriteStr(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteStrEx(const CallbackInfo &info)
+Napi::Value memWriteStrEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
   const uint8_t ADDR_ARG_INDEX = 1;
 
-  String text = info[2].As<String>();
-  Boolean isWideChar = info[3].ToBoolean();
+  Napi::String text = info[2].As<Napi::String>();
+  Napi::Boolean isWideChar = info[3].ToBoolean();
   if (isWideChar)
   {
     if (nmi_is_str(ADDR_ARG_INDEX))
@@ -129,14 +126,14 @@ Value memWriteStrEx(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteBytes(const CallbackInfo &info)
+Napi::Value memWriteBytes(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
-  vector<BYTE> vect_bytes;
+  std::vector<BYTE> vect_bytes;
 
   if (nmi_is_arr(1))
   {
-    Array table = nmi_arr(1);
+    Napi::Array table = nmi_arr(1);
     for (size_t i = 0; i < table.Length(); i++)
       vect_bytes.push_back(nm_dword(table.Get(i)));
   }
@@ -153,13 +150,13 @@ Value memWriteBytes(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteBytesEx(const CallbackInfo &info)
+Napi::Value memWriteBytesEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
 
-  Array table = nmi_arr(2);
-  vector<BYTE> vect_bytes(table.Length());
+  Napi::Array table = nmi_arr(2);
+  std::vector<BYTE> vect_bytes(table.Length());
 
   for (size_t i = 0; i < table.Length(); i++)
     vect_bytes.push_back(nm_dword(table.Get(i)));
@@ -171,7 +168,7 @@ Value memWriteBytesEx(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteWord(const CallbackInfo &info)
+Napi::Value memWriteWord(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
@@ -181,7 +178,7 @@ Value memWriteWord(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteWordEx(const CallbackInfo &info)
+Napi::Value memWriteWordEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -192,7 +189,7 @@ Value memWriteWordEx(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteDword(const CallbackInfo &info)
+Napi::Value memWriteDword(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
@@ -202,7 +199,7 @@ Value memWriteDword(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteDwordEx(const CallbackInfo &info)
+Napi::Value memWriteDwordEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -213,7 +210,7 @@ Value memWriteDwordEx(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteQword(const CallbackInfo &info)
+Napi::Value memWriteQword(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
@@ -223,7 +220,7 @@ Value memWriteQword(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteQwordEx(const CallbackInfo &info)
+Napi::Value memWriteQwordEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -234,7 +231,7 @@ Value memWriteQwordEx(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteFloat(const CallbackInfo &info)
+Napi::Value memWriteFloat(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
@@ -243,7 +240,7 @@ Value memWriteFloat(const CallbackInfo &info)
     ajanuw::Mem::wFloat((void *)nmi_qword(0), nmi_float(1));
   nm_retbt;
 }
-Value memWriteFloatEx(const CallbackInfo &info)
+Napi::Value memWriteFloatEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -254,7 +251,7 @@ Value memWriteFloatEx(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteDouble(const CallbackInfo &info)
+Napi::Value memWriteDouble(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   if (nmi_is_str(0))
@@ -263,7 +260,7 @@ Value memWriteDouble(const CallbackInfo &info)
     ajanuw::Mem::wDouble((void *)nmi_qword(0), nmi_double(1));
   nm_retbt;
 }
-Value memWriteDoubleEx(const CallbackInfo &info)
+Napi::Value memWriteDoubleEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -274,10 +271,10 @@ Value memWriteDoubleEx(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteRegionRoRile(const CallbackInfo &info)
+Napi::Value memWriteRegionRoRile(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
-  string filename = nmi_str(0);
+  std::string filename = nmi_str(0);
   uint32_t size = nmi_qword(2);
 
   if (nmi_is_str(1))
@@ -287,11 +284,11 @@ Value memWriteRegionRoRile(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memWriteRegionToFileEx(const CallbackInfo &info)
+Napi::Value memWriteRegionToFileEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(4);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
-  string filename = nmi_str(1);
+  std::string filename = nmi_str(1);
   uint32_t size = nmi_qword(3);
 
   if (nmi_is_str(2))
@@ -301,11 +298,11 @@ Value memWriteRegionToFileEx(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memReadStr(const CallbackInfo &info)
+Napi::Value memReadStr(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   uintptr_t maxSize = nm_is_nullishOr(info[1], nm_qword, -1);
-  Boolean isWideChar = info[2].ToBoolean();
+  Napi::Boolean isWideChar = info[2].ToBoolean();
 
   if (isWideChar)
     if (nmi_is_str(0))
@@ -318,12 +315,12 @@ Value memReadStr(const CallbackInfo &info)
     nm_rets(ajanuw::Mem::rStr((char *)nmi_qword(0), maxSize));
 }
 
-Value memReadStrEx(const CallbackInfo &info)
+Napi::Value memReadStrEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
   uintptr_t maxSize = nm_is_nullishOr(info[2], nm_qword, -1);
-  Boolean isWideChar = info[3].ToBoolean();
+  Napi::Boolean isWideChar = info[3].ToBoolean();
 
   if (isWideChar)
   {
@@ -341,7 +338,7 @@ Value memReadStrEx(const CallbackInfo &info)
   }
 }
 
-Value memReadBytes(const CallbackInfo &info)
+Napi::Value memReadBytes(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   uintptr_t size = nmi_qword(1);
@@ -352,12 +349,12 @@ Value memReadBytes(const CallbackInfo &info)
   else
     result = ajanuw::Mem::rBytes((void *)nmi_qword(0), size);
 
-  Array table = Array::New(env, size);
+  Napi::Array table = Napi::Array::New(env, size);
   for (int i = 0; i < size; i++)
     table.Set(i, result.at(i));
   return table;
 }
-Value memReadBytesEx(const CallbackInfo &info)
+Napi::Value memReadBytesEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -369,13 +366,13 @@ Value memReadBytesEx(const CallbackInfo &info)
   else
     result = ajanuw::Mem::rBytesEx(hProcess, (void *)nmi_qword(1), size);
 
-  Array table = Array::New(env, size);
+  Napi::Array table = Napi::Array::New(env, size);
   for (int i = 0; i < size; i++)
     table.Set(i, result.at(i));
   return table;
 }
 
-Value memReadWord(const CallbackInfo &info)
+Napi::Value memReadWord(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
@@ -383,7 +380,7 @@ Value memReadWord(const CallbackInfo &info)
   else
     nm_ret(ajanuw::Mem::rWord((void *)nmi_qword(0)));
 }
-Value memReadWordEx(const CallbackInfo &info)
+Napi::Value memReadWordEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -393,7 +390,7 @@ Value memReadWordEx(const CallbackInfo &info)
     nm_ret(ajanuw::Mem::rWordEx(hProcess, (void *)nmi_qword(1)));
 }
 
-Value memReadDword(const CallbackInfo &info)
+Napi::Value memReadDword(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
@@ -401,7 +398,7 @@ Value memReadDword(const CallbackInfo &info)
   else
     nm_ret(ajanuw::Mem::rDword((void *)nmi_qword(0)));
 }
-Value memReadDwordEx(const CallbackInfo &info)
+Napi::Value memReadDwordEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -411,7 +408,7 @@ Value memReadDwordEx(const CallbackInfo &info)
     nm_ret(ajanuw::Mem::rDwordEx(hProcess, (void *)nmi_qword(1)));
 }
 
-Value memReadQword(const CallbackInfo &info)
+Napi::Value memReadQword(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
@@ -419,7 +416,7 @@ Value memReadQword(const CallbackInfo &info)
   else
     nm_ret(ajanuw::Mem::rQword((void *)nmi_qword(0)));
 }
-Value memReadQwordEx(const CallbackInfo &info)
+Napi::Value memReadQwordEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -429,7 +426,7 @@ Value memReadQwordEx(const CallbackInfo &info)
     nm_ret(ajanuw::Mem::rQwordEx(hProcess, (void *)nmi_qword(1)));
 }
 
-Value memReadPointer(const CallbackInfo &info)
+Napi::Value memReadPointer(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
@@ -437,7 +434,7 @@ Value memReadPointer(const CallbackInfo &info)
   else
     nm_ret(ajanuw::Mem::rPointer((void *)nmi_qword(0)));
 }
-Value memReadPointerEx(const CallbackInfo &info)
+Napi::Value memReadPointerEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -447,7 +444,7 @@ Value memReadPointerEx(const CallbackInfo &info)
     nm_ret(ajanuw::Mem::rPointerEx(hProcess, (void *)nmi_qword(1)));
 }
 
-Value memReadFloat(const CallbackInfo &info)
+Napi::Value memReadFloat(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
@@ -455,7 +452,7 @@ Value memReadFloat(const CallbackInfo &info)
   else
     nm_ret(ajanuw::Mem::rFloat((void *)nmi_qword(0)));
 }
-Value memReadFloatEx(const CallbackInfo &info)
+Napi::Value memReadFloatEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -464,7 +461,7 @@ Value memReadFloatEx(const CallbackInfo &info)
   else
     nm_ret(ajanuw::Mem::rFloatEx(hProcess, (void *)nmi_qword(1)));
 }
-Value memReadDouble(const CallbackInfo &info)
+Napi::Value memReadDouble(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
   if (nmi_is_str(0))
@@ -472,7 +469,7 @@ Value memReadDouble(const CallbackInfo &info)
   else
     nm_ret(ajanuw::Mem::rDouble((void *)nmi_qword(0)));
 }
-Value memReadDoubleEx(const CallbackInfo &info)
+Napi::Value memReadDoubleEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
@@ -482,11 +479,11 @@ Value memReadDoubleEx(const CallbackInfo &info)
     nm_ret(ajanuw::Mem::rDoubleEx(hProcess, (void *)nmi_qword(1)));
 }
 
-Value memReadRegionFromFile(const CallbackInfo &info)
+Napi::Value memReadRegionFromFile(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
 
-  string filename = nmi_str(0);
+  std::string filename = nmi_str(0);
   if (nmi_is_str(1))
     ajanuw::Mem::rRegionFromFile(filename, nmi_str(1));
   else
@@ -494,11 +491,11 @@ Value memReadRegionFromFile(const CallbackInfo &info)
   nm_retbt;
 }
 
-Value memReadRegionFromFileEx(const CallbackInfo &info)
+Napi::Value memReadRegionFromFileEx(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
-  string filename = nmi_str(1);
+  std::string filename = nmi_str(1);
   if (nmi_is_str(2))
     ajanuw::Mem::rRegionFromFileEx(hProcess, filename, nmi_str(2));
   else

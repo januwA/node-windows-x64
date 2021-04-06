@@ -62,7 +62,7 @@ void VAManage::SetPosition(const Napi::CallbackInfo &info, const Napi::Value &va
   this->position = nm_qword(value);
 }
 
-VAManage::VAManage(const CallbackInfo &info)
+VAManage::VAManage(const Napi::CallbackInfo &info)
     : ObjectWrap<VAManage>(info),
       ajanuw::Mem::VAManage(
           nm_is_nullishOr(info[0], nm_qword, 1024),
@@ -97,7 +97,7 @@ Napi::Value VAManage::readWord(const Napi::CallbackInfo &info)
   WRITE_TYPE_FORM(Word);
 }
 
-Value VAManage::readDword(const CallbackInfo &info)
+Napi::Value VAManage::readDword(const Napi::CallbackInfo &info)
 {
   WRITE_TYPE_FORM(Dword);
 }
@@ -134,7 +134,7 @@ Napi::Value VAManage::readWstr(const Napi::CallbackInfo &info)
 void VAManage::write(const Napi::CallbackInfo &info)
 {
   nm_init;
-  Array table = nmi_arr(0);
+  Napi::Array table = nmi_arr(0);
   size_t count = nmi_is_nullishOr(1, nm_qword, table.Length());
 
   std::vector<BYTE> vect;
@@ -199,7 +199,7 @@ Napi::Value VAManage::destroy(const Napi::CallbackInfo &info)
   nm_retb(ajanuw::Mem::VAManage::destroy());
 }
 
-Value VAManage::GetPtr(const Napi::CallbackInfo &info)
+Napi::Value VAManage::GetPtr(const Napi::CallbackInfo &info)
 {
   nm_init;
   nm_ret((uintptr_t)ajanuw::Mem::VAManage::ptr());
