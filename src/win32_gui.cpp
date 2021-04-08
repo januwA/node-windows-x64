@@ -12,6 +12,7 @@ Win32GuiEvent::Win32GuiEvent(Napi::Object o)
 
 LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
   const std::initializer_list<napi_value> args = {
       Napi::Number::New(env, (uintptr_t)hWnd),
       Napi::Number::New(env, (uintptr_t)message),
@@ -49,6 +50,7 @@ Napi::Object Win32Gui::Init(Napi::Env env, Napi::Object exports)
           StaticMethod<&Win32Gui::getCheck>("getCheck"),
           StaticMethod<&Win32Gui::rgb>("rgb"),
 
+          InstanceAccessor<&Win32Gui::GetHwnd, &Win32Gui::SetX>("hwnd"),
           InstanceAccessor<&Win32Gui::GetX, &Win32Gui::SetX>("x"),
           InstanceAccessor<&Win32Gui::GetY, &Win32Gui::SetY>("y"),
           InstanceAccessor<&Win32Gui::GetWidth, &Win32Gui::SetWidth>("width"),
@@ -118,6 +120,12 @@ Napi::Value Win32Gui::rgb(const Napi::CallbackInfo &info)
 {
   nm_init_cal(3);
   nm_ret(ajanuw::Gui::Win32::rgb(nmi_dword(0), nmi_dword(1), nmi_dword(2)));
+}
+
+Napi::Value Win32Gui::GetHwnd(const Napi::CallbackInfo &info)
+{
+  nm_init;
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::hWnd);
 }
 
 Napi::Value Win32Gui::GetX(const Napi::CallbackInfo &info)

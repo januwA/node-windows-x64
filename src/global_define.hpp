@@ -3,7 +3,8 @@
 #include "_napi_macro.h"
 #include <Windows.h>
 
-Napi::Value globalDefine(const Napi::CallbackInfo &info)
+using namespace Napi;
+Value globalDefine(const CallbackInfo &info)
 {
   nm_init;
   Napi::Object g;
@@ -13,6 +14,11 @@ Napi::Value globalDefine(const Napi::CallbackInfo &info)
     g = env.Global();
 
   
+  /*
+   * Shell support
+   */
+  g.Set("HSHELL_WINDOWCREATED", 1);g.Set("HSHELL_WINDOWDESTROYED", 2);g.Set("HSHELL_ACTIVATESHELLWINDOW", 3);g.Set("HSHELL_WINDOWACTIVATED", 4);g.Set("HSHELL_GETMINRECT", 5);g.Set("HSHELL_REDRAW", 6);g.Set("HSHELL_TASKMAN", 7);g.Set("HSHELL_LANGUAGE", 8);g.Set("HSHELL_SYSMENU", 9);g.Set("HSHELL_ENDTASK", 10);g.Set("HSHELL_ACCESSIBILITYSTATE", 11);g.Set("HSHELL_APPCOMMAND", 12);g.Set("HSHELL_WINDOWREPLACED", 13);g.Set("HSHELL_WINDOWREPLACING", 14);g.Set("HSHELL_MONITORCHANGED", 16);g.Set("HSHELL_HIGHBIT", 0x8000);g.Set("HSHELL_FLASH", (HSHELL_REDRAW|HSHELL_HIGHBIT));g.Set("HSHELL_RUDEAPPACTIVATED", (HSHELL_WINDOWACTIVATED|HSHELL_HIGHBIT));
+
   /*
    * Window Messages
    */

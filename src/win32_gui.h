@@ -35,6 +35,8 @@ public:
   Win32Gui(const Napi::CallbackInfo &info);
   inline ~Win32Gui(){};
 
+  Napi::Value GetHwnd(const Napi::CallbackInfo &info);
+
   Napi::Value GetX(const Napi::CallbackInfo &info);
   void SetX(const Napi::CallbackInfo &info, const Napi::Value &value);
 

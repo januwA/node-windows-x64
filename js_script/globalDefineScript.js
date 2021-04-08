@@ -52,6 +52,8 @@ const getExp = (key) => new RegExp(`#define\\s+(${key})\\s+([^#]+)`, "g");
 
 const WinUser = fs.readFileSync(win10SDK_winuser).toString("utf-8");
 
+toStr(WinUser, getExp("HSHELL_[A-Z0-9_]+"), `Shell support`);
+
 toStr(WinUser, getExp("WM_[A-Z0-9_]+"), `Window Messages`);
 toStr(WinUser, getExp("WS_[A-Z0-9_]+"), `Window Styles`);
 toStr(WinUser, getExp("CS_[A-Z0-9_]+"), `Class styles`);

@@ -1,29 +1,42 @@
 import { node_windows_x64 as nw } from "../";
 nw.globalDefine();
 
-const className = "Node Win32 Gui";
-const windowName = "window caption";
-
-const wui = new nw.Win32Gui(className, windowName, {
-  x: 100,
-  y: 100,
-  width: 600,
-  height: 400,
-  style: WS_OVERLAPPEDWINDOW,
-});
+let WM_ShellHook = 0;
+const wui = new nw.Win32Gui("Node Win32 Gui", "window caption");
 
 if (wui.initRegisterClass() && wui.initWindow()) {
+  if (nw["user32.RegisterShellHookWindow"](wui.hwnd)) {
+    WM_ShellHook = nw["user32.RegisterWindowMessageA"]("SHELLHOOK");
+    if (WM_ShellHook === 0) {
+      console.log("RegisterWindowMessageA fail.");
+    }
+  } else {
+    console.log("RegisterShellHookWindow fail.");
+  }
 
-  // create a button
-  wui.button({
-    id: 1,
-    windowName: "click me",
-    events: {
-      click() {
-        console.log('button clicked.');
-      },
-    },
+  wui.messageLoop((hWnd, message, wParam, lParam) => {
+    switch (message) {
+      case WM_ShellHook:
+        switch (wParam) {
+          case HSHELL_WINDOWCREATED:
+            console.log("WINDOWCREATED");
+            break;
+
+          case HSHELL_WINDOWDESTROYED:
+            console.log("WINDOWDESTROYED");
+            break;
+
+          case HSHELL_ACTIVATESHELLWINDOW:
+            console.log("ACTIVATESHELLWINDOW");
+            break;
+
+          default:
+            break;
+        }
+        break;
+
+      default:
+        break;
+    }
   });
-
-  wui.messageLoop((hWnd, message, wParam, lParam) => {});
 }
