@@ -1570,7 +1570,7 @@ LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE h
     Interpreter interpreter{hProcess};
     LPVOID addr = (LPVOID)interpreter.visit(node);
 
-    deleteCEAddressStringNode(node);
+    delete node;
 
     return addr;
   }

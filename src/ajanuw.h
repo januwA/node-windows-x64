@@ -727,7 +727,8 @@ namespace ajanuw
         str.push_back(curChar);
         Position *posStart = pos->copy();
 
-        auto getHex = [=](std::string *s) {
+        auto getHex = [=](std::string *s)
+        {
           while (curChar != NULL && isHex(curChar))
           {
             *s += curChar;
@@ -871,65 +872,27 @@ namespace ajanuw
       }
     };
 
-#define CESNT_MODULE 1
-#define CESNT_SYMBOL 2
-#define CESNT_HEX 3
-#define CESNT_MMETHOD 4
-#define CESNT_METHOD 5
-#define CESNT_UNARY_OP 6
-#define CESNT_BIN_OP 7
-#define CESNT_POINTER 8
-
     class CEAddressStringNode
     {
     public:
+      enum class NT
+      {
+        MODULE,
+        SYMBOL,
+        HEX,
+        MMETHOD,
+        METHOD,
+        UNARY,
+        BINARY,
+        POINTER
+      };
+
       Position *posStart;
       Position *posEnd;
       CEAddressStringNode(Position *posStart, Position *posEnd) : posStart(posStart), posEnd(posEnd) {}
-      virtual size_t id() = 0;
+      virtual ~CEAddressStringNode() {}
+      virtual NT id() = 0;
     };
-
-    static void deleteCEAddressStringNode(CEAddressStringNode *node)
-    {
-      switch (node->id())
-      {
-      case CESNT_HEX:
-        delete reinterpret_cast<HexNode *>(node);
-        break;
-
-      case CESNT_SYMBOL:
-        delete reinterpret_cast<SymbolNode *>(node);
-        break;
-
-      case CESNT_MODULE:
-        delete reinterpret_cast<ModuleNode *>(node);
-        break;
-
-      case CESNT_MMETHOD:
-        delete reinterpret_cast<MMethodNode *>(node);
-        break;
-
-      case CESNT_METHOD:
-        delete reinterpret_cast<MethodNode *>(node);
-        break;
-
-      case CESNT_UNARY_OP:
-        delete reinterpret_cast<UnaryOpNode *>(node);
-        break;
-
-      case CESNT_POINTER:
-        delete reinterpret_cast<PointerNode *>(node);
-        break;
-
-      case CESNT_BIN_OP:
-        delete reinterpret_cast<BinOpNode *>(node);
-        break;
-
-      default:
-        delete node;
-        break;
-      }
-    }
 
     class ModuleNode : public CEAddressStringNode
     {
@@ -942,9 +905,9 @@ namespace ajanuw
         delete token;
       }
 
-      size_t id()
+      NT id()
       {
-        return CESNT_MODULE;
+        return NT::MODULE;
       }
     };
 
@@ -959,9 +922,9 @@ namespace ajanuw
       {
         delete token;
       }
-      size_t id()
+      NT id()
       {
-        return CESNT_SYMBOL;
+        return NT::SYMBOL;
       }
     };
 
@@ -975,9 +938,9 @@ namespace ajanuw
       {
         delete token;
       }
-      size_t id()
+      NT id()
       {
-        return CESNT_HEX;
+        return NT::HEX;
       }
     };
 
@@ -991,9 +954,9 @@ namespace ajanuw
       {
         delete token;
       }
-      size_t id()
+      NT id()
       {
-        return CESNT_MMETHOD;
+        return NT::MMETHOD;
       }
     };
 
@@ -1008,9 +971,9 @@ namespace ajanuw
         delete token;
       }
 
-      size_t id()
+      NT id()
       {
-        return CESNT_METHOD;
+        return NT::METHOD;
       }
     };
 
@@ -1025,12 +988,12 @@ namespace ajanuw
       ~UnaryOpNode()
       {
         delete token;
-        deleteCEAddressStringNode(node);
+        delete node;
       }
 
-      size_t id()
+      NT id()
       {
-        return CESNT_UNARY_OP;
+        return NT::UNARY;
       }
     };
 
@@ -1047,14 +1010,14 @@ namespace ajanuw
           : CEAddressStringNode(leftNode->posStart, rightNode->posEnd), leftNode(leftNode), token(token), rightNode(rightNode) {}
       ~BinOpNode()
       {
-        deleteCEAddressStringNode(leftNode);
+        delete leftNode;
         delete token;
-        deleteCEAddressStringNode(rightNode);
+        delete rightNode;
       }
 
-      size_t id()
+      NT id()
       {
-        return CESNT_BIN_OP;
+        return NT::BINARY;
       }
     };
 
@@ -1066,11 +1029,11 @@ namespace ajanuw
           : CEAddressStringNode(node->posStart, node->posEnd), node(node) {}
       ~PointerNode()
       {
-        deleteCEAddressStringNode(node);
+        delete node;
       }
-      size_t id()
+      NT id()
       {
-        return CESNT_POINTER;
+        return NT::POINTER;
       }
     };
 
@@ -1276,13 +1239,13 @@ namespace ajanuw
       {
         switch (node->id())
         {
-        case CESNT_HEX:
+        case CEAddressStringNode::NT::HEX:
           return std::stoull(reinterpret_cast<HexNode *>(node)->token->value, nullptr, 16);
 
-        case CESNT_SYMBOL:
+        case CEAddressStringNode::NT::SYMBOL:
           return (uintptr_t)ajanuw::Symbol::get(reinterpret_cast<SymbolNode *>(node)->token->value);
 
-        case CESNT_MODULE:
+        case CEAddressStringNode::NT::MODULE:
         {
           HMODULE hModule = NULL;
           std::string moduleName = reinterpret_cast<ModuleNode *>(node)->token->value;
@@ -1310,7 +1273,7 @@ namespace ajanuw
           return (uintptr_t)hModule;
         }
 
-        case CESNT_MMETHOD:
+        case CEAddressStringNode::NT::MMETHOD:
         {
           std::vector<std::string> r = ajanuw::SSString::split(reinterpret_cast<MMethodNode *>(node)->token->value, std::regex("\\."));
           std::string mod = r.at(0);
@@ -1361,7 +1324,7 @@ namespace ajanuw
           return (uintptr_t)hMethod;
         }
 
-        case CESNT_METHOD:
+        case CEAddressStringNode::NT::METHOD:
         {
           std::string met = reinterpret_cast<MethodNode *>(node)->token->value;
           uintptr_t r = NULL;
@@ -1403,7 +1366,7 @@ namespace ajanuw
           return r;
         }
 
-        case CESNT_UNARY_OP:
+        case CEAddressStringNode::NT::UNARY:
         {
           uintptr_t value = visit(reinterpret_cast<UnaryOpNode *>(node)->node);
           if (reinterpret_cast<UnaryOpNode *>(node)->token->type == TT_MINUS)
@@ -1413,7 +1376,7 @@ namespace ajanuw
           return value;
         }
 
-        case CESNT_POINTER:
+        case CEAddressStringNode::NT::POINTER:
         {
           uintptr_t address = visit(reinterpret_cast<PointerNode *>(node)->node);
           if (hProcess == NULL)
@@ -1439,7 +1402,7 @@ namespace ajanuw
           }
         }
 
-        case CESNT_BIN_OP:
+        case CEAddressStringNode::NT::BINARY:
         {
           uintptr_t left = visit(reinterpret_cast<BinOpNode *>(node)->leftNode);
           uintptr_t right = visit(reinterpret_cast<BinOpNode *>(node)->rightNode);

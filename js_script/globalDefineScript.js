@@ -7,12 +7,10 @@
 const fs = require("fs");
 const path = require("path");
 
-const win10SDK_winuser =
-  "D:\\Windows Kits\\10\\Include\\10.0.18362.0\\um\\WinUser.h";
-const win10SDK_wingdi =
-  "D:\\Windows Kits\\10\\Include\\10.0.18362.0\\um\\wingdi.h";
-const win10SDK_wingnt =
-  "D:\\Windows Kits\\10\\Include\\10.0.18362.0\\um\\winnt.h";
+const wk = "D:\\Windows Kits\\10\\Include\\10.0.18362.0\\um";
+const win10SDK_winuser = path.join(wk, "WinUser.h");
+const win10SDK_wingdi = path.join(wk, "wingdi.h");
+const win10SDK_wingnt = path.join(wk, "winnt.h");
 
 let props = ``;
 let typescriptDeclarationFile = "";
@@ -120,8 +118,7 @@ fs.writeFileSync(
 #include "_napi_macro.h"
 #include <Windows.h>
 
-using namespace Napi;
-Value globalDefine(const CallbackInfo &info)
+Napi::Value globalDefine(const Napi::CallbackInfo &info)
 {
   nm_init;
   Napi::Object g;

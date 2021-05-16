@@ -3,7 +3,6 @@
 #include "ajanuw.h"
 #include "_napi_macro.h"
 #include <asmjit/asmjit.h>
-#include <asmtk/asmtk.h>
 
 extern "C" typedef uintptr_t (*asm_fun_t)();
 
@@ -59,7 +58,6 @@ extern "C" uintptr_t cccccc(std::vector<CallbackContext *> *vect_cc, void *index
 Napi::Value invoke(const Napi::CallbackInfo &info)
 {
   using namespace asmjit;
-  using namespace asmtk;
   using namespace asmjit::x86;
 
   nm_init_cal(1);
@@ -104,10 +102,10 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     nm_retu;
   }
 
-  // args: number | pointer |std::string | function
+  // args: number | pointer | string | function
   Napi::Array args = nm_is_nullishOr(o.Get("args"), nm_arr, Napi::Array::New(env));
 
-  // savestd::strings
+  // save strings
   BYTE *strMem = NULL;
   size_t strSizeCount = getStringsCount(args, bWideChar);
   size_t strMemOffset = 0;
@@ -116,7 +114,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     strMem = (BYTE *)ajanuw::Mem::alloc(strSizeCount);
     if (strMem == NULL)
     {
-      nm_jserr("VirtualAllocstd::stringMem error.");
+      nm_jserr("VirtualAlloc stringMem error.");
       nm_retu;
     }
     ZeroMemory(strMem, strSizeCount);
