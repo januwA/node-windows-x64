@@ -8,9 +8,9 @@ extern "C" typedef uintptr_t (*asm_fun_t)();
 
 struct CallbackContext
 {
-  CallbackContext(Napi::Env env_, Napi::Function cb_, LPVOID address_) : cb(cb_),
-                                                                         env(env_),
-                                                                         address(address_){};
+  CallbackContext(Napi::Env env, Napi::Function cb, LPVOID address) : cb(cb),
+                                                                      env(env),
+                                                                      address(address){};
   Napi::Function cb;
   Napi::Env env;
   LPVOID address;
@@ -67,14 +67,14 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
   BYTE *lpMethod = nullptr;
   bool bWideChar = false;
 
-  if (nm_get_is("method", num))
+  if (nm_getis("method", num))
   {
-    bWideChar = nm_get_to("isWideChar", bool);
-    lpMethod = reinterpret_cast<BYTE *>(nm_get_to("method", qword));
+    bWideChar = nm_getto("isWideChar", bool);
+    lpMethod = reinterpret_cast<BYTE *>(nm_getto("method", qword));
   }
   else
   {
-    std::string sMethod = nm_get_to("method", str);
+    std::string sMethod = nm_getto("method", str);
     bWideChar = ajanuw::SSString::endWith(sMethod, "W");
     Napi::Value js_isWideChar = o.Get("isWideChar");
     if (!nm_is_nullish(js_isWideChar))
@@ -82,7 +82,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
 
     if (o.Has("module"))
     {
-      std::string sModule = nm_get_to("module", str);
+      std::string sModule = nm_getto("module", str);
       hModule = LoadLibraryA(sModule.c_str());
       if (hModule == NULL)
       {

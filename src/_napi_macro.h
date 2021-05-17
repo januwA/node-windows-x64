@@ -76,5 +76,11 @@ for (size_t i = 0; i < form.size(); i++)\
 to.Set(i, form[i]); \
 }\
 
-#define nm_get_to(p, type) nm_ ##type(o.Get(p))
-#define nm_get_is(p, type) nm_is_ ##type(o.Get(p))
+#define nm_getto(p, type) nm_ ##type(o.Get(p))
+#define nm_getis(p, type) nm_is_ ##type(o.Get(p))
+
+
+
+// class method
+#define nm_method(name) Napi::Value name(const Napi::CallbackInfo &info)
+#define nm_method_set(name) void name(const Napi::CallbackInfo &info, const Napi::Value &value)

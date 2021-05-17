@@ -28,42 +28,42 @@ private:
 
 public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
-  static Napi::Value getHLMessage(const Napi::CallbackInfo &info);
-  static Napi::Value getCheck(const Napi::CallbackInfo &info);
-  static Napi::Value rgb(const Napi::CallbackInfo &info);
 
   Win32Gui(const Napi::CallbackInfo &info);
   inline ~Win32Gui(){};
 
-  Napi::Value GetHwnd(const Napi::CallbackInfo &info);
+  static nm_method(getHLMessage);
+  static nm_method(getCheck);
+  static nm_method(rgb);
 
-  Napi::Value GetX(const Napi::CallbackInfo &info);
-  void SetX(const Napi::CallbackInfo &info, const Napi::Value &value);
+  nm_method(GetHwnd);
 
-  Napi::Value GetY(const Napi::CallbackInfo &info);
-  void SetY(const Napi::CallbackInfo &info, const Napi::Value &value);
+  nm_method(GetX);
+  nm_method_set(SetX);
 
-  Napi::Value GetWidth(const Napi::CallbackInfo &info);
-  void SetWidth(const Napi::CallbackInfo &info, const Napi::Value &value);
+  nm_method(GetY);
+  nm_method_set(SetY);
 
-  Napi::Value GetHeight(const Napi::CallbackInfo &info);
-  void SetHeight(const Napi::CallbackInfo &info, const Napi::Value &value);
+  nm_method(GetWidth);
+  nm_method_set(SetWidth);
 
-  Napi::Value GetStyle(const Napi::CallbackInfo &info);
-  void SetStyle(const Napi::CallbackInfo &info, const Napi::Value &value);
+  nm_method(GetHeight);
+  nm_method_set(SetHeight);
 
-  Napi::Value initRegisterClass(const Napi::CallbackInfo &info);
-  Napi::Value initWindow(const Napi::CallbackInfo &info);
-  Napi::Value messageLoop(const Napi::CallbackInfo &info);
+  nm_method(GetStyle);
+  nm_method_set(SetStyle);
 
-  Napi::Value createWindow(const Napi::CallbackInfo &info);
-  Napi::Value button(const Napi::CallbackInfo &info);
-  Napi::Value checkbox(const Napi::CallbackInfo &info);
-  Napi::Value radio(const Napi::CallbackInfo &info);
-  Napi::Value groupbox(const Napi::CallbackInfo &info);
-  Napi::Value text(const Napi::CallbackInfo &info);
-  Napi::Value input(const Napi::CallbackInfo &info);
-  Napi::Value textarea(const Napi::CallbackInfo &info);
-  Napi::Value listbox(const Napi::CallbackInfo &info);
-  Napi::Value select(const Napi::CallbackInfo &info);
+  nm_method(initRegisterClass);
+  nm_method(initWindow);
+  nm_method(messageLoop);
+  nm_method(createWindow);
+  nm_method(button);
+  nm_method(checkbox);
+  nm_method(radio);
+  nm_method(groupbox);
+  nm_method(text);
+  nm_method(input);
+  nm_method(textarea);
+  nm_method(listbox);
+  nm_method(select);
 };

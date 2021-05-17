@@ -2,7 +2,7 @@
 
 #define SET_EVENT(type) \
   if (o.Has(#type))     \
-  ##type = nm_get_to(#type, funref)
+  ##type = nm_getto(#type, funref)
 
 Win32GuiEvent::Win32GuiEvent(Napi::Object o)
 {
@@ -90,15 +90,15 @@ Win32Gui::Win32Gui(const Napi::CallbackInfo &info)
   {
     Napi::Object o = nmi_obj(2);
     if (o.Has("x"))
-      ajanuw::Gui::Win32::x = nm_get_to("x", int);
+      ajanuw::Gui::Win32::x = nm_getto("x", int);
     if (o.Has("y"))
-      ajanuw::Gui::Win32::y = nm_get_to("y", int);
+      ajanuw::Gui::Win32::y = nm_getto("y", int);
     if (o.Has("width"))
-      ajanuw::Gui::Win32::width = nm_get_to("width", int);
+      ajanuw::Gui::Win32::width = nm_getto("width", int);
     if (o.Has("height"))
-      ajanuw::Gui::Win32::height = nm_get_to("height", int);
+      ajanuw::Gui::Win32::height = nm_getto("height", int);
     if (o.Has("style"))
-      ajanuw::Gui::Win32::style = nm_get_to("style", dword);
+      ajanuw::Gui::Win32::style = nm_getto("style", dword);
   }
 }
 
@@ -333,8 +333,6 @@ void Win32Gui::setEvents(Napi::Object options)
   if (options.Has("events"))
   {
     HMENU id = (HMENU)nm_qword(options.Get("id"));
-    eventMap.insert(std::pair<HMENU, Win32GuiEvent *>(
-        id,
-        new Win32GuiEvent{nm_obj(options.Get("events"))}));
+    eventMap[id] = new Win32GuiEvent{nm_obj(options.Get("events"))};
   }
 }

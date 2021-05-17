@@ -20,7 +20,8 @@ std::string ajanuw::SSString::tolower(std::string s)
                  // static_cast<int(*)(int)>(std::tolower)         // wrong
                  // [](int c){ return std::tolower(c); }           // wrong
                  // [](char c){ return std::tolower(c); }          // wrong
-                 [](unsigned char c) { return std::tolower(c); } // correct
+                 [](unsigned char c)
+                 { return std::tolower(c); } // correct
   );
   return s;
 }
@@ -31,7 +32,8 @@ std::string ajanuw::SSString::toupper(std::string s)
                  // static_cast<int(*)(int)>(std::tolower)         // wrong
                  // [](int c){ return std::tolower(c); }           // wrong
                  // [](char c){ return std::tolower(c); }          // wrong
-                 [](unsigned char c) { return std::toupper(c); } // correct
+                 [](unsigned char c)
+                 { return std::toupper(c); } // correct
   );
   return s;
 }
@@ -1553,18 +1555,19 @@ LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE h
 {
   try
   {
-
     Lexer lexer = ajanuw::CEAddressString::Lexer(CEAddressString);
-    std::vector<Token *> tokens = lexer.makeTokens();
+    std::vector<Token *> tokens;
+    lexer.makeTokens(&tokens);
 
-    /*
-     for (auto token : tokens)
-       printf("%s ", token->toString().c_str());
-     printf("\n");
+/*
+    for (auto token : tokens)
+      printf("%s ", token->toString().c_str());
+    printf("\n");
+    return 0;
 */
 
-    Parser parser = Parser(tokens);
-    CEAddressStringNode *node = parser.parse();
+    Parser parser = Parser(&tokens);
+    BaseNode *node = parser.parse();
     // printf("node id: %d\n", node->id());
 
     Interpreter interpreter{hProcess};
@@ -1682,7 +1685,8 @@ std::map<std::string, uintptr_t> ajanuw::PE::exports(DWORD pid, HMODULE hModule)
   PIMAGE_NT_HEADERS ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(buf + dosHeader->e_lfanew);
   PIMAGE_FILE_HEADER fileHeader = reinterpret_cast<PIMAGE_FILE_HEADER>(&ntHeader->FileHeader);
   bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
-  auto RVA2VA = [&](size_t rva) {
+  auto RVA2VA = [&](size_t rva)
+  {
     return (BYTE *)hModule + rva;
   };
 
@@ -1752,7 +1756,8 @@ BYTE *ajanuw::PE::GetProcAddress(DWORD pid, HMODULE hModule, std::string method)
   PIMAGE_NT_HEADERS ntHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(buf + dosHeader->e_lfanew);
   PIMAGE_FILE_HEADER fileHeader = reinterpret_cast<PIMAGE_FILE_HEADER>(&ntHeader->FileHeader);
   bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
-  auto RVA2VA = [&](size_t rva) {
+  auto RVA2VA = [&](size_t rva)
+  {
     return (BYTE *)hModule + rva;
   };
 
@@ -1770,7 +1775,7 @@ BYTE *ajanuw::PE::GetProcAddress(DWORD pid, HMODULE hModule, std::string method)
 
   if (exportEntry.Size == NULL)
   {
-    delete hProcess;
+    CloseHandle(hProcess);
     delete[] buf;
     return result;
   }

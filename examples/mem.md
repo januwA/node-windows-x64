@@ -126,4 +126,15 @@ console.log(nw.readStr("[newmem+8]")); // node-windows-x64
 nw.free(strMem);
 nw.free("newmem");
 nw.unregisterSymbol("newmem");
+
+
+nw.registerSymbol("中文", 2);
+nw.getAddress(` "中文" + 2  `); // 4
+nw.unregisterSymbol("中文");
+
+
+nw.getAddress(` 1 + 2 * 3 `);  // 7
+nw.getAddress(` (1 + 2) * 3 `);  // 9
+
+nw.getAddress(` "2 * 2" + 1  `) // 5
 ```

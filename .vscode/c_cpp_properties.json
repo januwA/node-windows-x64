@@ -13,7 +13,7 @@
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.18362.0",
-            "compilerPath": "D:/dev/tool/vs2019/IDE/VC/Tools/MSVC/14.28.29333/bin/Hostx64/x64/cl.exe",
+            "compilerPath": "D:/dev/tool/vs2019/IDE/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64/cl.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64"

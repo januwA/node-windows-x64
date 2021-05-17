@@ -67,7 +67,10 @@
     "xtree": "cpp",
     "bit": "cpp",
     "clocale": "cpp",
-    "stop_token": "cpp"
+    "stop_token": "cpp",
+    "cerrno": "cpp",
+    "cfloat": "cpp",
+    "climits": "cpp"
   },
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "python.formatting.provider": "yapf"

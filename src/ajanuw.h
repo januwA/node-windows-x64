@@ -417,8 +417,8 @@ namespace ajanuw
     {
     private:
     public:
-      std::string script_;
-      AAScript(std::string script) : script_(script){};
+      std::string script;
+      AAScript(std::string script) : script(script){};
       ~AAScript(){};
 
       // auto asm
@@ -459,21 +459,24 @@ namespace ajanuw
     static LPVOID getAddress(std::string address, HANDLE hProcess = NULL);
 
   private:
-#define TT_HEX "HEX"
-#define TT_MODULE "MODULE"   // a.exe or "a b.exe" or 'a b.exe'
-#define TT_MMETHOD "MMETHOD" // user32.MessageBoxA, 指定了模块的方法地址
-#define TT_METHOD "METHOD"   // MessageBoxA
-#define TT_SYMBOL "SYMBOL"   // s1 or s2
-#define TT_PLUS "PLUS"       // +
-#define TT_MINUS "MINUS"     // -
-#define TT_MUL "MUL"         // *
-#define TT_DIV "DIV"         // /
-#define TT_POW "POW"         // **
-#define TT_LPAREN "LPAREN"   // (
-#define TT_RPAREN "RPAREN"   // )
-#define TT_LSQUARE "LSQUARE" // [
-#define TT_RSQUARE "RSQUARE" // ]
-#define TT_EOF "EOF"
+    enum class TT
+    {
+      HEX,
+      MODULE,      // a.exe or "a b.exe" or 'a b.exe' or "a-b.exe"
+      MMETHOD,     // user32.MessageBoxA, 指定了模块的方法地址
+      METHOD,      // MessageBoxA
+      SYMBOL,      // s1 or s2
+      PLUS,        // +
+      MINUS,       // -
+      MUL,         // *
+      DIV,         // /
+      POW,         // **
+      LPAREN,      // (
+      RPAREN,      // )
+      LSQUARE,     // [
+      RSQUARE,     // ]
+      END_OF_FILE, // \0
+    };
 
     class Position
     {
@@ -571,13 +574,13 @@ namespace ajanuw
     class Token
     {
     public:
-      std::string type;
+      TT type;
       std::string value;
       Position *posStart;
       Position *posEnd;
 
       Token(
-          std::string type,
+          TT type,
           std::string value,
           Position *posStart,
           Position *posEnd)
@@ -586,7 +589,7 @@ namespace ajanuw
       }
 
       Token(
-          std::string type,
+          TT type,
           std::string value,
           Position *posStart) : type(type), value(value), posStart(posStart->copy()), posEnd(posStart->copy())
       {
@@ -601,7 +604,7 @@ namespace ajanuw
 
       std::string toString()
       {
-        return value.empty() ? type : type + ":" + value;
+        return value + ":" + std::to_string((int)type);
       }
     };
 
@@ -609,7 +612,7 @@ namespace ajanuw
     {
     public:
       Position *pos;
-      char curChar;
+      char c;
       std::string text;
       Lexer(std::string text) : text(text), pos(new Position(-1, 0, -1, text))
       {
@@ -623,85 +626,82 @@ namespace ajanuw
 
       void advance()
       {
-        pos->advance(curChar);
-        if (pos->index < text.size())
-        {
-          curChar = text.at(pos->index);
-        }
-        else
-        {
-          curChar = NULL;
-        }
+        pos->advance(c);
+        c = pos->index < text.size() ? text.at(pos->index) : '\0';
       }
 
-      std::vector<Token *> makeTokens()
+      void makeTokens(std::vector<Token *> *tokens)
       {
-        std::vector<Token *> tokens;
-
-        while (curChar != NULL)
+        while (c != '\0')
         {
-          switch (curChar)
+          switch (c)
           {
           case ' ':
           case '\t':
+          case '\r':
+          case '\n':
             advance();
             break;
 
           case '+':
-            tokens.push_back(new Token(TT_PLUS, "+", pos));
+            tokens->push_back(new Token(TT::PLUS, "+", pos));
             advance();
             break;
 
           case '-':
-            tokens.push_back(new Token(TT_MINUS, "-", pos));
+            tokens->push_back(new Token(TT::MINUS, "-", pos));
             advance();
             break;
 
           case '*':
-            tokens.push_back(makeMulOrPow());
+            tokens->push_back(makeMulOrPow());
             break;
+
           case '/':
-            tokens.push_back(new Token(TT_DIV, "/", pos));
+            tokens->push_back(new Token(TT::DIV, "/", pos));
             advance();
             break;
+
           case '(':
-            tokens.push_back(new Token(TT_LPAREN, "(", pos));
+            tokens->push_back(new Token(TT::LPAREN, "(", pos));
             advance();
             break;
+
           case ')':
-            tokens.push_back(new Token(TT_RPAREN, ")", pos));
+            tokens->push_back(new Token(TT::RPAREN, ")", pos));
             advance();
             break;
+
           case '[':
-            tokens.push_back(new Token(TT_LSQUARE, "[", pos));
+            tokens->push_back(new Token(TT::LSQUARE, "[", pos));
             advance();
             break;
+
           case ']':
-            tokens.push_back(new Token(TT_RSQUARE, "]", pos));
+            tokens->push_back(new Token(TT::RSQUARE, "]", pos));
             advance();
             break;
 
           case '\'':
           case '"':
-            makeString(&tokens);
+            makeString(tokens);
             break;
 
           case '0':
-            tokens.push_back(makeHex());
+            tokens->push_back(makeHex());
             break;
 
           default:
-            if (isSymbol(curChar))
+            if (isSymbol(c))
             {
-              tokens.push_back(makeModuleOrSymbolOrHex());
+              tokens->push_back(makeModuleOrSymbolOrHex());
               break;
             }
             break;
           }
         }
 
-        tokens.push_back(new Token(TT_EOF, "", pos));
-        return tokens;
+        tokens->push_back(new Token(TT::END_OF_FILE, "EOF", pos));
       }
 
       bool isHex(char c)
@@ -724,63 +724,63 @@ namespace ajanuw
       Token *makeHex()
       {
         std::string str;
-        str.push_back(curChar);
+        str.push_back(c);
         Position *posStart = pos->copy();
 
         auto getHex = [=](std::string *s)
         {
-          while (curChar != NULL && isHex(curChar))
+          while (c != '\0' && isHex(c))
           {
-            *s += curChar;
+            *s += c;
             advance();
           }
         };
 
         advance();
-        if (curChar == 'x')
+        if (c == 'x')
         {
-          str.push_back(curChar);
+          str.push_back(c);
           advance();
           getHex(&str);
         }
         else
           getHex(&str);
 
-        return new Token(TT_HEX, str, posStart, pos);
+        return new Token(TT::HEX, str, posStart, pos);
       }
 
       Token *makeModuleOrSymbolOrHex()
       {
         std::string str;
         std::string method;
-        std::string type = TT_SYMBOL;
+        TT type = TT::SYMBOL;
         Position *posStart = pos->copy();
 
-        while (curChar != NULL && isSymbol(curChar))
+        while (c != '\0' && isSymbol(c))
         {
-          if (type == TT_MODULE)
-            method += curChar;
-          if (curChar == '.')
-            type = TT_MODULE;
-          str += curChar;
+          if (type == TT::MODULE)
+            method += c;
+          if (c == '.')
+            type = TT::MODULE;
+          str += c;
           advance();
         }
 
         // 优先级: SYMBOL > HEX > METHOD
-        if (type == TT_SYMBOL && !ajanuw::Symbol::has(str))
+        if (type == TT::SYMBOL && !ajanuw::Symbol::has(str))
         {
           if (isHex(str))
-            type = TT_HEX;
+            type = TT::HEX;
           else
-            type = TT_METHOD;
+            type = TT::METHOD;
         }
 
         // is MODULE_NAME.METHOD?
-        if (type == TT_MODULE)
+        if (type == TT::MODULE)
         {
           method = ajanuw::SSString::tolower(method);
           if (method != "dll" && method != "exe")
-            type = TT_MMETHOD;
+            type = TT::MMETHOD;
         }
 
         return new Token(type, str, posStart, pos);
@@ -789,14 +789,14 @@ namespace ajanuw
       Token *makeMulOrPow()
       {
         Position *posStart = pos->copy();
-        std::string type = TT_MUL;
+        TT type = TT::MUL;
         std::string value = "*";
 
         advance();
-        if (curChar == '*')
+        if (c == '*')
         {
           advance();
-          type = TT_POW;
+          type = TT::POW;
           value += "*";
         }
         return new Token(type, value, posStart, pos);
@@ -823,14 +823,14 @@ namespace ajanuw
       void makeString(std::vector<ajanuw::CEAddressString::Token *> *tokens)
       {
         std::string str;
-        std::string type = TT_MODULE;
-        char s = curChar; // " or '
+        TT type = TT::MODULE;
+        char s = c; // " or '
         Position *posStart = pos->copy();
 
         advance();
-        while (curChar != NULL && curChar != s)
+        while (c != '\0' && c != s)
         {
-          str += curChar;
+          str += c;
           advance();
         }
         advance();
@@ -841,30 +841,29 @@ namespace ajanuw
           std::string method = r.at(1);
           if (method != "exe" && method != "dll")
           {
-            type = TT_MMETHOD;
+            type = TT::MMETHOD;
           }
         }
         else
         {
           if (ajanuw::Symbol::has(str))
           {
-            type = TT_SYMBOL;
+            type = TT::SYMBOL;
           }
           else if (std::regex_search(str, std::regex("[\\+\\-\\*\\/]")))
           {
             auto lexer = ajanuw::CEAddressString::Lexer(str);
-            auto _tokens = lexer.makeTokens();
-            for (auto tok : _tokens)
-              tokens->push_back(tok);
+            lexer.makeTokens(tokens);
+            tokens->pop_back(); // remove last EOF token
             return;
           }
           else if (ajanuw::SSString::startWith(str, "0x") || isHex(str))
           {
-            type = TT_HEX;
+            type = TT::HEX;
           }
           else
           {
-            type = TT_METHOD;
+            type = TT::METHOD;
           }
         }
 
@@ -872,33 +871,32 @@ namespace ajanuw
       }
     };
 
-    class CEAddressStringNode
+    enum class NT
+    {
+      MODULE,
+      SYMBOL,
+      HEX,
+      MMETHOD,
+      METHOD,
+      UNARY,
+      BINARY,
+      POINTER
+    };
+    class BaseNode
     {
     public:
-      enum class NT
-      {
-        MODULE,
-        SYMBOL,
-        HEX,
-        MMETHOD,
-        METHOD,
-        UNARY,
-        BINARY,
-        POINTER
-      };
-
       Position *posStart;
       Position *posEnd;
-      CEAddressStringNode(Position *posStart, Position *posEnd) : posStart(posStart), posEnd(posEnd) {}
-      virtual ~CEAddressStringNode() {}
+      BaseNode(Position *posStart, Position *posEnd) : posStart(posStart), posEnd(posEnd) {}
+      virtual ~BaseNode() {}
       virtual NT id() = 0;
     };
 
-    class ModuleNode : public CEAddressStringNode
+    class ModuleNode : public BaseNode
     {
     public:
       Token *token;
-      ModuleNode(Token *token) : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+      ModuleNode(Token *token) : BaseNode(token->posStart, token->posEnd), token(token) {}
 
       ~ModuleNode()
       {
@@ -911,12 +909,12 @@ namespace ajanuw
       }
     };
 
-    class SymbolNode : public CEAddressStringNode
+    class SymbolNode : public BaseNode
     {
     public:
       Token *token;
       SymbolNode(Token *token)
-          : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+          : BaseNode(token->posStart, token->posEnd), token(token) {}
 
       ~SymbolNode()
       {
@@ -928,12 +926,12 @@ namespace ajanuw
       }
     };
 
-    class HexNode : public CEAddressStringNode
+    class HexNode : public BaseNode
     {
     public:
       Token *token;
       HexNode(Token *token)
-          : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+          : BaseNode(token->posStart, token->posEnd), token(token) {}
       ~HexNode()
       {
         delete token;
@@ -944,12 +942,12 @@ namespace ajanuw
       }
     };
 
-    class MMethodNode : public CEAddressStringNode
+    class MMethodNode : public BaseNode
     {
     public:
       Token *token;
       MMethodNode(Token *token)
-          : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+          : BaseNode(token->posStart, token->posEnd), token(token) {}
       ~MMethodNode()
       {
         delete token;
@@ -960,12 +958,12 @@ namespace ajanuw
       }
     };
 
-    class MethodNode : public CEAddressStringNode
+    class MethodNode : public BaseNode
     {
     public:
       Token *token;
       MethodNode(Token *token)
-          : CEAddressStringNode(token->posStart, token->posEnd), token(token) {}
+          : BaseNode(token->posStart, token->posEnd), token(token) {}
       ~MethodNode()
       {
         delete token;
@@ -977,17 +975,17 @@ namespace ajanuw
       }
     };
 
-    class UnaryOpNode : public CEAddressStringNode
+    class UnaryNode : public BaseNode
     {
     public:
-      Token *token;
-      CEAddressStringNode *node;
-      UnaryOpNode(Token *token, CEAddressStringNode *node)
-          : CEAddressStringNode(token->posStart, token->posEnd), token(token), node(node) {}
+      Token *op;
+      BaseNode *node;
+      UnaryNode(Token *op, BaseNode *node)
+          : BaseNode(op->posStart, op->posEnd), op(op), node(node) {}
 
-      ~UnaryOpNode()
+      ~UnaryNode()
       {
-        delete token;
+        delete op;
         delete node;
       }
 
@@ -997,22 +995,19 @@ namespace ajanuw
       }
     };
 
-    class BinOpNode : public CEAddressStringNode
+    class BinaryNode : public BaseNode
     {
     public:
-      CEAddressStringNode *leftNode;
-      Token *token;
-      CEAddressStringNode *rightNode;
-      BinOpNode(
-          CEAddressStringNode *leftNode,
-          Token *token,
-          CEAddressStringNode *rightNode)
-          : CEAddressStringNode(leftNode->posStart, rightNode->posEnd), leftNode(leftNode), token(token), rightNode(rightNode) {}
-      ~BinOpNode()
+      BaseNode *left;
+      Token *op;
+      BaseNode *right;
+      BinaryNode(BaseNode *left, Token *op, BaseNode *right)
+          : BaseNode(left->posStart, right->posEnd), left(left), op(op), right(right) {}
+      ~BinaryNode()
       {
-        delete leftNode;
-        delete token;
-        delete rightNode;
+        delete left;
+        delete op;
+        delete right;
       }
 
       NT id()
@@ -1021,12 +1016,12 @@ namespace ajanuw
       }
     };
 
-    class PointerNode : public CEAddressStringNode
+    class PointerNode : public BaseNode
     {
     public:
-      CEAddressStringNode *node;
-      PointerNode(CEAddressStringNode *node)
-          : CEAddressStringNode(node->posStart, node->posEnd), node(node) {}
+      BaseNode *node;
+      PointerNode(BaseNode *node)
+          : BaseNode(node->posStart, node->posEnd), node(node) {}
       ~PointerNode()
       {
         delete node;
@@ -1042,8 +1037,8 @@ namespace ajanuw
     public:
       size_t index = -1;
       Token *curToken = nullptr;
-      std::vector<Token *> tokens;
-      Parser(std::vector<Token *> tokens) : tokens(tokens)
+      std::vector<Token *> *tokens;
+      Parser(std::vector<Token *> *tokens) : tokens(tokens)
       {
         advance();
       }
@@ -1051,21 +1046,43 @@ namespace ajanuw
       void advance()
       {
         index++;
-        if (index < tokens.size())
-        {
-          curToken = tokens.at(index);
-        }
-        else
-        {
-          curToken = nullptr;
-        }
+        curToken = index < tokens->size() ? tokens->at(index) : nullptr;
       }
 
-      CEAddressStringNode *parse()
+      uint8_t getUnaryOperatorPrecedence(ajanuw::CEAddressString::Token *token)
       {
-        CEAddressStringNode *node = expr();
+        if (token->type == TT::PLUS || token->type == TT::MINUS)
+        {
+          return 17;
+        }
+        return 0;
+      }
 
-        if (curToken->type != TT_EOF)
+      uint8_t getBinaryOperatorPrecedence(ajanuw::CEAddressString::Token *token)
+      {
+        if (token->type == TT::POW)
+        {
+          return 16;
+        }
+
+        if (token->type == TT::MUL || token->type == TT::DIV)
+        {
+          return 15;
+        }
+
+        if (token->type == TT::PLUS || token->type == TT::MINUS)
+        {
+          return 14;
+        }
+
+        return 0;
+      }
+
+      BaseNode *parse()
+      {
+        BaseNode *node = binaryExpr();
+
+        if (curToken->type != TT::END_OF_FILE)
         {
           throw std::exception(
               InvalidSyntaxError(
@@ -1079,97 +1096,76 @@ namespace ajanuw
         return node;
       }
 
-      CEAddressStringNode *expr()
+      BaseNode *binaryExpr(uint8_t parentPrecedence = 0)
       {
-        CEAddressStringNode *leftNode = term();
+        BaseNode *left;
 
-        while (curToken->type == TT_PLUS || curToken->type == TT_MINUS)
+        uint8_t unaryPrecedence = getUnaryOperatorPrecedence(curToken);
+        if (unaryPrecedence != 0 && unaryPrecedence >= parentPrecedence)
         {
-          Token *token = curToken;
-          advance();
-          CEAddressStringNode *rightNode = term();
-          leftNode = new BinOpNode(leftNode, token, rightNode);
+          left = unaryExpr();
+        }
+        else
+        {
+          left = atom();
         }
 
-        return leftNode;
-      }
-
-      CEAddressStringNode *term()
-      {
-        CEAddressStringNode *leftNode = factor();
-
-        while (curToken->type == TT_MUL || curToken->type == TT_DIV)
+        while (true)
         {
-          Token *token = curToken;
+          uint8_t precedence = getBinaryOperatorPrecedence(curToken);
+          if (precedence == 0 || precedence <= parentPrecedence)
+            break;
+
+          auto *op = curToken;
           advance();
-          CEAddressStringNode *rightNode = factor();
-          leftNode = new BinOpNode(leftNode, token, rightNode);
+          BaseNode *right = binaryExpr(precedence);
+          left = new BinaryNode(left, op, right);
         }
 
-        return leftNode;
+        return left;
       }
 
-      CEAddressStringNode *factor()
+      BaseNode *unaryExpr()
+      {
+        auto op = curToken;
+        advance();
+        auto _node = atom();
+        return new UnaryNode(op, _node);
+      }
+
+      BaseNode *atom()
       {
         Token *token = curToken;
-
-        if (curToken->type == TT_PLUS || curToken->type == TT_MINUS)
-        {
-          advance();
-          return new UnaryOpNode(token, factor());
-        }
-
-        return power();
-      }
-
-      CEAddressStringNode *power()
-      {
-        CEAddressStringNode *leftNode = atom();
-
-        while (curToken->type == TT_POW)
-        {
-          Token *token = curToken;
-          advance();
-          CEAddressStringNode *rightNode = factor();
-          leftNode = new BinOpNode(leftNode, token, rightNode);
-        }
-
-        return leftNode;
-      }
-
-      CEAddressStringNode *atom()
-      {
-        Token *token = curToken;
-        if (token->type == TT_MODULE)
+        if (token->type == TT::MODULE)
         {
           advance();
           return new ModuleNode(token);
         }
-        else if (token->type == TT_SYMBOL)
+        else if (token->type == TT::SYMBOL)
         {
           advance();
           return new SymbolNode(token);
         }
-        else if (token->type == TT_HEX)
+        else if (token->type == TT::HEX)
         {
           advance();
           return new HexNode(token);
         }
-        else if (token->type == TT_MMETHOD)
+        else if (token->type == TT::MMETHOD)
         {
           advance();
           return new MMethodNode(token);
         }
-        else if (token->type == TT_METHOD)
+        else if (token->type == TT::METHOD)
         {
           advance();
           return new MethodNode(token);
         }
-        else if (token->type == TT_LPAREN)
+        else if (token->type == TT::LPAREN)
         {
           advance();
-          CEAddressStringNode *_expr = expr();
-          if (curToken->type == TT_RPAREN)
+          BaseNode *_expr = binaryExpr();
+          if (curToken->type == TT::RPAREN)
           {
             advance();
             return _expr;
@@ -1184,11 +1180,11 @@ namespace ajanuw
                                      .c_str());
           }
         }
-        else if (token->type == TT_LSQUARE)
+        else if (token->type == TT::LSQUARE)
         {
           advance();
-          CEAddressStringNode *_expr = expr();
-          if (curToken->type == TT_RSQUARE)
+          BaseNode *_expr = binaryExpr();
+          if (curToken->type == TT::RSQUARE)
           {
             advance();
             return new PointerNode(_expr);
@@ -1235,24 +1231,25 @@ namespace ajanuw
         }
       }
 
-      uintptr_t visit(CEAddressStringNode *node)
+      uintptr_t visit(BaseNode *node)
       {
         switch (node->id())
         {
-        case CEAddressStringNode::NT::HEX:
+        case NT::HEX:
           return std::stoull(reinterpret_cast<HexNode *>(node)->token->value, nullptr, 16);
 
-        case CEAddressStringNode::NT::SYMBOL:
+        case NT::SYMBOL:
           return (uintptr_t)ajanuw::Symbol::get(reinterpret_cast<SymbolNode *>(node)->token->value);
 
-        case CEAddressStringNode::NT::MODULE:
+        case NT::MODULE:
         {
+          auto n = reinterpret_cast<ModuleNode *>(node);
           HMODULE hModule = NULL;
-          std::string moduleName = reinterpret_cast<ModuleNode *>(node)->token->value;
+          std::string moduleName = n->token->value;
 
           if (hProcess == NULL)
           {
-            hModule = LoadLibraryA(reinterpret_cast<ModuleNode *>(node)->token->value.c_str());
+            hModule = LoadLibraryA(n->token->value.c_str());
           }
           else
           {
@@ -1273,9 +1270,10 @@ namespace ajanuw
           return (uintptr_t)hModule;
         }
 
-        case CEAddressStringNode::NT::MMETHOD:
+        case NT::MMETHOD:
         {
-          std::vector<std::string> r = ajanuw::SSString::split(reinterpret_cast<MMethodNode *>(node)->token->value, std::regex("\\."));
+          auto n = reinterpret_cast<MMethodNode *>(node);
+          std::vector<std::string> r = ajanuw::SSString::split(n->token->value, std::regex("\\."));
           std::string mod = r.at(0);
           std::string met = r.at(1);
 
@@ -1324,7 +1322,7 @@ namespace ajanuw
           return (uintptr_t)hMethod;
         }
 
-        case CEAddressStringNode::NT::METHOD:
+        case NT::METHOD:
         {
           std::string met = reinterpret_cast<MethodNode *>(node)->token->value;
           uintptr_t r = NULL;
@@ -1366,17 +1364,17 @@ namespace ajanuw
           return r;
         }
 
-        case CEAddressStringNode::NT::UNARY:
+        case NT::UNARY:
         {
-          uintptr_t value = visit(reinterpret_cast<UnaryOpNode *>(node)->node);
-          if (reinterpret_cast<UnaryOpNode *>(node)->token->type == TT_MINUS)
+          uintptr_t value = visit(reinterpret_cast<UnaryNode *>(node)->node);
+          if (reinterpret_cast<UnaryNode *>(node)->op->type == TT::MINUS)
           {
             return value * -1;
           }
           return value;
         }
 
-        case CEAddressStringNode::NT::POINTER:
+        case NT::POINTER:
         {
           uintptr_t address = visit(reinterpret_cast<PointerNode *>(node)->node);
           if (hProcess == NULL)
@@ -1402,25 +1400,21 @@ namespace ajanuw
           }
         }
 
-        case CEAddressStringNode::NT::BINARY:
+        case NT::BINARY:
         {
-          uintptr_t left = visit(reinterpret_cast<BinOpNode *>(node)->leftNode);
-          uintptr_t right = visit(reinterpret_cast<BinOpNode *>(node)->rightNode);
+          auto n = reinterpret_cast<BinaryNode *>(node);
+          uintptr_t left = visit(n->left);
+          uintptr_t right = visit(n->right);
 
-          std::string type = reinterpret_cast<BinOpNode *>(node)->token->type;
-          if (type == TT_PLUS)
+          switch (n->op->type)
           {
+          case TT::PLUS:
             return left + right;
-          }
-          else if (type == TT_MINUS)
-          {
+          case TT::MINUS:
             return left - right;
-          }
-          else if (type == TT_MUL)
-          {
+          case TT::MUL:
             return left * right;
-          }
-          else if (type == TT_DIV)
+          case TT::DIV:
           {
             if (right == 0)
             {
@@ -1434,12 +1428,19 @@ namespace ajanuw
             }
             return left / right;
           }
-          else if (type == TT_POW)
-          {
+          case TT::POW:
             return pow(left, right);
-          }
-        }
 
+          default:
+            throw std::exception(RuntimeError(
+                                     node->posStart,
+                                     node->posEnd,
+                                     "Unexpected Binary Node")
+                                     .toString()
+                                     .c_str());
+            break;
+          }
+        };
         default:
           throw std::exception(RuntimeError(
                                    node->posStart,

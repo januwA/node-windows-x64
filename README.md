@@ -2,7 +2,7 @@
 
  Provides some low-level APIs
 
- > Only tested on Windows 10 and Intel 64-bit cpu
+ > Only tested on Windows 10 and Intel 64-bit cpu and vs2019
 
  ## Install
  ```sh
