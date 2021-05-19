@@ -2,6 +2,7 @@
 
 - *test version*
 - feat: CEAddresSstring ignore case
+- perf: CEAddresSstring Rewrite the parser
 
 ## 0.0.9 [2021-4-1]
 

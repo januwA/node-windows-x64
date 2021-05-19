@@ -157,6 +157,23 @@ namespace ajanuw
     * ajanuw::SSString::repeat("abc", 3) -> "abcabcabc"
     */
     std::string repeat(std::string str, size_t len);
+
+    /*
+    * join<MyStruct*>(vct, "--", [](MyStruct* item) { return item->name; })
+    */
+    std::string join(std::vector<std::string> v, std::string p);
+
+    template <class T>
+    std::string join(std::vector<T> v, std::string p, std::string (*t)(T item))
+    {
+      std::string r;
+      int last = v.size() - 1;
+      for (size_t i = 0; i < v.size(); i++)
+      {
+        r += t(v.at(i)) + (i == last ? "" : p);
+      }
+      return r;
+    };
   }
   namespace Mem
   {
@@ -453,6 +470,11 @@ namespace ajanuw
     // 获取模块的导出表,通常一个模块会导出函数
     static std::map<std::string, uintptr_t> exports(DWORD pid, HMODULE hModule);
     static BYTE *GetProcAddress(DWORD pid, HMODULE hModule, std::string method);
+
+    // user32.dll => user32
+    // user32.xxx.dll => user32.xxx
+    static std::wstring GetModuleName(WCHAR *moduleName);
+    static std::wstring GetModuleName(std::wstring moduleName);
   };
 
   class CEAddressString
@@ -464,25 +486,26 @@ namespace ajanuw
     enum class TT
     {
       HEX,
-      MODULE,      // a.exe or "a b.exe" or 'a b.exe' or "a-b.exe"
-      MMETHOD,     // user32.MessageBoxA, 指定了模块的方法地址
-      METHOD,      // MessageBoxA
-      SYMBOL,      // s1 or s2
-      PLUS,        // +
-      MINUS,       // -
-      MUL,         // *
-      DIV,         // /
-      POW,         // **
-      LPAREN,      // (
-      RPAREN,      // )
-      LSQUARE,     // [
-      RSQUARE,     // ]
+
+      PLUS,  // +
+      MINUS, // -
+      MUL,   // *
+      DIV,   // /
+      POW,   // **
+
+      LPAREN,  // (
+      RPAREN,  // )
+      LSQUARE, // [
+      RSQUARE, // ]
+
+      DOT, // .
+      IDENT,
+
       END_OF_FILE, // \0
     };
 
     class Position
     {
-
     public:
       size_t index;
       size_t row;
@@ -544,6 +567,12 @@ namespace ajanuw
           std::string message)
           : errorName(errorName), posStart(posStart), posEnd(posEnd), message(message)
       {
+      }
+
+      ~CEAddressStringError()
+      {
+        delete posStart;
+        delete posEnd;
       }
 
       virtual std::string toString()
@@ -615,8 +644,18 @@ namespace ajanuw
     public:
       Position *pos;
       char c;
+
+      // string 模式下不会解析符号
+      // "=+(][x)&.exe"    =>  IDENT:=+(][x)& DOT:. IDENT:exe
+      // "'a&a.txt"        => IDENT:'a&a DOT:. IDENT:exe
+      // 123.exe           => IDENT:123 DOT:. IDENT:exe
+      // "123.exe"         => IDENT:123 DOT:. IDENT:exe
+      // 0123.exe          => HEX:0123 DOT:. IDENT:exe
+      // "0123.exe"        => IDENT:0123 DOT:. IDENT:exe
+      bool inString;
+
       std::string text;
-      Lexer(std::string text) : text(text), pos(new Position(-1, 0, -1, text))
+      Lexer(std::string text) : text(text), pos(new Position(-1, 0, -1, text)), inString(false)
       {
         advance();
       }
@@ -636,70 +675,106 @@ namespace ajanuw
       {
         while (c != '\0')
         {
-          switch (c)
+          if (inString)
           {
-          case ' ':
-          case '\t':
-          case '\r':
-          case '\n':
-            advance();
-            break;
-
-          case '+':
-            tokens->push_back(new Token(TT::PLUS, "+", pos));
-            advance();
-            break;
-
-          case '-':
-            tokens->push_back(new Token(TT::MINUS, "-", pos));
-            advance();
-            break;
-
-          case '*':
-            tokens->push_back(makeMulOrPow());
-            break;
-
-          case '/':
-            tokens->push_back(new Token(TT::DIV, "/", pos));
-            advance();
-            break;
-
-          case '(':
-            tokens->push_back(new Token(TT::LPAREN, "(", pos));
-            advance();
-            break;
-
-          case ')':
-            tokens->push_back(new Token(TT::RPAREN, ")", pos));
-            advance();
-            break;
-
-          case '[':
-            tokens->push_back(new Token(TT::LSQUARE, "[", pos));
-            advance();
-            break;
-
-          case ']':
-            tokens->push_back(new Token(TT::RSQUARE, "]", pos));
-            advance();
-            break;
-
-          case '\'':
-          case '"':
-            makeString(tokens);
-            break;
-
-          case '0':
-            tokens->push_back(makeHex());
-            break;
-
-          default:
-            if (isSymbol(c))
+            if (c == '.')
             {
-              tokens->push_back(makeModuleOrSymbolOrHex());
-              break;
+              tokens->push_back(new Token(TT::DOT, ".", pos));
+              advance();
             }
-            break;
+            else if (c == '"')
+            {
+              inString = !inString;
+              advance();
+            }
+            else if (isIdent(c))
+            {
+              tokens->push_back(makeIdent());
+            }
+            else
+            {
+              char ec = c;
+              auto posStart = pos->copy();
+              advance();
+              throw std::exception(IllegalCharError(posStart, pos, std::string(1, ec)).toString().c_str());
+            }
+          }
+          else
+          {
+            switch (c)
+            {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+              advance();
+              break;
+
+            case '.':
+              tokens->push_back(new Token(TT::DOT, ".", pos));
+              advance();
+              break;
+
+            case '+':
+              tokens->push_back(new Token(TT::PLUS, "+", pos));
+              advance();
+              break;
+
+            case '-':
+              tokens->push_back(new Token(TT::MINUS, "-", pos));
+              advance();
+              break;
+
+            case '*':
+              tokens->push_back(makeMulOrPow());
+              break;
+
+            case '/':
+              tokens->push_back(new Token(TT::DIV, "/", pos));
+              advance();
+              break;
+
+            case '(':
+              tokens->push_back(new Token(TT::LPAREN, "(", pos));
+              advance();
+              break;
+
+            case ')':
+              tokens->push_back(new Token(TT::RPAREN, ")", pos));
+              advance();
+              break;
+
+            case '[':
+              tokens->push_back(new Token(TT::LSQUARE, "[", pos));
+              advance();
+              break;
+
+            case ']':
+              tokens->push_back(new Token(TT::RSQUARE, "]", pos));
+              advance();
+              break;
+
+            case '"':
+              inString = !inString;
+              advance();
+              break;
+
+            case '0':
+              tokens->push_back(makeHex());
+              break;
+
+            default:
+              if (isIdent(c))
+              {
+                tokens->push_back(makeIdent());
+                break;
+              }
+
+              char ec = c;
+              auto posStart = pos->copy();
+              advance();
+              throw std::exception(IllegalCharError(posStart, pos, std::string(1, ec)).toString().c_str());
+            }
           }
         }
 
@@ -713,15 +788,34 @@ namespace ajanuw
 
       bool isHex(std::string str)
       {
-        return !std::regex_search(str, std::regex("[^0-9a-f]", std::regex::icase));
+        return std::regex_search(str, std::regex("[\\da-f]", std::regex::icase));
       };
 
-      bool isSymbol(char c)
+      bool isIdent(char c)
       {
-        return !std::regex_search(std::string(1, c), std::regex("[^\u4e00-\u9fa5\\w-.]", std::regex::icase));
+        if (inString)
+        {
+          return std::regex_search(std::string(1, c), std::regex("[\u4e00-\u9fa5\\w\\-\\+\\='&\\(\\)\\[\\]\\s]", std::regex::icase));
+        }
+        else
+        {
+          return std::regex_search(std::string(1, c), std::regex("[\u4e00-\u9fa5\\w\\='&]", std::regex::icase));
+        }
       }
 
     private:
+      Token *makeIdent()
+      {
+        std::string str = "";
+        Position *posStart = pos->copy();
+
+        while (c != '\0' && isIdent(c))
+        {
+          str += c;
+          advance();
+        }
+        return new Token(TT::IDENT, str, posStart, pos);
+      }
       // 0a or 0x0a
       Token *makeHex()
       {
@@ -751,43 +845,6 @@ namespace ajanuw
         return new Token(TT::HEX, str, posStart, pos);
       }
 
-      Token *makeModuleOrSymbolOrHex()
-      {
-        std::string str;
-        std::string method;
-        TT type = TT::SYMBOL;
-        Position *posStart = pos->copy();
-
-        while (c != '\0' && isSymbol(c))
-        {
-          if (type == TT::MODULE)
-            method += c;
-          if (c == '.')
-            type = TT::MODULE;
-          str += c;
-          advance();
-        }
-
-        // 优先级: SYMBOL > HEX > METHOD
-        if (type == TT::SYMBOL && !ajanuw::Symbol::has(str))
-        {
-          if (isHex(str))
-            type = TT::HEX;
-          else
-            type = TT::METHOD;
-        }
-
-        // is MODULE_NAME.METHOD?
-        if (type == TT::MODULE)
-        {
-          method = ajanuw::SSString::tolower(method);
-          if (method != "dll" && method != "exe")
-            type = TT::MMETHOD;
-        }
-
-        return new Token(type, str, posStart, pos);
-      }
-
       Token *makeMulOrPow()
       {
         Position *posStart = pos->copy();
@@ -803,87 +860,17 @@ namespace ajanuw
         }
         return new Token(type, value, posStart, pos);
       }
-
-      /**
-   * "user32.dll"
-   * "user32.MessageBoxA"
-   * "MessageBoxA"
-   * "s1" => 优先级: SYMBOL > HEX > METHOD
-   * "1+1" => 2
-   * "0xaa"
-   * "a b.exe"
-   *
-   * ## error
-   * "user32.dll+1"
-   * "user32.MessageBoxA+1"
-   * "MessageBoxA+1"
-   * "s1+1"
-   *
-   * ## test
-   * 1+'user32.MessageBoxA'-0xabc+MessageBoxA+'0x22'+'MessageboxA'
-   */
-      void makeString(std::vector<ajanuw::CEAddressString::Token *> *tokens)
-      {
-        std::string str;
-        TT type = TT::MODULE;
-        char s = c; // " or '
-        Position *posStart = pos->copy();
-
-        advance();
-        while (c != '\0' && c != s)
-        {
-          str += c;
-          advance();
-        }
-        advance();
-
-        if (ajanuw::SSString::search(str, std::regex("\\.")))
-        {
-          auto r = ajanuw::SSString::split(str, std::regex("\\."));
-          std::string method = r.at(1);
-          if (method != "exe" && method != "dll")
-          {
-            type = TT::MMETHOD;
-          }
-        }
-        else
-        {
-          if (ajanuw::Symbol::has(str))
-          {
-            type = TT::SYMBOL;
-          }
-          else if (std::regex_search(str, std::regex("[\\+\\-\\*\\/]")))
-          {
-            auto lexer = ajanuw::CEAddressString::Lexer(str);
-            lexer.makeTokens(tokens);
-            tokens->pop_back(); // remove last EOF token
-            return;
-          }
-          else if (ajanuw::SSString::startWith(str, "0x") || isHex(str))
-          {
-            type = TT::HEX;
-          }
-          else
-          {
-            type = TT::METHOD;
-          }
-        }
-
-        tokens->push_back(new Token(type, str, posStart, pos));
-      }
     };
 
     enum class NT
     {
-      MODULE,
-      SYMBOL,
       HEX,
-      MMETHOD,
-      METHOD,
       UNARY,
       BINARY,
-      POINTER
+      POINTER,
+      IDENTS
     };
+
     class BaseNode
     {
     public:
@@ -894,37 +881,25 @@ namespace ajanuw
       virtual NT id() = 0;
     };
 
-    class ModuleNode : public BaseNode
+    class IdentsNode : public BaseNode
     {
     public:
-      Token *token;
-      ModuleNode(Token *token) : BaseNode(token->posStart, token->posEnd), token(token) {}
-
-      ~ModuleNode()
+      std::vector<Token *> idents;
+      IdentsNode(std::vector<Token *> idents) : BaseNode(idents[0]->posStart, idents[idents.size() - 1]->posEnd), idents(idents)
       {
-        delete token;
+      }
+
+      ~IdentsNode()
+      {
+        for (auto i : idents)
+        {
+          delete i;
+        }
       }
 
       NT id()
       {
-        return NT::MODULE;
-      }
-    };
-
-    class SymbolNode : public BaseNode
-    {
-    public:
-      Token *token;
-      SymbolNode(Token *token)
-          : BaseNode(token->posStart, token->posEnd), token(token) {}
-
-      ~SymbolNode()
-      {
-        delete token;
-      }
-      NT id()
-      {
-        return NT::SYMBOL;
+        return NT::IDENTS;
       }
     };
 
@@ -941,39 +916,6 @@ namespace ajanuw
       NT id()
       {
         return NT::HEX;
-      }
-    };
-
-    class MMethodNode : public BaseNode
-    {
-    public:
-      Token *token;
-      MMethodNode(Token *token)
-          : BaseNode(token->posStart, token->posEnd), token(token) {}
-      ~MMethodNode()
-      {
-        delete token;
-      }
-      NT id()
-      {
-        return NT::MMETHOD;
-      }
-    };
-
-    class MethodNode : public BaseNode
-    {
-    public:
-      Token *token;
-      MethodNode(Token *token)
-          : BaseNode(token->posStart, token->posEnd), token(token) {}
-      ~MethodNode()
-      {
-        delete token;
-      }
-
-      NT id()
-      {
-        return NT::METHOD;
       }
     };
 
@@ -1138,32 +1080,27 @@ namespace ajanuw
       BaseNode *atom()
       {
         Token *token = curToken;
-        if (token->type == TT::MODULE)
-        {
-          advance();
-          return new ModuleNode(token);
-        }
-        else if (token->type == TT::SYMBOL)
-        {
-          advance();
-          return new SymbolNode(token);
-        }
-        else if (token->type == TT::HEX)
+
+        if (token->type == TT::HEX)
         {
           advance();
           return new HexNode(token);
         }
-        else if (token->type == TT::MMETHOD)
+
+        if (token->type == TT::IDENT)
         {
           advance();
-          return new MMethodNode(token);
+          std::vector<Token *> idents = {token};
+          while (curToken->type == TT::DOT)
+          {
+            advance();
+            idents.push_back(curToken);
+            advance();
+          }
+          return new IdentsNode(idents);
         }
-        else if (token->type == TT::METHOD)
-        {
-          advance();
-          return new MethodNode(token);
-        }
-        else if (token->type == TT::LPAREN)
+
+        if (token->type == TT::LPAREN)
         {
           advance();
           BaseNode *_expr = binaryExpr();
@@ -1182,7 +1119,8 @@ namespace ajanuw
                                      .c_str());
           }
         }
-        else if (token->type == TT::LSQUARE)
+
+        if (token->type == TT::LSQUARE)
         {
           advance();
           BaseNode *_expr = binaryExpr();
@@ -1201,15 +1139,13 @@ namespace ajanuw
                                      .c_str());
           }
         }
-        else
-        {
-          throw std::exception(InvalidSyntaxError(
-                                   curToken->posStart,
-                                   curToken->posEnd,
-                                   "Expected '+', '-', '*', '/', MODULE, SYMBOL, HEX or MODULE_NAME.METHOD")
-                                   .toString()
-                                   .c_str());
-        }
+
+        throw std::exception(InvalidSyntaxError(
+                                 curToken->posStart,
+                                 curToken->posEnd,
+                                 "Invalid token")
+                                 .toString()
+                                 .c_str());
       }
     };
 
@@ -1239,165 +1175,15 @@ namespace ajanuw
         switch (node->id())
         {
         case NT::HEX:
-          return std::stoull(reinterpret_cast<HexNode *>(node)->token->value, nullptr, 16);
-
-        case NT::SYMBOL:
-          return (uintptr_t)ajanuw::Symbol::get(reinterpret_cast<SymbolNode *>(node)->token->value);
-
-        case NT::MODULE:
-        {
-          std::string modName = reinterpret_cast<ModuleNode *>(node)->token->value;
-          HMODULE hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(modName), pid).lpBaseOfDll);
-          if (hModule == NULL)
-          {
-            throw std::exception(
-                RuntimeError(
-                    node->posStart,
-                    node->posEnd,
-                    "MODULE not module \"" + reinterpret_cast<ModuleNode *>(node)->token->value + "\"")
-                    .toString()
-                    .c_str());
-          }
-          return (uintptr_t)hModule;
-        }
-
-        case NT::MMETHOD:
-        {
-          std::vector<std::string> r = ajanuw::SSString::split(reinterpret_cast<MMethodNode *>(node)->token->value, std::regex("\\."));
-          std::string mod = r.at(0) + ".dll";
-          std::string met = r.at(1);
-          HMODULE hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(mod), pid).lpBaseOfDll);
-          if (!hModule)
-          {
-            throw std::exception(
-                RuntimeError(
-                    node->posStart,
-                    node->posEnd,
-                    "MMETHOD not module \"" + mod + "\"")
-                    .toString()
-                    .c_str());
-          }
-
-          uintptr_t hMethod = (uintptr_t)PE::GetProcAddress(pid, hModule, met);
-
-          if (hMethod == NULL)
-          {
-            throw std::exception(
-                RuntimeError(
-                    node->posStart,
-                    node->posEnd,
-                    "Not method \"" + met + "\"")
-                    .toString()
-                    .c_str());
-          }
-          return (uintptr_t)hMethod;
-        }
-
-        case NT::METHOD:
-        {
-          std::string met = reinterpret_cast<MethodNode *>(node)->token->value;
-          uintptr_t r = NULL;
-          HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
-          if (hSnap != INVALID_HANDLE_VALUE)
-          {
-            MODULEENTRY32 me;
-            me.dwSize = sizeof(me);
-            if (Module32First(hSnap, &me))
-            {
-              do
-              {
-                r = (uintptr_t)PE::GetProcAddress(pid, (HMODULE)me.modBaseAddr, met);
-                if (r != NULL)
-                  break;
-              } while (Module32Next(hSnap, &me));
-            }
-          }
-          CloseHandle(hSnap);
-
-          if (r == NULL)
-          {
-            throw std::exception(
-                RuntimeError(
-                    node->posStart,
-                    node->posEnd,
-                    "Not defined symbol \"" + met + "\"")
-                    .toString()
-                    .c_str());
-          }
-
-          return r;
-        }
-
+          return visitHex(reinterpret_cast<HexNode *>(node));
+        case NT::IDENTS:
+          return visitIdent(reinterpret_cast<IdentsNode *>(node));
         case NT::UNARY:
-        {
-          uintptr_t value = visit(reinterpret_cast<UnaryNode *>(node)->node);
-          if (reinterpret_cast<UnaryNode *>(node)->op->type == TT::MINUS)
-          {
-            return value * -1;
-          }
-          return value;
-        }
-
+          return visitUnary(reinterpret_cast<UnaryNode *>(node));
         case NT::POINTER:
-        {
-          uintptr_t address = visit(reinterpret_cast<PointerNode *>(node)->node);
-          uintptr_t result = NULL;
-          if (ReadProcessMemory(hProcess, (LPCVOID)address, (LPVOID)&result, isX86 ? 4 : 8, NULL))
-          {
-            return result;
-          }
-          else
-          {
-            throw std::exception(RuntimeError(
-                                     node->posStart,
-                                     node->posEnd,
-                                     "Read Pointer Error.")
-                                     .toString()
-                                     .c_str());
-          }
-        }
-
+          return visitPointer(reinterpret_cast<PointerNode *>(node));
         case NT::BINARY:
-        {
-          auto n = reinterpret_cast<BinaryNode *>(node);
-          uintptr_t left = visit(n->left);
-          uintptr_t right = visit(n->right);
-
-          switch (n->op->type)
-          {
-          case TT::PLUS:
-            return left + right;
-          case TT::MINUS:
-            return left - right;
-          case TT::MUL:
-            return left * right;
-          case TT::DIV:
-          {
-            if (right == 0)
-            {
-              throw std::exception(
-                  RuntimeError(
-                      node->posStart,
-                      node->posEnd,
-                      "Division by zero")
-                      .toString()
-                      .c_str());
-            }
-            return left / right;
-          }
-          case TT::POW:
-            return pow(left, right);
-
-          default:
-            throw std::exception(RuntimeError(
-                                     node->posStart,
-                                     node->posEnd,
-                                     "Unexpected Binary Node")
-                                     .toString()
-                                     .c_str());
-            break;
-          }
-        };
+          return visitBinary(reinterpret_cast<BinaryNode *>(node));
         default:
           throw std::exception(RuntimeError(
                                    node->posStart,
@@ -1405,7 +1191,183 @@ namespace ajanuw
                                    "Unexpected CEAddressStringNode")
                                    .toString()
                                    .c_str());
-          return NULL;
+        }
+      }
+
+      uintptr_t visitHex(HexNode *node)
+      {
+        return std::stoull(node->token->value, nullptr, 16);
+      }
+
+      uintptr_t visitIdent(IdentsNode *node)
+      {
+        // 优先级 SYMBOL -> HEX -> MODULE
+        std::vector<ajanuw::CEAddressString::Token *> idents = node->idents;
+        if (idents.size() == 1)
+        {
+          // symbol -> hex -> method
+          std::string val = idents.at(0)->value;
+          if (ajanuw::Symbol::has(val))
+          {
+            return (uintptr_t)ajanuw::Symbol::get(val);
+          }
+          else if (std::all_of(val.begin(), val.end(), ::isxdigit))
+          {
+            return std::stoull(val, nullptr, 16);
+          }
+          else
+          {
+            // 遍历所有模块中的方法，直到找到为止
+            uintptr_t r = NULL;
+            HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
+            if (hSnap != INVALID_HANDLE_VALUE)
+            {
+              MODULEENTRY32 me;
+              me.dwSize = sizeof(me);
+              if (Module32First(hSnap, &me))
+              {
+                do
+                {
+                  r = (uintptr_t)PE::GetProcAddress(pid, (HMODULE)me.modBaseAddr, val);
+                  if (r != NULL)
+                    break;
+                } while (Module32Next(hSnap, &me));
+              }
+            }
+            CloseHandle(hSnap);
+
+            if (r == NULL)
+            {
+              throw std::exception(
+                  RuntimeError(
+                      node->posStart,
+                      node->posEnd,
+                      "Not defined symbol \"" + val + "\"")
+                      .toString()
+                      .c_str());
+            }
+
+            return r;
+          }
+        }
+        else
+        {
+          std::string last = idents.back()->value;
+          idents.pop_back();
+          std::string first = ajanuw::SSString::join<ajanuw::CEAddressString::Token *>(idents, ".", [](ajanuw::CEAddressString::Token *t)
+                                                                                       { return t->value; });
+
+          // user32.messageboxa
+          // user32.dll
+          // node.exe
+          if (last == "dll" || last == "exe")
+          {
+            HMODULE hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(first), pid).lpBaseOfDll);
+            if (hModule == NULL)
+            {
+              throw std::exception(
+                  RuntimeError(
+                      node->posStart,
+                      node->posEnd,
+                      "MODULE not module \"" + first + "\"")
+                      .toString()
+                      .c_str());
+            }
+            return (uintptr_t)hModule;
+          }
+
+          HMODULE hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(first), pid).lpBaseOfDll);
+          if (hModule == NULL)
+          {
+            throw std::exception(
+                RuntimeError(
+                    node->posStart,
+                    node->posEnd,
+                    "not find module \"" + first + "\"")
+                    .toString()
+                    .c_str());
+          }
+
+          uintptr_t hMethod = (uintptr_t)PE::GetProcAddress(pid, hModule, last);
+          if (hMethod == NULL)
+          {
+            throw std::exception(
+                RuntimeError(
+                    node->posStart,
+                    node->posEnd,
+                    "not find method \"" + last + "\"")
+                    .toString()
+                    .c_str());
+          }
+          return (uintptr_t)hMethod;
+        }
+      }
+
+      uintptr_t visitUnary(UnaryNode *node)
+      {
+        uintptr_t value = visit(node->node);
+        if (node->op->type == TT::MINUS)
+        {
+          return value * -1;
+        }
+        return value;
+      }
+
+      uintptr_t visitPointer(PointerNode *node)
+      {
+        uintptr_t address = visit(node->node);
+        uintptr_t result = NULL;
+        if (ReadProcessMemory(hProcess == NULL ? GetCurrentProcess() : hProcess, (LPCVOID)address, (LPVOID)&result, isX86 ? 4 : 8, NULL))
+        {
+          return result;
+        }
+        else
+        {
+          throw std::exception(RuntimeError(
+                                   node->posStart,
+                                   node->posEnd,
+                                   "Read Pointer Error.")
+                                   .toString()
+                                   .c_str());
+        }
+      }
+
+      uintptr_t visitBinary(BinaryNode *node)
+      {
+        uintptr_t left = visit(node->left);
+        uintptr_t right = visit(node->right);
+        switch (node->op->type)
+        {
+        case TT::PLUS:
+          return left + right;
+        case TT::MINUS:
+          return left - right;
+        case TT::MUL:
+          return left * right;
+        case TT::DIV:
+        {
+          if (right == 0)
+          {
+            throw std::exception(
+                RuntimeError(
+                    node->posStart,
+                    node->posEnd,
+                    "Division by zero")
+                    .toString()
+                    .c_str());
+          }
+          return left / right;
+        }
+        case TT::POW:
+          return pow(left, right);
+
+        default:
+          throw std::exception(RuntimeError(
+                                   node->posStart,
+                                   node->posEnd,
+                                   "Unexpected Binary Node")
+                                   .toString()
+                                   .c_str());
         }
       }
     };

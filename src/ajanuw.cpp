@@ -83,6 +83,17 @@ std::string ajanuw::SSString::repeat(std::string str, size_t len)
   return r;
 }
 
+std::string ajanuw::SSString::join(std::vector<std::string> v, std::string p)
+{
+  std::string r;
+  int last = v.size() - 1;
+  for (size_t i = 0; i < v.size(); i++)
+  {
+    r += v.at(i) + (i == last ? "" : p);
+  }
+  return r;
+}
+
 bool ajanuw::SSString::startWith(std::string str, const char *s2, size_t index)
 {
   return str.find(s2) - index == 0;
@@ -1631,6 +1642,20 @@ MODULEINFO ajanuw::PE::GetModuleBase(DWORD pid)
   return mi;
 }
 
+std::wstring ajanuw::PE::GetModuleName(WCHAR *moduleName)
+{
+  return ajanuw::PE::GetModuleName(std::wstring(moduleName));
+}
+
+std::wstring ajanuw::PE::GetModuleName(std::wstring moduleName)
+{
+  auto index = moduleName.rfind(L".");
+  return moduleName.substr(0, index);
+}
+
+// 忽略大小写判断
+// user32.dll
+// user32
 MODULEINFO ajanuw::PE::GetModuleInfo(std::wstring moduleName, DWORD pid)
 {
   MODULEINFO mi{0};
@@ -1644,7 +1669,7 @@ MODULEINFO ajanuw::PE::GetModuleInfo(std::wstring moduleName, DWORD pid)
       do
       {
         // me.szModule 带有模块后缀 .dll .exe .node
-        if (ajanuw::SSString::icmp(me.szModule, moduleName.c_str()))
+        if (ajanuw::SSString::icmp(ajanuw::PE::GetModuleName(me.szModule).c_str(), moduleName.c_str()) || ajanuw::SSString::icmp(me.szModule, moduleName.c_str()))
         {
           mi.lpBaseOfDll = (LPVOID)me.modBaseAddr;
           mi.SizeOfImage = me.modBaseSize;

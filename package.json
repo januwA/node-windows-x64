@@ -1,6 +1,6 @@
 {
   "name": "node-windows-x64",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "node windows x64",
   "private": false,
   "main": "./index.js",
