@@ -103,6 +103,11 @@ bool ajanuw::SSString::search(std::string str, std::regex reg)
   return std::regex_search(str, reg);
 }
 
+bool ajanuw::SSString::search(std::wstring str, std::regex reg)
+{
+  return std::regex_search(ajanuw::SSString::wstrToStr(str), reg);
+}
+
 std::string ajanuw::SSString::trim(std::string str)
 {
   return std::regex_replace(str, std::regex("^\\s+|\\s+$"), "");
@@ -1559,7 +1564,7 @@ LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE h
     std::vector<Token *> tokens;
     lexer.makeTokens(&tokens);
 
-/*
+    /*
     for (auto token : tokens)
       printf("%s ", token->toString().c_str());
     printf("\n");
@@ -1638,7 +1643,8 @@ MODULEINFO ajanuw::PE::GetModuleInfo(std::wstring moduleName, DWORD pid)
     {
       do
       {
-        if (!_wcsicmp(me.szModule, moduleName.c_str()))
+        // me.szModule 带有模块后缀 .dll .exe .node
+        if (ajanuw::SSString::icmp(me.szModule, moduleName.c_str()))
         {
           mi.lpBaseOfDll = (LPVOID)me.modBaseAddr;
           mi.SizeOfImage = me.modBaseSize;
@@ -1797,7 +1803,7 @@ BYTE *ajanuw::PE::GetProcAddress(DWORD pid, HMODULE hModule, std::string method)
     ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(DWORD), NULL);
     ReadProcessMemory(hProcess, RVA2VA(namePtrRVA), &funme, MAX_PATH, NULL);
 
-    if (!_stricmp(funme, method.c_str()))
+    if (ajanuw::SSString::icmp(funme, method.c_str()))
     {
       // get function address index
       WORD AddressOfFunctionsIndex = 0;

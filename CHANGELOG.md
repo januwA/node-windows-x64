@@ -1,3 +1,8 @@
+## 0.0.10 [2021-5-19]
+
+- *test version*
+- feat: CEAddresSstring ignore case
+
 ## 0.0.9 [2021-4-1]
 
 - *test version*

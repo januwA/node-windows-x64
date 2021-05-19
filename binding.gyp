@@ -6,6 +6,7 @@
             "node-windows-x64",
             "sources": [
                 "src/ajanuw.cpp",
+                "src/createThread.hpp",
                 "src/mem.hpp",
                 "src/target.hpp",
                 "src/test.hpp",

@@ -93,7 +93,17 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     if (hModule != NULL)
       lpMethod = (BYTE *)GetProcAddress(hModule, sMethod.c_str());
     else
-      lpMethod = (BYTE *)ajanuw::CEAddressString::getAddress(sMethod);
+    {
+      try
+      {
+        lpMethod = (BYTE *)ajanuw::CEAddressString::getAddress(sMethod);
+      }
+      catch (const std::exception &e)
+      {
+        nm_jserr(e.what());
+        nm_retu;
+      }
+    }
   }
 
   if (lpMethod == NULL)

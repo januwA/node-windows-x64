@@ -61,7 +61,9 @@ namespace ajanuw
     */
     bool endWith(std::string str, const char *s2);
     bool endWith(std::string str, const char *s2, size_t length);
+
     bool search(std::string str, std::regex reg);
+    bool search(std::wstring str, std::regex reg);
 
     /*
     * ajanuw::SSString::trim("  abc  ")      -> "abc"
@@ -1226,6 +1228,7 @@ namespace ajanuw
         }
         else
         {
+          hProcess = GetCurrentProcess();
           pid = GetCurrentProcessId();
           isX86 = PE::isX86(pid, (HMODULE)(PE::GetModuleBase(pid).lpBaseOfDll));
         }
@@ -1243,19 +1246,8 @@ namespace ajanuw
 
         case NT::MODULE:
         {
-          auto n = reinterpret_cast<ModuleNode *>(node);
-          HMODULE hModule = NULL;
-          std::string moduleName = n->token->value;
-
-          if (hProcess == NULL)
-          {
-            hModule = LoadLibraryA(n->token->value.c_str());
-          }
-          else
-          {
-            hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(moduleName), pid).lpBaseOfDll);
-          }
-
+          std::string modName = reinterpret_cast<ModuleNode *>(node)->token->value;
+          HMODULE hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(modName), pid).lpBaseOfDll);
           if (hModule == NULL)
           {
             throw std::exception(
@@ -1266,28 +1258,15 @@ namespace ajanuw
                     .toString()
                     .c_str());
           }
-
           return (uintptr_t)hModule;
         }
 
         case NT::MMETHOD:
         {
-          auto n = reinterpret_cast<MMethodNode *>(node);
-          std::vector<std::string> r = ajanuw::SSString::split(n->token->value, std::regex("\\."));
-          std::string mod = r.at(0);
+          std::vector<std::string> r = ajanuw::SSString::split(reinterpret_cast<MMethodNode *>(node)->token->value, std::regex("\\."));
+          std::string mod = r.at(0) + ".dll";
           std::string met = r.at(1);
-
-          HMODULE hModule = NULL;
-
-          if (hProcess == NULL)
-          {
-            hModule = LoadLibraryA(mod.c_str());
-          }
-          else
-          {
-            hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(mod), pid).lpBaseOfDll);
-          }
-
+          HMODULE hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(mod), pid).lpBaseOfDll);
           if (!hModule)
           {
             throw std::exception(
@@ -1299,15 +1278,7 @@ namespace ajanuw
                     .c_str());
           }
 
-          uintptr_t hMethod = NULL;
-          if (hProcess == NULL)
-          {
-            hMethod = (uintptr_t)GetProcAddress(hModule, met.c_str());
-          }
-          else
-          {
-            hMethod = (uintptr_t)PE::GetProcAddress(pid, hModule, met);
-          }
+          uintptr_t hMethod = (uintptr_t)PE::GetProcAddress(pid, hModule, met);
 
           if (hMethod == NULL)
           {
@@ -1335,14 +1306,7 @@ namespace ajanuw
             {
               do
               {
-                if (hProcess == NULL)
-                {
-                  r = (uintptr_t)GetProcAddress((HMODULE)me.modBaseAddr, met.c_str());
-                }
-                else
-                {
-                  r = (uintptr_t)PE::GetProcAddress(pid, (HMODULE)me.modBaseAddr, met);
-                }
+                r = (uintptr_t)PE::GetProcAddress(pid, (HMODULE)me.modBaseAddr, met);
                 if (r != NULL)
                   break;
               } while (Module32Next(hSnap, &me));
@@ -1377,26 +1341,19 @@ namespace ajanuw
         case NT::POINTER:
         {
           uintptr_t address = visit(reinterpret_cast<PointerNode *>(node)->node);
-          if (hProcess == NULL)
+          uintptr_t result = NULL;
+          if (ReadProcessMemory(hProcess, (LPCVOID)address, (LPVOID)&result, isX86 ? 4 : 8, NULL))
           {
-            return *(uintptr_t *)address;
+            return result;
           }
           else
           {
-            uintptr_t result = NULL;
-            if (ReadProcessMemory(hProcess, (LPCVOID)address, (LPVOID)&result, isX86 ? 4 : 8, NULL))
-            {
-              return result;
-            }
-            else
-            {
-              throw std::exception(RuntimeError(
-                                       node->posStart,
-                                       node->posEnd,
-                                       "Read Pointer Error.")
-                                       .toString()
-                                       .c_str());
-            }
+            throw std::exception(RuntimeError(
+                                     node->posStart,
+                                     node->posEnd,
+                                     "Read Pointer Error.")
+                                     .toString()
+                                     .c_str());
           }
         }
 

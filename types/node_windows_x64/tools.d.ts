@@ -113,3 +113,15 @@ export declare function getAddress(
  * @param global 如果设置了这个参数，会将所有数据定义到这个对象中，否者将定义到全局的global中
  */
 export declare function globalDefine(global?: { [k: string]: number }): number;
+
+/**
+ * https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread
+ * @param cbFunc 
+ * @param lpParameter 
+ * @param dwCreationFlags 
+ */
+export declare function createThread(
+  cbFunc: (lpParameter: number) => void,
+  lpParameter?: number,
+  dwCreationFlags?: number
+): number;

@@ -16,6 +16,5 @@ Napi::Value test(const Napi::CallbackInfo &info)
 {
   nm_init;
 
-  throw std::exception("c++ error.");
   nm_retu;
 }

@@ -128,3 +128,18 @@ for (const t of text) {
 nw.globalDefine();
 console.log(VK_BACK);
 ```
+
+## createThread
+```ts
+const hThread = nw.createThread(
+  function (arg) {
+    console.log(arg); // 10
+  },
+  10,
+  0x00000004
+);
+
+setTimeout(() => {
+  nw["Kernel32.ResumeThread"](hThread);
+}, 2000);
+```
