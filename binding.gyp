@@ -17,6 +17,15 @@
                 "src/win32_gui.cpp",
                 "src/global_define.hpp",
                 "src/main.cpp",
+
+                # Flex Bison
+                "src/ces/lexer.cc",
+                "src/ces/parser.h",
+                "src/ces/parser.cc",
+                "src/ces/BaseNode.h",
+                "src/ces/BaseNode.cpp",
+                "src/ces/export.h",
+                "src/ces/export.cpp",
             ],
 
             # headers

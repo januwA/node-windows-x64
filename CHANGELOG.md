@@ -2,7 +2,7 @@
 
 - *test version*
 - feat: CEAddresSstring ignore case
-- perf: CEAddresSstring Rewrite the parser
+- perf: CEAddresSstring Rewrite the parser (use Flex&Bison)
 
 ## 0.0.9 [2021-4-1]
 

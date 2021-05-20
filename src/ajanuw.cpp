@@ -1571,26 +1571,15 @@ LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE h
 {
   try
   {
-    Lexer lexer = ajanuw::CEAddressString::Lexer(CEAddressString);
-    std::vector<Token *> tokens;
-    lexer.makeTokens(&tokens);
-
-    /*
-    for (auto token : tokens)
-      printf("%s ", token->toString().c_str());
-    printf("\n");
-    return 0;
-*/
-
-    Parser parser = Parser(&tokens);
-    BaseNode *node = parser.parse();
-    // printf("node id: %d\n", node->id());
+    BaseNode *node = ces(CEAddressString);
+    if (!node)
+    {
+      throw std::exception("parser error.\n");
+    }
 
     Interpreter interpreter{hProcess};
     LPVOID addr = (LPVOID)interpreter.visit(node);
-
     delete node;
-
     return addr;
   }
   catch (const std::exception &e)

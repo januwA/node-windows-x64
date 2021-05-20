@@ -10,8 +10,10 @@
 #include <fstream>
 #include <map>
 #include <sstream>
+#include <typeinfo>
 #include <asmjit/asmjit.h>
 #include <asmtk/asmtk.h>
+#include "./ces/export.h"
 
 #define uptr_size sizeof(uintptr_t)
 
@@ -483,672 +485,6 @@ namespace ajanuw
     static LPVOID getAddress(std::string address, HANDLE hProcess = NULL);
 
   private:
-    enum class TT
-    {
-      HEX,
-
-      PLUS,  // +
-      MINUS, // -
-      MUL,   // *
-      DIV,   // /
-      POW,   // **
-
-      LPAREN,  // (
-      RPAREN,  // )
-      LSQUARE, // [
-      RSQUARE, // ]
-
-      DOT, // .
-      IDENT,
-
-      END_OF_FILE, // \0
-    };
-
-    class Position
-    {
-    public:
-      size_t index;
-      size_t row;
-      size_t col;
-      std::string text;
-
-      Position(size_t index,
-               size_t row,
-               size_t col,
-               std::string text)
-          : index(index), row(row), col(col), text(text)
-      {
-      }
-
-      void advance(char c)
-      {
-        index++;
-        col++;
-        if (c == '\n')
-        {
-          col = 0;
-          row++;
-        }
-      }
-
-      Position *copy()
-      {
-        return new Position(index, row, col, text);
-      }
-    };
-
-    static std::string stringsWithArrows(
-        std::string text,
-        Position *posStart,
-        Position *posEnd)
-    {
-      std::string result;
-      std::vector<std::string> lines = ajanuw::SSString::split(text, std::regex("\n"));
-      result += lines.at(posStart->row);
-      result += "\n";
-      result +=
-          (posStart->col ? ajanuw::SSString::padStart(" ", posStart->col, " ") : "") +
-          ajanuw::SSString::repeat("^", posEnd->col - posStart->col);
-      return result;
-    }
-
-    class CEAddressStringError
-    {
-    public:
-      std::string errorName;
-      Position *posStart;
-      Position *posEnd;
-      std::string message;
-
-      CEAddressStringError(
-          std::string errorName,
-          Position *posStart,
-          Position *posEnd,
-          std::string message)
-          : errorName(errorName), posStart(posStart), posEnd(posEnd), message(message)
-      {
-      }
-
-      ~CEAddressStringError()
-      {
-        delete posStart;
-        delete posEnd;
-      }
-
-      virtual std::string toString()
-      {
-        std::string err = errorName + ": " + message + "\n";
-        err += stringsWithArrows(posStart->text, posStart, posEnd);
-        err += "\n";
-        return err;
-      };
-    };
-
-    class IllegalCharError : public CEAddressStringError
-    {
-    public:
-      IllegalCharError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Illegal Char Error", posStart, posEnd, message) {}
-    };
-
-    class InvalidSyntaxError : public CEAddressStringError
-    {
-    public:
-      InvalidSyntaxError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Invalid Syntax Error", posStart, posEnd, message) {}
-    };
-
-    class RuntimeError : public CEAddressStringError
-    {
-    public:
-      RuntimeError(Position *posStart, Position *posEnd, std::string message) : CEAddressStringError("Runtime Error", posStart, posEnd, message) {}
-    };
-
-    class Token
-    {
-    public:
-      TT type;
-      std::string value;
-      Position *posStart;
-      Position *posEnd;
-
-      Token(
-          TT type,
-          std::string value,
-          Position *posStart,
-          Position *posEnd)
-          : type(type), value(value), posStart(posStart), posEnd(posEnd->copy())
-      {
-      }
-
-      Token(
-          TT type,
-          std::string value,
-          Position *posStart) : type(type), value(value), posStart(posStart->copy()), posEnd(posStart->copy())
-      {
-        this->posEnd->advance(NULL);
-      }
-
-      ~Token()
-      {
-        delete posStart;
-        delete posEnd;
-      }
-
-      std::string toString()
-      {
-        return value + ":" + std::to_string((int)type);
-      }
-    };
-
-    class Lexer
-    {
-    public:
-      Position *pos;
-      char c;
-
-      // string 模式下不会解析符号
-      // "=+(][x)&.exe"    =>  IDENT:=+(][x)& DOT:. IDENT:exe
-      // "'a&a.txt"        => IDENT:'a&a DOT:. IDENT:exe
-      // 123.exe           => IDENT:123 DOT:. IDENT:exe
-      // "123.exe"         => IDENT:123 DOT:. IDENT:exe
-      // 0123.exe          => HEX:0123 DOT:. IDENT:exe
-      // "0123.exe"        => IDENT:0123 DOT:. IDENT:exe
-      bool inString;
-
-      std::string text;
-      Lexer(std::string text) : text(text), pos(new Position(-1, 0, -1, text)), inString(false)
-      {
-        advance();
-      }
-
-      ~Lexer()
-      {
-        delete pos;
-      }
-
-      void advance()
-      {
-        pos->advance(c);
-        c = pos->index < text.size() ? text.at(pos->index) : '\0';
-      }
-
-      void makeTokens(std::vector<Token *> *tokens)
-      {
-        while (c != '\0')
-        {
-          if (inString)
-          {
-            if (c == '.')
-            {
-              tokens->push_back(new Token(TT::DOT, ".", pos));
-              advance();
-            }
-            else if (c == '"')
-            {
-              inString = !inString;
-              advance();
-            }
-            else if (isIdent(c))
-            {
-              tokens->push_back(makeIdent());
-            }
-            else
-            {
-              char ec = c;
-              auto posStart = pos->copy();
-              advance();
-              throw std::exception(IllegalCharError(posStart, pos, std::string(1, ec)).toString().c_str());
-            }
-          }
-          else
-          {
-            switch (c)
-            {
-            case ' ':
-            case '\t':
-            case '\r':
-            case '\n':
-              advance();
-              break;
-
-            case '.':
-              tokens->push_back(new Token(TT::DOT, ".", pos));
-              advance();
-              break;
-
-            case '+':
-              tokens->push_back(new Token(TT::PLUS, "+", pos));
-              advance();
-              break;
-
-            case '-':
-              tokens->push_back(new Token(TT::MINUS, "-", pos));
-              advance();
-              break;
-
-            case '*':
-              tokens->push_back(makeMulOrPow());
-              break;
-
-            case '/':
-              tokens->push_back(new Token(TT::DIV, "/", pos));
-              advance();
-              break;
-
-            case '(':
-              tokens->push_back(new Token(TT::LPAREN, "(", pos));
-              advance();
-              break;
-
-            case ')':
-              tokens->push_back(new Token(TT::RPAREN, ")", pos));
-              advance();
-              break;
-
-            case '[':
-              tokens->push_back(new Token(TT::LSQUARE, "[", pos));
-              advance();
-              break;
-
-            case ']':
-              tokens->push_back(new Token(TT::RSQUARE, "]", pos));
-              advance();
-              break;
-
-            case '"':
-              inString = !inString;
-              advance();
-              break;
-
-            case '0':
-              tokens->push_back(makeHex());
-              break;
-
-            default:
-              if (isIdent(c))
-              {
-                tokens->push_back(makeIdent());
-                break;
-              }
-
-              char ec = c;
-              auto posStart = pos->copy();
-              advance();
-              throw std::exception(IllegalCharError(posStart, pos, std::string(1, ec)).toString().c_str());
-            }
-          }
-        }
-
-        tokens->push_back(new Token(TT::END_OF_FILE, "EOF", pos));
-      }
-
-      bool isHex(char c)
-      {
-        return isHex(std::string(1, c));
-      };
-
-      bool isHex(std::string str)
-      {
-        return std::regex_search(str, std::regex("[\\da-f]", std::regex::icase));
-      };
-
-      bool isIdent(char c)
-      {
-        if (inString)
-        {
-          return std::regex_search(std::string(1, c), std::regex("[\u4e00-\u9fa5\\w\\-\\+\\='&\\(\\)\\[\\]\\s]", std::regex::icase));
-        }
-        else
-        {
-          return std::regex_search(std::string(1, c), std::regex("[\u4e00-\u9fa5\\w\\='&]", std::regex::icase));
-        }
-      }
-
-    private:
-      Token *makeIdent()
-      {
-        std::string str = "";
-        Position *posStart = pos->copy();
-
-        while (c != '\0' && isIdent(c))
-        {
-          str += c;
-          advance();
-        }
-        return new Token(TT::IDENT, str, posStart, pos);
-      }
-      // 0a or 0x0a
-      Token *makeHex()
-      {
-        std::string str;
-        str.push_back(c);
-        Position *posStart = pos->copy();
-
-        auto getHex = [=](std::string *s)
-        {
-          while (c != '\0' && isHex(c))
-          {
-            *s += c;
-            advance();
-          }
-        };
-
-        advance();
-        if (c == 'x')
-        {
-          str.push_back(c);
-          advance();
-          getHex(&str);
-        }
-        else
-          getHex(&str);
-
-        return new Token(TT::HEX, str, posStart, pos);
-      }
-
-      Token *makeMulOrPow()
-      {
-        Position *posStart = pos->copy();
-        TT type = TT::MUL;
-        std::string value = "*";
-
-        advance();
-        if (c == '*')
-        {
-          advance();
-          type = TT::POW;
-          value += "*";
-        }
-        return new Token(type, value, posStart, pos);
-      }
-    };
-
-    enum class NT
-    {
-      HEX,
-      UNARY,
-      BINARY,
-      POINTER,
-      IDENTS
-    };
-
-    class BaseNode
-    {
-    public:
-      Position *posStart;
-      Position *posEnd;
-      BaseNode(Position *posStart, Position *posEnd) : posStart(posStart), posEnd(posEnd) {}
-      virtual ~BaseNode() {}
-      virtual NT id() = 0;
-    };
-
-    class IdentsNode : public BaseNode
-    {
-    public:
-      std::vector<Token *> idents;
-      IdentsNode(std::vector<Token *> idents) : BaseNode(idents[0]->posStart, idents[idents.size() - 1]->posEnd), idents(idents)
-      {
-      }
-
-      ~IdentsNode()
-      {
-        for (auto i : idents)
-        {
-          delete i;
-        }
-      }
-
-      NT id()
-      {
-        return NT::IDENTS;
-      }
-    };
-
-    class HexNode : public BaseNode
-    {
-    public:
-      Token *token;
-      HexNode(Token *token)
-          : BaseNode(token->posStart, token->posEnd), token(token) {}
-      ~HexNode()
-      {
-        delete token;
-      }
-      NT id()
-      {
-        return NT::HEX;
-      }
-    };
-
-    class UnaryNode : public BaseNode
-    {
-    public:
-      Token *op;
-      BaseNode *node;
-      UnaryNode(Token *op, BaseNode *node)
-          : BaseNode(op->posStart, op->posEnd), op(op), node(node) {}
-
-      ~UnaryNode()
-      {
-        delete op;
-        delete node;
-      }
-
-      NT id()
-      {
-        return NT::UNARY;
-      }
-    };
-
-    class BinaryNode : public BaseNode
-    {
-    public:
-      BaseNode *left;
-      Token *op;
-      BaseNode *right;
-      BinaryNode(BaseNode *left, Token *op, BaseNode *right)
-          : BaseNode(left->posStart, right->posEnd), left(left), op(op), right(right) {}
-      ~BinaryNode()
-      {
-        delete left;
-        delete op;
-        delete right;
-      }
-
-      NT id()
-      {
-        return NT::BINARY;
-      }
-    };
-
-    class PointerNode : public BaseNode
-    {
-    public:
-      BaseNode *node;
-      PointerNode(BaseNode *node)
-          : BaseNode(node->posStart, node->posEnd), node(node) {}
-      ~PointerNode()
-      {
-        delete node;
-      }
-      NT id()
-      {
-        return NT::POINTER;
-      }
-    };
-
-    class Parser
-    {
-    public:
-      size_t index = -1;
-      Token *curToken = nullptr;
-      std::vector<Token *> *tokens;
-      Parser(std::vector<Token *> *tokens) : tokens(tokens)
-      {
-        advance();
-      }
-
-      void advance()
-      {
-        index++;
-        curToken = index < tokens->size() ? tokens->at(index) : nullptr;
-      }
-
-      uint8_t getUnaryOperatorPrecedence(ajanuw::CEAddressString::Token *token)
-      {
-        if (token->type == TT::PLUS || token->type == TT::MINUS)
-        {
-          return 17;
-        }
-        return 0;
-      }
-
-      uint8_t getBinaryOperatorPrecedence(ajanuw::CEAddressString::Token *token)
-      {
-        if (token->type == TT::POW)
-        {
-          return 16;
-        }
-
-        if (token->type == TT::MUL || token->type == TT::DIV)
-        {
-          return 15;
-        }
-
-        if (token->type == TT::PLUS || token->type == TT::MINUS)
-        {
-          return 14;
-        }
-
-        return 0;
-      }
-
-      BaseNode *parse()
-      {
-        BaseNode *node = binaryExpr();
-
-        if (curToken->type != TT::END_OF_FILE)
-        {
-          throw std::exception(
-              InvalidSyntaxError(
-                  curToken->posStart,
-                  curToken->posEnd,
-                  "Wrong EOF")
-                  .toString()
-                  .c_str());
-        }
-
-        return node;
-      }
-
-      BaseNode *binaryExpr(uint8_t parentPrecedence = 0)
-      {
-        BaseNode *left;
-
-        uint8_t unaryPrecedence = getUnaryOperatorPrecedence(curToken);
-        if (unaryPrecedence != 0 && unaryPrecedence >= parentPrecedence)
-        {
-          left = unaryExpr();
-        }
-        else
-        {
-          left = atom();
-        }
-
-        while (true)
-        {
-          uint8_t precedence = getBinaryOperatorPrecedence(curToken);
-          if (precedence == 0 || precedence <= parentPrecedence)
-            break;
-
-          auto *op = curToken;
-          advance();
-          BaseNode *right = binaryExpr(precedence);
-          left = new BinaryNode(left, op, right);
-        }
-
-        return left;
-      }
-
-      BaseNode *unaryExpr()
-      {
-        auto op = curToken;
-        advance();
-        auto _node = atom();
-        return new UnaryNode(op, _node);
-      }
-
-      BaseNode *atom()
-      {
-        Token *token = curToken;
-
-        if (token->type == TT::HEX)
-        {
-          advance();
-          return new HexNode(token);
-        }
-
-        if (token->type == TT::IDENT)
-        {
-          advance();
-          std::vector<Token *> idents = {token};
-          while (curToken->type == TT::DOT)
-          {
-            advance();
-            idents.push_back(curToken);
-            advance();
-          }
-          return new IdentsNode(idents);
-        }
-
-        if (token->type == TT::LPAREN)
-        {
-          advance();
-          BaseNode *_expr = binaryExpr();
-          if (curToken->type == TT::RPAREN)
-          {
-            advance();
-            return _expr;
-          }
-          else
-          {
-            throw std::exception(InvalidSyntaxError(
-                                     curToken->posStart,
-                                     curToken->posEnd,
-                                     "Expected ')'")
-                                     .toString()
-                                     .c_str());
-          }
-        }
-
-        if (token->type == TT::LSQUARE)
-        {
-          advance();
-          BaseNode *_expr = binaryExpr();
-          if (curToken->type == TT::RSQUARE)
-          {
-            advance();
-            return new PointerNode(_expr);
-          }
-          else
-          {
-            throw std::exception(InvalidSyntaxError(
-                                     curToken->posStart,
-                                     curToken->posEnd,
-                                     "Expected ']'")
-                                     .toString()
-                                     .c_str());
-          }
-        }
-
-        throw std::exception(InvalidSyntaxError(
-                                 curToken->posStart,
-                                 curToken->posEnd,
-                                 "Invalid token")
-                                 .toString()
-                                 .c_str());
-      }
-    };
-
     class Interpreter
     {
     public:
@@ -1185,28 +521,23 @@ namespace ajanuw
         case NT::BINARY:
           return visitBinary(reinterpret_cast<BinaryNode *>(node));
         default:
-          throw std::exception(RuntimeError(
-                                   node->posStart,
-                                   node->posEnd,
-                                   "Unexpected CEAddressStringNode")
-                                   .toString()
-                                   .c_str());
+          throw std::exception("Unexpected CEAddressString Node");
         }
       }
 
       uintptr_t visitHex(HexNode *node)
       {
-        return std::stoull(node->token->value, nullptr, 16);
+        return std::stoull(*node->value, nullptr, 16);
       }
 
       uintptr_t visitIdent(IdentsNode *node)
       {
         // 优先级 SYMBOL -> HEX -> MODULE
-        std::vector<ajanuw::CEAddressString::Token *> idents = node->idents;
+        std::vector<std::string *> idents = *node->idents;
         if (idents.size() == 1)
         {
           // symbol -> hex -> method
-          std::string val = idents.at(0)->value;
+          std::string val = *idents.at(0);
           if (ajanuw::Symbol::has(val))
           {
             return (uintptr_t)ajanuw::Symbol::get(val);
@@ -1238,13 +569,7 @@ namespace ajanuw
 
             if (r == NULL)
             {
-              throw std::exception(
-                  RuntimeError(
-                      node->posStart,
-                      node->posEnd,
-                      "Not defined symbol \"" + val + "\"")
-                      .toString()
-                      .c_str());
+              throw std::exception(("Not defined symbol \"" + val + "\"").c_str());
             }
 
             return r;
@@ -1252,10 +577,12 @@ namespace ajanuw
         }
         else
         {
-          std::string last = idents.back()->value;
+          std::string last = *idents.back();
           idents.pop_back();
-          std::string first = ajanuw::SSString::join<ajanuw::CEAddressString::Token *>(idents, ".", [](ajanuw::CEAddressString::Token *t)
-                                                                                       { return t->value; });
+          std::string first = ajanuw::SSString::join<std::string *>(idents, ".", [](std::string *it)
+                                                                    { return *it; });
+
+          // printf("first:%s\nlast:%s\n", first.c_str(), last.c_str());
 
           // user32.messageboxa
           // user32.dll
@@ -1265,13 +592,7 @@ namespace ajanuw
             HMODULE hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(first), pid).lpBaseOfDll);
             if (hModule == NULL)
             {
-              throw std::exception(
-                  RuntimeError(
-                      node->posStart,
-                      node->posEnd,
-                      "MODULE not module \"" + first + "\"")
-                      .toString()
-                      .c_str());
+              throw std::exception(("MODULE not module \"" + first + "\"").c_str());
             }
             return (uintptr_t)hModule;
           }
@@ -1279,25 +600,13 @@ namespace ajanuw
           HMODULE hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(first), pid).lpBaseOfDll);
           if (hModule == NULL)
           {
-            throw std::exception(
-                RuntimeError(
-                    node->posStart,
-                    node->posEnd,
-                    "not find module \"" + first + "\"")
-                    .toString()
-                    .c_str());
+            throw std::exception(("not find module \"" + first + "\"").c_str());
           }
 
           uintptr_t hMethod = (uintptr_t)PE::GetProcAddress(pid, hModule, last);
           if (hMethod == NULL)
           {
-            throw std::exception(
-                RuntimeError(
-                    node->posStart,
-                    node->posEnd,
-                    "not find method \"" + last + "\"")
-                    .toString()
-                    .c_str());
+            throw std::exception(("not find method \"" + last + "\"").c_str());
           }
           return (uintptr_t)hMethod;
         }
@@ -1306,7 +615,7 @@ namespace ajanuw
       uintptr_t visitUnary(UnaryNode *node)
       {
         uintptr_t value = visit(node->node);
-        if (node->op->type == TT::MINUS)
+        if (node->op == MINUS)
         {
           return value * -1;
         }
@@ -1323,12 +632,7 @@ namespace ajanuw
         }
         else
         {
-          throw std::exception(RuntimeError(
-                                   node->posStart,
-                                   node->posEnd,
-                                   "Read Pointer Error.")
-                                   .toString()
-                                   .c_str());
+          throw std::exception("Read Pointer Error.");
         }
       }
 
@@ -1336,38 +640,27 @@ namespace ajanuw
       {
         uintptr_t left = visit(node->left);
         uintptr_t right = visit(node->right);
-        switch (node->op->type)
+        switch (node->op)
         {
-        case TT::PLUS:
+        case PLUS:
           return left + right;
-        case TT::MINUS:
+        case MINUS:
           return left - right;
-        case TT::MUL:
+        case MUL:
           return left * right;
-        case TT::DIV:
+        case DIV:
         {
           if (right == 0)
           {
-            throw std::exception(
-                RuntimeError(
-                    node->posStart,
-                    node->posEnd,
-                    "Division by zero")
-                    .toString()
-                    .c_str());
+            throw std::exception("Division by zero");
           }
           return left / right;
         }
-        case TT::POW:
+        case POW:
           return pow(left, right);
 
         default:
-          throw std::exception(RuntimeError(
-                                   node->posStart,
-                                   node->posEnd,
-                                   "Unexpected Binary Node")
-                                   .toString()
-                                   .c_str());
+          throw std::exception("Unexpected Binary Node");
         }
       }
     };
