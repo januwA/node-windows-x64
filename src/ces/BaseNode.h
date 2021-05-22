@@ -3,107 +3,107 @@
 #include <iostream>
 #include <vector>
 
-enum class NT
+namespace ces
 {
-  HEX,
-  UNARY,
-  BINARY,
-  POINTER,
-  IDENTS
-};
-
-class BaseNode
-{
-public:
-  virtual ~BaseNode() {}
-  virtual NT id() = 0;
-};
-
-class IdentsNode : public BaseNode
-{
-public:
-  std::vector<std::string *> *idents;
-  IdentsNode(std::vector<std::string *> *idents) : idents(idents)
+  enum class NT
   {
-  }
+    HEX,
+    UNARY,
+    BINARY,
+    POINTER,
+    IDENTS
+  };
 
-  ~IdentsNode()
+  class BaseNode
   {
-    for (auto str : *idents)
-      delete str;
-    delete idents;
-  }
+  public:
+    virtual ~BaseNode() {}
+    virtual NT id() = 0;
+  };
 
-  NT id()
+  class IdentsNode : public BaseNode
   {
-    return NT::IDENTS;
-  }
-};
+  public:
+    std::vector<std::string>* idents;
+    IdentsNode(std::vector<std::string>* idents) : idents(idents)
+    {
+    }
 
-class HexNode : public BaseNode
-{
-public:
-  std::string *value;
-  HexNode(std::string *value) : value(value) {}
-  ~HexNode()
+    ~IdentsNode()
+    {
+      delete idents;
+    }
+
+    NT id()
+    {
+      return NT::IDENTS;
+    }
+  };
+
+  class HexNode : public BaseNode
   {
-    delete value;
-  }
-  NT id()
+  public:
+    std::string value;
+    HexNode(std::string value) : value(value) {}
+    ~HexNode()
+    {
+    }
+    NT id()
+    {
+      return NT::HEX;
+    }
+  };
+
+  class UnaryNode : public BaseNode
   {
-    return NT::HEX;
-  }
-};
+  public:
+    int op;
+    BaseNode* node;
+    UnaryNode(int op, BaseNode* node) : op(op), node(node) {}
 
-class UnaryNode : public BaseNode
-{
-public:
-  int op;
-  BaseNode *node;
-  UnaryNode(int op, BaseNode *node) : op(op), node(node) {}
+    ~UnaryNode()
+    {
+      delete node;
+    }
 
-  ~UnaryNode()
+    NT id()
+    {
+      return NT::UNARY;
+    }
+  };
+
+  class BinaryNode : public BaseNode
   {
-    delete node;
-  }
-
-  NT id()
-  {
-    return NT::UNARY;
-  }
-};
-
-class BinaryNode : public BaseNode
-{
-public:
-  BaseNode *left;
-  int op;
-  BaseNode *right;
-  BinaryNode(BaseNode *left, int op, BaseNode *right)
+  public:
+    BaseNode* left;
+    int op;
+    BaseNode* right;
+    BinaryNode(BaseNode* left, int op, BaseNode* right)
       : left(left), op(op), right(right) {}
-  ~BinaryNode()
-  {
-    delete left;
-    delete right;
-  }
+    ~BinaryNode()
+    {
+      delete left;
+      delete right;
+    }
 
-  NT id()
-  {
-    return NT::BINARY;
-  }
-};
+    NT id()
+    {
+      return NT::BINARY;
+    }
+  };
 
-class PointerNode : public BaseNode
-{
-public:
-  BaseNode *node;
-  PointerNode(BaseNode *node) : node(node) {}
-  ~PointerNode()
+  class PointerNode : public BaseNode
   {
-    delete node;
-  }
-  NT id()
-  {
-    return NT::POINTER;
-  }
-};
+  public:
+    BaseNode* node;
+    PointerNode(BaseNode* node) : node(node) {}
+    ~PointerNode()
+    {
+      delete node;
+    }
+    NT id()
+    {
+      return NT::POINTER;
+    }
+  };
+}

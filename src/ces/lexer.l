@@ -1,52 +1,49 @@
 %option noyywrap noline yylineno
+%option prefix="ces"
+
 %{
 #include <iostream>
 #include "parser.h"
 
-using namespace std;
-#define SAVE_STR yylval.text = new std::string(yytext, yyleng)
-
-int yycolumn = 1;
+#define YY_DECL ces::parser::symbol_type yylex ()
+ces::location loc;
+#define yyterminate() return ces::parser::make_CESEOF(loc)
+#define _T(t) return ces::parser::make_##t(loc)
+#define _ST(t) return ces::parser::make_##t(std::string(yytext, yyleng), loc)
 
 #define YY_USER_ACTION \
-    yylloc.first_line = yylloc.last_line = yylineno; \
-    yylloc.first_column = yycolumn; \
-    yylloc.last_column = yycolumn + yyleng - 1; \
-    yycolumn += yyleng; \
+    loc.step();     \
+    loc.columns(yyleng);
+
+
 %}
 
 HEX	        (?i:0[0-9a-f]+)
-IDENT_INSTR (?i:[\x0000-\xffff-z0-9\-+='&\(\)\[\] ]+)
-IDENT       (?i:[\x0000-\xffff-z0-9='&]+)
+IDENT_INSTR (?i:[\x0000-\xffffa-z0-9\-+='&\(\)\[\] ]+)
+IDENT       (?i:[\x0000-\xffffa-z0-9='&]+)
 
 
 %x instr
 %%
 
-
-"."                   { return DOT; };
+"."                   { _T(DOT); };
 <instr>\"             { BEGIN 0; }
-<instr>{IDENT_INSTR}  { SAVE_STR; return IDENT; }
+<instr>{IDENT_INSTR}  { _ST(IDENT); }
 
 [ \t\r\n]   {  }
-"+" { return PLUS;}
-"-" { return MINUS;}
-"*" { return MUL;}
-"/" { return DIV;}
-"(" { return LPAREN;}
-")" { return RPAREN;}
-"[" { return LSQUARE;}
-"]" { return RSQUARE;}
+"+" { _T(PLUS);}
+"-" { _T(MINUS);}
+"*" { _T(MUL);}
+"/" { _T(DIV);}
+"(" { _T(LPAREN);}
+")" { _T(RPAREN);}
+"[" { _T(RSQUARE);}
+"]" { _T(RSQUARE); }
 \"  { BEGIN instr; }
-"**" { return POW;}
-{HEX} { SAVE_STR; return HEX; }
-{IDENT} { SAVE_STR; return  IDENT; }
+"**" { _T(POW); }
+{HEX} { _ST(HEX); }
+{IDENT} { _ST(IDENT); }
 
-.				{ printf("Char Error: %s\n%d:%d,%d:%d\n", yytext, yylloc.first_line, yylloc.first_column, yylloc.last_line, yylloc.last_column ); }
+.				{ printf("Char Error:%s\n%d:%d,%d:%d\n", yytext, loc.begin.line, loc.begin.column, loc.end.line, loc.end.column ); }
 
 %%
-
-void yyerror(BaseNode** result, const char* msg)
-{
-  cout << "YYError: " << msg << endl;
-}

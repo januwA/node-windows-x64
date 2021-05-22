@@ -1571,11 +1571,12 @@ LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE h
 {
   try
   {
-    BaseNode *node = ces(CEAddressString);
+    ces::BaseNode *node = ces::parse(CEAddressString);
     if (!node)
     {
       throw std::exception("parser error.\n");
     }
+    // printf("id:%d\n", node->id());
 
     Interpreter interpreter{hProcess};
     LPVOID addr = (LPVOID)interpreter.visit(node);

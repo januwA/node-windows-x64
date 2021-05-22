@@ -506,38 +506,38 @@ namespace ajanuw
         }
       }
 
-      uintptr_t visit(BaseNode *node)
+      uintptr_t visit(ces::BaseNode *node)
       {
         switch (node->id())
         {
-        case NT::HEX:
-          return visitHex(reinterpret_cast<HexNode *>(node));
-        case NT::IDENTS:
-          return visitIdent(reinterpret_cast<IdentsNode *>(node));
-        case NT::UNARY:
-          return visitUnary(reinterpret_cast<UnaryNode *>(node));
-        case NT::POINTER:
-          return visitPointer(reinterpret_cast<PointerNode *>(node));
-        case NT::BINARY:
-          return visitBinary(reinterpret_cast<BinaryNode *>(node));
+        case ces::NT::HEX:
+          return visitHex(reinterpret_cast<ces::HexNode *>(node));
+        case ces::NT::IDENTS:
+          return visitIdent(reinterpret_cast<ces::IdentsNode *>(node));
+        case ces::NT::UNARY:
+          return visitUnary(reinterpret_cast<ces::UnaryNode *>(node));
+        case ces::NT::POINTER:
+          return visitPointer(reinterpret_cast<ces::PointerNode *>(node));
+        case ces::NT::BINARY:
+          return visitBinary(reinterpret_cast<ces::BinaryNode *>(node));
         default:
           throw std::exception("Unexpected CEAddressString Node");
         }
       }
 
-      uintptr_t visitHex(HexNode *node)
+      uintptr_t visitHex(ces::HexNode *node)
       {
-        return std::stoull(*node->value, nullptr, 16);
+        return std::stoull(node->value, nullptr, 16);
       }
 
-      uintptr_t visitIdent(IdentsNode *node)
+      uintptr_t visitIdent(ces::IdentsNode *node)
       {
         // 优先级 SYMBOL -> HEX -> MODULE
-        std::vector<std::string *> idents = *node->idents;
+        std::vector<std::string> idents = *node->idents;
         if (idents.size() == 1)
         {
           // symbol -> hex -> method
-          std::string val = *idents.at(0);
+          std::string val = idents.at(0);
           if (ajanuw::Symbol::has(val))
           {
             return (uintptr_t)ajanuw::Symbol::get(val);
@@ -577,10 +577,9 @@ namespace ajanuw
         }
         else
         {
-          std::string last = *idents.back();
+          std::string last = idents.back();
           idents.pop_back();
-          std::string first = ajanuw::SSString::join<std::string *>(idents, ".", [](std::string *it)
-                                                                    { return *it; });
+          std::string first = ajanuw::SSString::join(idents, ".");
 
           // printf("first:%s\nlast:%s\n", first.c_str(), last.c_str());
 
@@ -612,17 +611,17 @@ namespace ajanuw
         }
       }
 
-      uintptr_t visitUnary(UnaryNode *node)
+      uintptr_t visitUnary(ces::UnaryNode *node)
       {
         uintptr_t value = visit(node->node);
-        if (node->op == MINUS)
+        if (node->op == ces::parser::token::MINUS)
         {
           return value * -1;
         }
         return value;
       }
 
-      uintptr_t visitPointer(PointerNode *node)
+      uintptr_t visitPointer(ces::PointerNode *node)
       {
         uintptr_t address = visit(node->node);
         uintptr_t result = NULL;
@@ -636,19 +635,19 @@ namespace ajanuw
         }
       }
 
-      uintptr_t visitBinary(BinaryNode *node)
+      uintptr_t visitBinary(ces::BinaryNode *node)
       {
         uintptr_t left = visit(node->left);
         uintptr_t right = visit(node->right);
         switch (node->op)
         {
-        case PLUS:
+        case ces::parser::token::PLUS:
           return left + right;
-        case MINUS:
+        case ces::parser::token::MINUS:
           return left - right;
-        case MUL:
+        case ces::parser::token::MUL:
           return left * right;
-        case DIV:
+        case ces::parser::token::DIV:
         {
           if (right == 0)
           {
@@ -656,7 +655,7 @@ namespace ajanuw
           }
           return left / right;
         }
-        case POW:
+        case ces::parser::token::POW:
           return pow(left, right);
 
         default:
