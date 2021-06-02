@@ -664,7 +664,7 @@ namespace ces {
     break;
 
   case 15: // identList: "ident"
-                 { yylhs.value.as < std::vector<std::string>* > () = new std::vector<std::string>(); yylhs.value.as < std::vector<std::string>* > ()->push_back(yystack_[0].value.as < std::string > ()); }
+                 { yylhs.value.as < std::vector<std::string>* > () = new std::vector<std::string>{yystack_[0].value.as < std::string > ()}; }
     break;
 
   case 16: // identList: identList "." "ident"
@@ -953,8 +953,8 @@ namespace ces {
   const signed char
   parser::yyrline_[] =
   {
-       0,    36,    36,    38,    39,    40,    41,    42,    43,    46,
-      47,    50,    51,    52,    53,    56,    57
+       0,    37,    37,    40,    41,    42,    43,    44,    45,    48,
+      49,    52,    53,    54,    55,    58,    59
   };
 
   void

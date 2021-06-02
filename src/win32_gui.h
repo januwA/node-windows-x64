@@ -7,11 +7,10 @@
 
 class Win32GuiEvent
 {
-private:
 public:
   Napi::FunctionReference click;
   Napi::FunctionReference keydown;
-  Win32GuiEvent(Napi::Object o);
+  Win32GuiEvent(const Napi::Object& o);
   inline ~Win32GuiEvent(){};
 };
 
@@ -20,11 +19,11 @@ class Win32Gui : public Napi::ObjectWrap<Win32Gui>,
 {
 private:
   Napi::FunctionReference messageCallback;
-  Napi::Env env;
-  LRESULT OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+  Napi::Env _env;
+  LRESULT OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) override;
   std::map<HMENU, Win32GuiEvent *> eventMap;
-  ajanuw::Gui::Win32CreateOption getCreateOption(Napi::Object o, int dw, int dh);
-  void setEvents(Napi::Object options);
+  std::unique_ptr<ajanuw::Gui::Win32CreateOption> getCreateOption(const Napi::Object& o, int dw, int dh);
+  void setEvents(const Napi::Object& opt);
 
 public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);

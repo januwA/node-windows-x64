@@ -1,3 +1,5 @@
+#pragma warning(disable: 4100)
+
 #pragma once
 #include <iostream>
 #include <Windows.h>
@@ -62,31 +64,31 @@ public:
   Napi::Value setNop(const Napi::CallbackInfo &info)
   {
     nm_init_cal(2);
-    BYTE *addr = (BYTE *)nmi_qword(0);
+    uint8_t *addr = (uint8_t *)nmi_qword(0);
     size_t size = nmi_dword(1);
 
     ajanuw::Target::SetNop *r = new ajanuw::Target::SetNop(hProcess, addr, size);
 
-    Napi::Object result = Napi::Object::New(env);
+    auto result = Napi::Object::New(env);
 
     result.Set("enable", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info) { r->enable(); },
+                             env, [=](const Napi::CallbackInfo &info)
+                             { r->enable(); },
                              "enable"));
 
     result.Set("disable", Napi::Function::New(
-                              env, [=](const Napi::CallbackInfo &info) { r->disable(); },
+                              env, [=](const Napi::CallbackInfo &info)
+                              { r->disable(); },
                               "disable"));
 
     result.Set("toggle", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info) {
-                               r->toggle();
-                             },
+                             env, [=](const Napi::CallbackInfo &info)
+                             { r->toggle(); },
                              "toggle"));
 
     result.Set("delete", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info) {
-                               delete r;
-                             },
+                             env, [=](const Napi::CallbackInfo &info)
+                             { delete r; },
                              "delete"));
 
     result.Set("bSuccess", r->bSuccess);
@@ -100,10 +102,10 @@ public:
   Napi::Value setHook(const Napi::CallbackInfo &info)
   {
     nm_init_cal(2);
-    BYTE *addr = (BYTE *)nmi_qword(0);
+    uint8_t *addr = (uint8_t *)nmi_qword(0);
     size_t size = nmi_dword(1);
 
-    std::vector<BYTE> hookBytes;
+    std::vector<uint8_t> hookBytes;
     if (nmi_is_str(2))
     {
       hookBytes = ajanuw::Asm::AAScript::asmBytes(nmi_str(2), isX64);
@@ -120,21 +122,23 @@ public:
     Napi::Object result = Napi::Object::New(env);
 
     result.Set("enable", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info) { r->enable(); },
+                             env, [=](const Napi::CallbackInfo &info)
+                             { r->enable(); },
                              "enable"));
 
     result.Set("disable", Napi::Function::New(
-                              env, [=](const Napi::CallbackInfo &info) { r->disable(); },
+                              env, [=](const Napi::CallbackInfo &info)
+                              { r->disable(); },
                               "disable"));
 
     result.Set("toggle", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info) {
-                               r->toggle();
-                             },
+                             env, [=](const Napi::CallbackInfo &info)
+                             { r->toggle(); },
                              "toggle"));
 
     result.Set("delete", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info) {
+                             env, [=](const Napi::CallbackInfo &info)
+                             {
                                ajanuw::Mem::freeEx(hProcess, r->newmem);
                                delete r;
                              },
@@ -161,7 +165,7 @@ public:
       offset = nmi_dword(2);
     }
 
-    std::vector<BYTE *> addrs = ajanuw::Target::moduleScan(strbytes, offset);
+    std::vector<uint8_t *> addrs = ajanuw::Target::moduleScan(strbytes, offset);
     Napi::Array r = Napi::Array::New(env, addrs.size());
     for (size_t i = 0; i < addrs.size(); i++)
     {
@@ -174,7 +178,7 @@ public:
 Napi::Object createTargetWithName(const Napi::CallbackInfo &info)
 {
   nm_init;
-  DWORD pid = ajanuw::PE::GetPID(ajanuw::SSString::strToWstr(nmi_str(0)));
+  auto pid = ajanuw::PE::GetPID(nmi_str(0));
   return Target::NewInstance(env, Napi::Number::New(env, pid));
 }
 

@@ -79,7 +79,7 @@ namespace ces
     int op;
     BaseNode* right;
     BinaryNode(BaseNode* left, int op, BaseNode* right)
-      : left(left), op(op), right(right) {}
+      : left(left), op(op), right(right) { }
     ~BinaryNode()
     {
       delete left;

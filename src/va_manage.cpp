@@ -137,7 +137,7 @@ void VAManage::write(const Napi::CallbackInfo &info)
   Napi::Array table = nmi_arr(0);
   size_t count = nmi_is_nullishOr(1, nm_qword, table.Length());
 
-  std::vector<BYTE> vect;
+  std::vector<uint8_t> vect;
   for (size_t i = 0; i < count; i++)
     vect.push_back(nm_dword(table.Get(i)));
 

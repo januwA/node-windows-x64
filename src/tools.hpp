@@ -12,7 +12,7 @@ Napi::Number getProcessID(const Napi::CallbackInfo &info)
   nm_init;
   if (info.Length() != NULL)
   {
-    nm_ret(ajanuw::PE::GetPID(ajanuw::SSString::strToWstr(nmi_str(0))));
+    nm_ret(ajanuw::PE::GetPID(nmi_str(0)));
   }
   else
   {
@@ -27,9 +27,9 @@ Napi::Number getCurrentProcess(const Napi::CallbackInfo &info)
 Napi::Number openProcess(const Napi::CallbackInfo &info)
 {
   nm_init;
-  DWORD dwDesiredAccess = nm_is_nullishOr(info[0], nm_dword, PROCESS_ALL_ACCESS);
+  uint32_t dwDesiredAccess = nm_is_nullishOr(info[0], nm_dword, PROCESS_ALL_ACCESS);
   BOOL bInheritHandle = info[1].ToBoolean() ? TRUE : FALSE;
-  DWORD dwProcessId = nm_is_nullishOr(info[2], nm_dword, GetCurrentProcessId());
+  uint32_t dwProcessId = nm_is_nullishOr(info[2], nm_dword, GetCurrentProcessId());
   nm_ret((uintptr_t)OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId));
 }
 Napi::Value closeHandle(const Napi::CallbackInfo &info)
@@ -98,10 +98,10 @@ Napi::Value doKeyPress(const Napi::CallbackInfo &info)
 Napi::Value e_mouse_event(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-  DWORD dwFlags = nmi_dword(0);
-  DWORD dx = nm_is_nullishOr(info[1], nm_dword, 0);
-  DWORD dy = nm_is_nullishOr(info[2], nm_dword, 0);
-  DWORD dwData = nm_is_nullishOr(info[3], nm_dword, 0);
+  uint32_t dwFlags = nmi_dword(0);
+  uint32_t dx = nm_is_nullishOr(info[1], nm_dword, 0);
+  uint32_t dy = nm_is_nullishOr(info[2], nm_dword, 0);
+  uint32_t dwData = nm_is_nullishOr(info[3], nm_dword, 0);
   ULONG_PTR dwExtraInf = nm_is_nullishOr(info[4], nm_dword, 0);
 
   /*
@@ -207,8 +207,8 @@ Napi::Value getPixel(const Napi::CallbackInfo &info)
 Napi::Value beep(const Napi::CallbackInfo &info)
 {
   nm_init;
-  DWORD dwFreq = nmi_is_nullishOr(0, nm_dword, 750);
-  DWORD dwDuration = nmi_is_nullishOr(1, nm_dword, 300);
+  uint32_t dwFreq = nmi_is_nullishOr(0, nm_dword, 750);
+  uint32_t dwDuration = nmi_is_nullishOr(1, nm_dword, 300);
   nm_retb(Beep(dwFreq, dwDuration));
 }
 
@@ -217,7 +217,7 @@ Napi::Value speak(const Napi::CallbackInfo &info)
 {
   nm_init;
   std::u16string pwcs = nmi_ustr(0);
-  DWORD dwFlags = SPF_DEFAULT;
+  uint32_t dwFlags = SPF_DEFAULT;
   ULONG *pulStreamNumber = NULL;
 
   CoInitialize(NULL);
@@ -234,7 +234,7 @@ Napi::Value speak(const Napi::CallbackInfo &info)
 Napi::Value sleep(const Napi::CallbackInfo &info)
 {
   nm_init;
-  DWORD dwMilliseconds = nmi_dword(0);
+  uint32_t dwMilliseconds = nmi_dword(0);
   Sleep(dwMilliseconds);
   nm_retu;
 }
@@ -408,7 +408,7 @@ Napi::Value asmBytes(const Napi::CallbackInfo &info)
       isX64 = nmi_bool(1);
     }
 
-    std::vector<BYTE> r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0), isX64);
+    std::vector<uint8_t> r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0), isX64);
     auto buf = Napi::ArrayBuffer::New(env, r.size());
     memcpy_s((BYTE *)buf.Data(), buf.ByteLength(), r.data(), buf.ByteLength());
     return buf;

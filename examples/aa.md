@@ -12,6 +12,25 @@ const r = nw.aa(
 console.log(r); // 2
 ```
 
+```js
+const lpFloatVal = nw.alloc(8);
+nw.writeFloat(lpFloatVal, 2.0);
+nw.writeFloat(lpFloatVal + 4, 3.0);
+
+nw.aa(
+  `
+ movss xmm0,[rcx]
+ mulss xmm0,[rcx+4]
+ movss [rcx],xmm0
+ ret
+`,
+  lpFloatVal
+);
+
+console.log(nw.readFloat(lpFloatVal)); // 6
+nw.free(lpFloatVal);
+```
+
 
 ## asmBytes
 ```js

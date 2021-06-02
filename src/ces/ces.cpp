@@ -9,7 +9,7 @@ extern void ces_delete_buffer(YY_BUFFER_STATE buffer);
 
 int main()
 {
-  YY_BUFFER_STATE state = ces_scan_string("1 ^ 3");
+  YY_BUFFER_STATE state = ces_scan_string("1 + 3");
   ces::BaseNode* result = nullptr;
   ces::parser parser(&result);
   parser.parse();

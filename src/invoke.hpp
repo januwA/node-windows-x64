@@ -8,9 +8,8 @@ extern "C" typedef uintptr_t (*asm_fun_t)();
 
 struct CallbackContext
 {
-  CallbackContext(Napi::Env env, Napi::Function cb, LPVOID address) : cb(cb),
-                                                                      env(env),
-                                                                      address(address){};
+  CallbackContext(const Napi::Env &env, const Napi::Function &cb, const LPVOID &address)
+      : cb(cb), env(env), address(address){};
   Napi::Function cb;
   Napi::Env env;
   LPVOID address;
@@ -21,21 +20,23 @@ struct CallbackContext
     uintptr_t *r8 = (lpRcx + 2);
     uintptr_t *r9 = (lpRcx + 3);
 
-    std::vector<napi_value> args;
-    args.push_back(Napi::Number::New(env, *rcx));
-    args.push_back(Napi::Number::New(env, *rdx));
-    args.push_back(Napi::Number::New(env, *r8));
-    args.push_back(Napi::Number::New(env, *r9));
+    std::vector<napi_value> args{
+        Napi::Number::New(env, *rcx),
+        Napi::Number::New(env, *rdx),
+        Napi::Number::New(env, *r8),
+        Napi::Number::New(env, *r9),
 
-    // 第五个参数直接返回指针，用户需要自己读数据,如:
-    // mem_read_dword(lpP5)
-    // mem_read_str(mem_read_pointer(lpP5+8)) x64指针大小为8字节
-    args.push_back(Napi::Number::New(env, (uintptr_t)lpP5));
+        // 第五个参数返回其他参数指针，需要自己做指针运算读数据,如:
+        // readDword(lpP5)
+        // readStr(readPointer(lpP5+8)) x64指针大小为8字节
+        Napi::Number::New(env, (uintptr_t)lpP5),
+    };
+
     return cb.Call(args).ToNumber().Int64Value();
   }
 };
 
-size_t getStringsCount(Napi::Array args, bool isWideChar)
+size_t getStringsCount(const Napi::Array &args, bool isWideChar)
 {
   size_t count = 0;
   for (size_t i = 0; i < args.Length(); i++)
@@ -64,25 +65,25 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
   std::vector<CallbackContext *> vCC;
   Napi::Object o = nmi_obj(0);
   HMODULE hModule = NULL;
-  BYTE *lpMethod = nullptr;
+  uint8_t *lpMethod = nullptr;
   bool bWideChar = false;
 
   if (nm_getis("method", num))
   {
     bWideChar = nm_getto("isWideChar", bool);
-    lpMethod = reinterpret_cast<BYTE *>(nm_getto("method", qword));
+    lpMethod = reinterpret_cast<uint8_t *>(nm_getto("method", qword));
   }
   else
   {
-    std::string sMethod = nm_getto("method", str);
+    auto sMethod = nm_getto("method", str);
     bWideChar = ajanuw::SSString::endWith(sMethod, "W");
-    Napi::Value js_isWideChar = o.Get("isWideChar");
+    auto js_isWideChar = o.Get("isWideChar");
     if (!nm_is_nullish(js_isWideChar))
       bWideChar = nm_bool(js_isWideChar);
 
     if (o.Has("module"))
     {
-      std::string sModule = nm_getto("module", str);
+      auto sModule = nm_getto("module", str);
       hModule = LoadLibraryA(sModule.c_str());
       if (hModule == NULL)
       {
@@ -91,12 +92,12 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
       }
     }
     if (hModule != NULL)
-      lpMethod = (BYTE *)GetProcAddress(hModule, sMethod.c_str());
+      lpMethod = (uint8_t *)GetProcAddress(hModule, sMethod.c_str());
     else
     {
       try
       {
-        lpMethod = (BYTE *)ajanuw::CEAddressString::getAddress(sMethod);
+        lpMethod = (uint8_t *)ajanuw::CEAddressString::getAddress(sMethod);
       }
       catch (const std::exception &e)
       {
@@ -113,16 +114,16 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
   }
 
   // args: number | pointer | string | function
-  Napi::Array args = nm_is_nullishOr(o.Get("args"), nm_arr, Napi::Array::New(env));
+  auto args = nm_is_nullishOr(o.Get("args"), nm_arr, Napi::Array::New(env));
 
   // save strings
-  BYTE *strMem = NULL;
-  size_t strSizeCount = getStringsCount(args, bWideChar);
+  uint8_t *strMem = nullptr;
+  auto strSizeCount = getStringsCount(args, bWideChar);
   size_t strMemOffset = 0;
   if (strSizeCount)
   {
-    strMem = (BYTE *)ajanuw::Mem::alloc(strSizeCount);
-    if (strMem == NULL)
+    strMem = (uint8_t *)ajanuw::Mem::alloc(strSizeCount);
+    if (!strMem)
     {
       nm_jserr("VirtualAlloc stringMem error.");
       nm_retu;
@@ -130,7 +131,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     ZeroMemory(strMem, strSizeCount);
   }
 
-  size_t argsStackSize = max(args.Length() * sizeof(uintptr_t), Globals::kMaxPhysRegs);
+  auto argsStackSize = max(args.Length() * sizeof(uintptr_t), Globals::kMaxPhysRegs);
 
   JitRuntime rt;
   CodeHolder code;
@@ -141,39 +142,39 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
   a.mov(rbp, rsp);
   a.sub(rsp, argsStackSize);
 
-  for (size_t i = 0; i < args.Length(); i++)
+  for (size_t i = 0, l = args.Length(); i < l; i++)
   {
+    auto it = args.Get(i);
     uintptr_t value = NULL;
-    if (nm_is_fun(args.Get(i)))
+    if (nm_is_fun(it))
     {
-      auto CC = new CallbackContext(env,
-                                    args.Get(i).As<Napi::Function>(),
+      auto CC = new CallbackContext(env, it.As<Napi::Function>(),
                                     ajanuw::createCallback(&cccccc, i, &vCC));
       vCC.push_back(CC);
       value = (uintptr_t)CC->address;
     }
-    else if (nm_is_str(args.Get(i)))
+    else if (nm_is_str(it))
     {
-      Napi::String text = args.Get(i).ToString();
-      BYTE *addr = strMem + strMemOffset;
+      auto text = it.ToString();
+      auto addr = strMem + strMemOffset;
       value = (uintptr_t)addr;
       if (bWideChar)
       {
-        std::u16string str = text.Utf16Value();
+        auto str = text.Utf16Value();
         ajanuw::Mem::wUstr(addr, str);
-        strMemOffset += ajanuw::SSString::count(str) + 2;
+        strMemOffset += ajanuw::SSString::count(str) + sizeof(char16_t);
       }
       else
       {
-        std::string str = text.Utf8Value();
+        auto str = text.Utf8Value();
         ajanuw::Mem::wStr(addr, str);
-        strMemOffset += str.length() + 1;
+        strMemOffset += str.length() + sizeof(char);
       }
     }
     else
     {
       // null and undefined to 0
-      value = nm_qword(args.Get(i));
+      value = nm_qword(it);
     }
 
     if (i < 4)
@@ -204,7 +205,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
   a.ret();
 
   asm_fun_t fn;
-  asmjit::Error err = rt.add(&fn, &code);
+  auto err = rt.add(&fn, &code);
   if (err)
   {
     if (strMem)

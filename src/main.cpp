@@ -113,8 +113,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   __EXPORT("qworDToByteTable", qwordToByteTable);
   __EXPORT("floaTToByteTable", floatToByteTable);
   __EXPORT("doublEToByteTable", doubleToByteTable);
-  __EXPORT("stRToByteTable", strToByteTable);
-  __EXPORT("wstRToByteTable", wstrToByteTable);
+  __EXPORT("strToByteTable", strToByteTable);
+  __EXPORT("wstrToByteTable", wstrToByteTable);
 
   __EXPORT("byteTableToWord", byteTableToWord);
   __EXPORT("byteTableToDword", byteTableToDword);

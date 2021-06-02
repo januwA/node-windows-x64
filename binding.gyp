@@ -4,6 +4,17 @@
         {
             "target_name":
             "node-windows-x64",
+
+            # use c++ 17
+            # https://chromium.googlesource.com/external/skia/gyp/+/6b0b63f3d444e68d91f6c3b066e1597f18db05a9/common_conditions.gypi
+            'msvs_settings': {
+                "VCCLCompilerTool": {
+                    'WarningLevel': '4',
+                    "AdditionalOptions": [
+                       "/EHsc", "/std:c++17",
+                    ],
+                }
+            },
             "sources": [
                 "src/ajanuw.cpp",
                 "src/createThread.hpp",

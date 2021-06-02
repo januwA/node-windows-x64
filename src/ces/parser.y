@@ -1,3 +1,4 @@
+%require "3.7"
 %skeleton "lalr1.cc"
 %language "c++"
 %defines "parser.h"
@@ -34,6 +35,7 @@
 
 
 CEAddressString: binaryExpr YYEOF { *result = $1; $$ = $1; }
+;
 
 binaryExpr: atom { $$ = $1; }
 | unaryExpr { $$ = $1; }
@@ -53,7 +55,7 @@ atom:	HEX	{ $$ = new HexNode($1); }
 | identList	{ $$ = new IdentsNode($1); }
 ;
 
-identList: IDENT { $$ = new std::vector<std::string>(); $$->push_back($1); }
+identList: IDENT { $$ = new std::vector<std::string>{$1}; }
 | identList DOT IDENT	{ $$ = $1; $$->push_back($3); }
 ;
 %%

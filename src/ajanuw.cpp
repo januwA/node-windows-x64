@@ -17,9 +17,6 @@ std::string ajanuw::SSString::strFormNumber(uintptr_t number, bool isHex)
 std::string ajanuw::SSString::tolower(std::string s)
 {
   std::transform(s.begin(), s.end(), s.begin(),
-                 // static_cast<int(*)(int)>(std::tolower)         // wrong
-                 // [](int c){ return std::tolower(c); }           // wrong
-                 // [](char c){ return std::tolower(c); }          // wrong
                  [](unsigned char c)
                  { return std::tolower(c); } // correct
   );
@@ -29,262 +26,201 @@ std::string ajanuw::SSString::tolower(std::string s)
 std::string ajanuw::SSString::toupper(std::string s)
 {
   std::transform(s.begin(), s.end(), s.begin(),
-                 // static_cast<int(*)(int)>(std::tolower)         // wrong
-                 // [](int c){ return std::tolower(c); }           // wrong
-                 // [](char c){ return std::tolower(c); }          // wrong
                  [](unsigned char c)
                  { return std::toupper(c); } // correct
   );
   return s;
 }
 
-std::string ajanuw::SSString::pad(std::string str, size_t size, std::string padStr = " ", bool isStart = true)
+std::wstring ajanuw::SSString::tolower(std::wstring s)
+{
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c)
+                 { return std::tolower(c); });
+  return s;
+}
+
+std::wstring ajanuw::SSString::toupper(std::wstring s)
+{
+  std::transform(s.begin(), s.end(), s.begin(),
+                 [](unsigned char c)
+                 { return std::toupper(c); });
+  return s;
+}
+
+std::string ajanuw::SSString::pad(std::string_view str, size_t size, std::string_view padStr = " ", bool isStart = true)
 {
   if (str.size() >= size)
     return std::string(str.begin(), str.end());
 
-  std::string pad = "";
+  std::string result;
   while (true)
   {
-    size_t overflowSize = padStr.size() + pad.size() + str.size() - size;
+    size_t overflowSize = padStr.size() + result.size() + str.size() - size;
     if (overflowSize > 0)
     {
-      pad += padStr.substr(0, padStr.size() - overflowSize);
+      result += padStr.substr(0, padStr.size() - overflowSize);
     }
     else
     {
-      pad += padStr;
+      result += padStr;
     }
-    if (pad.size() + str.size() >= size)
-      return isStart ? pad + str : str + pad;
+    if (result.size() + str.size() >= size)
+      return isStart ? result + str.data() : str.data() + result;
   }
 }
 
-std::string ajanuw::SSString::padStart(std::string str, size_t size, std::string padStr = " ")
+std::string ajanuw::SSString::padStart(std::string_view str, size_t size, std::string_view padStr = " ")
 {
   return ajanuw::SSString::pad(str, size, padStr);
 }
 
-std::string ajanuw::SSString::padEnd(std::string str, size_t size, std::string padStr = " ")
+std::string ajanuw::SSString::padEnd(std::string_view str, size_t size, std::string_view padStr = " ")
 {
   return ajanuw::SSString::pad(str, size, padStr, false);
 }
 
-std::string ajanuw::SSString::repeat(std::string str, size_t len)
+std::string ajanuw::SSString::repeat(std::string_view str, size_t len)
 {
   std::string r;
-
-  while (len > 0)
-  {
+  while (len--)
     r += str;
-    len--;
-  }
-
   return r;
 }
 
-std::string ajanuw::SSString::join(std::vector<std::string> v, std::string p)
+std::string ajanuw::SSString::join(const std::vector<std::string> &v, std::string_view p)
 {
   std::string r;
   int last = v.size() - 1;
-  for (size_t i = 0; i < v.size(); i++)
+  for (size_t i = 0, l = v.size(); i < l; i++)
   {
-    r += v.at(i) + (i == last ? "" : p);
+    r += v.at(i) + (i == last ? "" : p.data());
   }
   return r;
 }
 
-bool ajanuw::SSString::startWith(std::string str, const char *s2, size_t index)
+bool ajanuw::SSString::startWith(std::string_view str, std::string_view s2, size_t index)
 {
   return str.find(s2) - index == 0;
 }
 
-bool ajanuw::SSString::endWith(std::string str, const char *s2)
+bool ajanuw::SSString::endWith(std::string_view str, const char *s2)
 {
   return str.rfind(s2) + strlen(s2) == str.size();
 }
 
-bool ajanuw::SSString::endWith(std::string str, const char *s2, size_t length)
+bool ajanuw::SSString::endWith(std::string_view str, const char *s2, size_t length)
 {
   return str.rfind(s2) + strlen(s2) == length;
 }
 
-bool ajanuw::SSString::search(std::string str, std::regex reg)
+bool ajanuw::SSString::search(std::string_view str, const std::regex &reg)
 {
-  return std::regex_search(str, reg);
+  return std::regex_search(str.data(), reg);
 }
 
-bool ajanuw::SSString::search(std::wstring str, std::regex reg)
+bool ajanuw::SSString::search(std::wstring_view str, const std::regex &reg)
 {
-  return std::regex_search(ajanuw::SSString::wstrToStr(str), reg);
+  return std::regex_search(std::move(ajanuw::SSString::wstrToStr(str)), reg);
 }
 
-std::string ajanuw::SSString::trim(std::string str)
+std::string ajanuw::SSString::trim(std::string_view str)
 {
-  return std::regex_replace(str, std::regex("^\\s+|\\s+$"), "");
+  return std::regex_replace(str.data(), std::regex("^\\s+|\\s+$"), "");
 }
-std::string ajanuw::SSString::trimStart(std::string str)
+std::string ajanuw::SSString::trimStart(std::string_view str)
 {
-  return std::regex_replace(str, std::regex("^\\s+"), "");
+  return std::regex_replace(str.data(), std::regex("^\\s+"), "");
 }
-std::string ajanuw::SSString::trimEnd(std::string str)
+std::string ajanuw::SSString::trimEnd(std::string_view str)
 {
-  return std::regex_replace(str, std::regex("\\s+$"), "");
+  return std::regex_replace(str.data(), std::regex("\\s+$"), "");
 }
-std::vector<std::string> ajanuw::SSString::split(std::string str, std::regex reg)
+std::vector<std::string> ajanuw::SSString::split(const std::string &str, const std::regex &reg)
 {
   std::smatch m;
-  std::string::const_iterator iterStart = str.begin();
-  std::string::const_iterator iterEnd = str.end();
+  auto _start = str.begin();
+  auto _end = str.end();
+  std::vector<std::string> _list;
 
-  std::vector<std::string> resultSplitList = {};
-
-  while (std::regex_search(iterStart, iterEnd, m, reg))
+  while (std::regex_search(_start, _end, m, reg))
   {
-    resultSplitList.emplace_back(iterStart, m[0].first);
-    iterStart = m[0].second;
+    _list.emplace_back(_start, m[0].first);
+    _start = m[0].second;
   }
-  resultSplitList.emplace_back(iterStart, iterEnd);
-  return resultSplitList;
+  _list.emplace_back(_start, _end);
+  return _list;
 }
-std::vector<BYTE> ajanuw::SSString::toBytes(std::string byteStr)
+std::vector<uint8_t> ajanuw::SSString::toBytes(std::string_view byteStr)
 {
   byteStr = ajanuw::SSString::trim(byteStr);
-  std::vector<std::string> byteStrList = ajanuw::SSString::split(byteStr, std::regex("[\\s\\n]+"));
-  std::vector<BYTE> byteList;
-  for (size_t i = 0; i < byteStrList.size(); i++)
-  {
-    byteList.push_back(std::stol(byteStrList[i], nullptr, 16));
-  }
-  return byteList;
+  auto byteStrList = ajanuw::SSString::split(byteStr.data(), std::regex{"[\\s\\n]+"});
+  std::vector<uint8_t> result;
+  std::transform(byteStrList.begin(), byteStrList.end(), std::back_inserter(result), [](const std::string &s)
+                 { return std::stoi(s, nullptr, 16); });
+  return result;
 }
 char *ajanuw::SSString::setLocale(int _Category, const char *_Locale)
 {
   return setlocale(_Category, _Locale);
 }
-BOOL ajanuw::SSString::cmp(const char *s1, const char *s2)
+
+BOOL ajanuw::SSString::cmp(std::string_view s1, std::string_view s2)
 {
-  return strncmp(s1, s2, len(s2)) == 0;
+  return strncmp(s1.data(), s2.data(), s2.size()) == 0;
 }
 
-BOOL ajanuw::SSString::cmp(std::string s1, std::string s2)
+BOOL ajanuw::SSString::cmp(std::wstring_view s1, std::wstring_view s2)
 {
-  return strncmp(s1.c_str(), s2.c_str(), s2.size()) == 0;
+  return wcsncmp(s1.data(), s2.data(), s2.size()) == 0;
 }
 
-BOOL ajanuw::SSString::cmp(const wchar_t *s1, const wchar_t *s2)
+BOOL ajanuw::SSString::cmp(std::u16string_view s1, std::u16string_view s2)
 {
-  return wcsncmp(s1, s2, len(s2)) == 0;
+  return wcsncmp((wchar_t *)s1.data(), (wchar_t *)s2.data(), s2.size()) == 0;
 }
 
-BOOL ajanuw::SSString::cmp(std::wstring s1, std::wstring s2)
+BOOL ajanuw::SSString::icmp(std::string_view s1, std::string_view s2)
 {
-  return wcsncmp(s1.c_str(), s2.c_str(), s2.size()) == 0;
+  return _stricmp(s1.data(), s2.data()) == 0;
 }
 
-BOOL ajanuw::SSString::cmp(const char16_t *s1, const char16_t *s2)
+BOOL ajanuw::SSString::icmp(std::wstring_view s1, std::wstring_view s2)
 {
-  return wcsncmp((wchar_t *)s1, (wchar_t *)s2, len(s2)) == 0;
+  return _wcsicmp(s1.data(), s2.data()) == 0;
 }
 
-BOOL ajanuw::SSString::cmp(std::u16string s1, std::u16string s2)
+BOOL ajanuw::SSString::icmp(std::u16string_view s1, std::u16string_view s2)
 {
-  return wcsncmp((wchar_t *)s1.c_str(), (wchar_t *)s2.c_str(), s2.size()) == 0;
+  return _wcsicmp((wchar_t *)s1.data(), (wchar_t *)s2.data()) == 0;
 }
 
-BOOL ajanuw::SSString::icmp(const char *s1, const char *s2)
-{
-  return _stricmp(s1, s2) == 0;
-}
-
-BOOL ajanuw::SSString::icmp(std::string s1, std::string s2)
-{
-  return _stricmp(s1.c_str(), s2.c_str()) == 0;
-}
-
-BOOL ajanuw::SSString::icmp(const wchar_t *s1, const wchar_t *s2)
-{
-  return _wcsicmp(s1, s2) == 0;
-}
-
-BOOL ajanuw::SSString::icmp(std::wstring s1, std::wstring s2)
-{
-  return _wcsicmp(s1.c_str(), s2.c_str()) == 0;
-}
-
-BOOL ajanuw::SSString::icmp(const char16_t *s1, const char16_t *s2)
-{
-  return _wcsicmp((wchar_t *)s1, (wchar_t *)s2) == 0;
-}
-
-BOOL ajanuw::SSString::icmp(std::u16string s1, std::u16string s2)
-{
-  return _wcsicmp((wchar_t *)s1.c_str(), (wchar_t *)s2.c_str()) == 0;
-}
-
-size_t ajanuw::SSString::len(const char *str)
-{
-  return strlen(str);
-}
-size_t ajanuw::SSString::len(const char *str, size_t maxSize)
-{
-  return strnlen_s(str, maxSize);
-}
-size_t ajanuw::SSString::len(const wchar_t *str)
-{
-  return wcslen(str);
-}
-size_t ajanuw::SSString::len(const wchar_t *str, size_t maxSize)
-{
-  return wcsnlen_s(str, maxSize);
-}
-
-size_t ajanuw::SSString::len(std::string str)
+size_t ajanuw::SSString::len(std::string_view str)
 {
   return str.length();
 }
-size_t ajanuw::SSString::len(std::wstring str)
+size_t ajanuw::SSString::len(std::wstring_view str)
 {
   return str.length();
 }
-size_t ajanuw::SSString::len(std::u16string str)
+size_t ajanuw::SSString::len(std::u16string_view str)
 {
   return str.length();
 }
 
-size_t ajanuw::SSString::count(const char *str)
+size_t ajanuw::SSString::count(std::string_view str)
 {
-  return len(str);
+  return str.length() * sizeof(char);
 }
 
-size_t ajanuw::SSString::count(const char *str, size_t maxSize)
+size_t ajanuw::SSString::count(std::wstring_view str)
 {
-  return len(str, maxSize);
+  return str.length() * sizeof(wchar_t);
 }
 
-size_t ajanuw::SSString::count(const wchar_t *str)
+size_t ajanuw::SSString::count(std::u16string_view str)
 {
-  return len(str) * 2;
-}
-
-size_t ajanuw::SSString::count(const wchar_t *str, size_t maxSize)
-{
-  return len(str, maxSize) * 2;
-}
-
-size_t ajanuw::SSString::count(std::string str)
-{
-  return len(str);
-}
-
-size_t ajanuw::SSString::count(std::wstring str)
-{
-  return len(str) * 2;
-}
-
-size_t ajanuw::SSString::count(std::u16string str)
-{
-  return len(str) * 2;
+  return str.length() * sizeof(char16_t);
 }
 
 LPVOID ajanuw::createCallback(void *lpCallback, size_t index, void *vCC)
@@ -327,31 +263,31 @@ LPVOID ajanuw::createCallback(void *lpCallback, size_t index, void *vCC)
   return p;
 }
 
-std::wstring ajanuw::SSString::strToWstr(std::string str)
+std::wstring ajanuw::SSString::strToWstr(std::string_view str)
 {
   std::wstring wideStr;
-  size_t size = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), NULL, NULL);
+  size_t size = MultiByteToWideChar(CP_UTF8, 0, str.data(), str.length(), NULL, NULL);
   if (size == NULL)
     return wideStr;
 
   wideStr.resize(size);
-  MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), (LPWSTR)wideStr.data(), wideStr.length());
+  MultiByteToWideChar(CP_UTF8, 0, str.data(), str.length(), (LPWSTR)wideStr.data(), wideStr.length());
   return wideStr;
 }
 
-std::u16string ajanuw::SSString::strToUstr(std::string str)
+std::u16string ajanuw::SSString::strToUstr(std::string_view str)
 {
   std::u16string wideStr;
-  size_t size = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), NULL, NULL);
+  size_t size = MultiByteToWideChar(CP_UTF8, 0, str.data(), str.length(), NULL, NULL);
   if (size == NULL)
     return wideStr;
 
   wideStr.resize(size);
-  MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), (LPWSTR)wideStr.data(), wideStr.length());
+  MultiByteToWideChar(CP_UTF8, 0, str.data(), str.length(), (LPWSTR)wideStr.data(), wideStr.length());
   return wideStr;
 }
 
-std::string ajanuw::SSString::ustrToStr(std::u16string ustr)
+std::string ajanuw::SSString::ustrToStr(std::u16string_view ustr)
 {
   std::string str;
   size_t size = WideCharToMultiByte(CP_UTF8, 0, (LPCWCH)ustr.data(), ustr.length(), NULL, NULL, 0, 0);
@@ -363,7 +299,7 @@ std::string ajanuw::SSString::ustrToStr(std::u16string ustr)
   return str;
 }
 
-std::string ajanuw::SSString::wstrToStr(std::wstring wstr)
+std::string ajanuw::SSString::wstrToStr(std::wstring_view wstr)
 {
   std::string str;
   size_t size = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), wstr.length(), NULL, NULL, 0, 0);
@@ -375,48 +311,48 @@ std::string ajanuw::SSString::wstrToStr(std::wstring wstr)
   return str;
 }
 
-std::wstring ajanuw::SSString::ustrToWstr(std::u16string ustr)
+std::wstring ajanuw::SSString::ustrToWstr(std::u16string_view ustr)
 {
   return std::wstring(ustr.begin(), ustr.end());
 }
 
-std::u16string ajanuw::SSString::wstrToUstr(std::wstring wstr)
+std::u16string ajanuw::SSString::wstrToUstr(std::wstring_view wstr)
 {
   return std::u16string(wstr.begin(), wstr.end());
 }
 
-void ajanuw::SSString::toMem(void *dst, std::string str)
+void ajanuw::SSString::toMem(void *dst, std::string_view str)
 {
-  memcpy_s(dst, str.length(), str.c_str(), str.length());
+  memcpy_s(dst, str.length(), str.data(), str.length());
 }
 
-void ajanuw::SSString::toMem(void *dst, std::wstring str)
+void ajanuw::SSString::toMem(void *dst, std::wstring_view str)
 {
   size_t count = ajanuw::SSString::count(str);
-  memcpy_s(dst, count, str.c_str(), count);
+  memcpy_s(dst, count, str.data(), count);
 }
 
-void ajanuw::SSString::toMem(void *dst, std::u16string str)
+void ajanuw::SSString::toMem(void *dst, std::u16string_view str)
 {
   size_t count = ajanuw::SSString::count(str);
-  memcpy_s(dst, count, str.c_str(), count);
+  memcpy_s(dst, count, str.data(), count);
 }
 
-void ajanuw::SSString::toMemEx(HANDLE hProcess, void *dst, std::string str)
+void ajanuw::SSString::toMemEx(HANDLE hProcess, void *dst, std::string_view str)
 {
-  WriteProcessMemory(hProcess, dst, str.c_str(), str.length(), NULL);
+  WriteProcessMemory(hProcess, dst, str.data(), str.length(), NULL);
 }
 
-void ajanuw::SSString::toMemEx(HANDLE hProcess, void *dst, std::wstring str)
-{
-  size_t count = ajanuw::SSString::count(str);
-  WriteProcessMemory(hProcess, dst, str.c_str(), count, NULL);
-}
-
-void ajanuw::SSString::toMemEx(HANDLE hProcess, void *dst, std::u16string str)
+void ajanuw::SSString::toMemEx(HANDLE hProcess, void *dst, std::wstring_view str)
 {
   size_t count = ajanuw::SSString::count(str);
-  WriteProcessMemory(hProcess, dst, str.c_str(), count, NULL);
+  WriteProcessMemory(hProcess, dst, str.data(), count, NULL);
+}
+
+void ajanuw::SSString::toMemEx(HANDLE hProcess, void *dst, std::u16string_view str)
+{
+  size_t count = ajanuw::SSString::count(str);
+  WriteProcessMemory(hProcess, dst, str.data(), count, NULL);
 }
 
 std::string ajanuw::SSString::strFormMem(void *src, size_t max)
@@ -425,7 +361,7 @@ std::string ajanuw::SSString::strFormMem(void *src, size_t max)
   uintptr_t addr = (uintptr_t)src;
   while (true)
   {
-    BYTE wc = *(BYTE *)addr;
+    uint8_t wc = *(uint8_t *)addr;
     if (wc == NULL || max == 0)
       break;
     str.push_back(wc);
@@ -476,7 +412,7 @@ std::string ajanuw::SSString::strFormMemEx(HANDLE hProcess, void *src, size_t ma
   uintptr_t addr = (uintptr_t)src;
   while (true)
   {
-    BYTE wc = ajanuw::Mem::rByteEx(hProcess, (BYTE *)addr);
+    uint8_t wc = ajanuw::Mem::rByteEx(hProcess, (uint8_t *)addr);
     if (wc == NULL || max == 0)
       break;
     str.push_back(wc);
@@ -521,11 +457,11 @@ std::u16string ajanuw::SSString::ustrFormMemEx(HANDLE hProcess, void *src, size_
   return ustr;
 }
 
-LPVOID ajanuw::Mem::alloc(SIZE_T dwSize, LPVOID lpAddress, DWORD flAllocationType, DWORD flProtect)
+LPVOID ajanuw::Mem::alloc(SIZE_T dwSize, LPVOID lpAddress, uint32_t flAllocationType, uint32_t flProtect)
 {
   return VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
 }
-LPVOID ajanuw::Mem::allocEx(HANDLE hProcess, SIZE_T dwSize, LPVOID lpAddress, DWORD flAllocationType, DWORD flProtect)
+LPVOID ajanuw::Mem::allocEx(HANDLE hProcess, SIZE_T dwSize, LPVOID lpAddress, uint32_t flAllocationType, uint32_t flProtect)
 {
   return VirtualAllocEx(hProcess, lpAddress, dwSize, flAllocationType, flProtect);
 }
@@ -535,7 +471,7 @@ BOOL ajanuw::Mem::free(LPVOID lpAddress)
   return VirtualFree(lpAddress, 0, MEM_RELEASE);
 }
 
-BOOL ajanuw::Mem::free(std::string CEAddressString)
+BOOL ajanuw::Mem::free(std::string_view CEAddressString)
 {
   return ajanuw::Mem::free(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
@@ -545,58 +481,58 @@ BOOL ajanuw::Mem::freeEx(HANDLE hProcess, LPVOID lpAddress)
   return VirtualFreeEx(hProcess, lpAddress, 0, MEM_RELEASE);
 }
 
-BOOL ajanuw::Mem::freeEx(HANDLE hProcess, std::string CEAddressString)
+BOOL ajanuw::Mem::freeEx(HANDLE hProcess, std::string_view CEAddressString)
 {
   return ajanuw::Mem::freeEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-void ajanuw::Mem::wStr(void *lpAddress, std::string str)
+void ajanuw::Mem::wStr(void *lpAddress, std::string_view str)
 {
   ajanuw::SSString::toMem((void *)lpAddress, str);
 }
 
-void ajanuw::Mem::wWstr(void *lpAddress, std::wstring str)
+void ajanuw::Mem::wWstr(void *lpAddress, std::wstring_view str)
 {
   ajanuw::SSString::toMem((void *)lpAddress, str);
 }
 
-void ajanuw::Mem::wUstr(void *lpAddress, std::u16string str)
+void ajanuw::Mem::wUstr(void *lpAddress, std::u16string_view str)
 {
   ajanuw::SSString::toMem((void *)lpAddress, str);
 }
 
-void ajanuw::Mem::wStrEx(HANDLE hProcess, void *lpAddress, std::string str)
+void ajanuw::Mem::wStrEx(HANDLE hProcess, void *lpAddress, std::string_view str)
 {
   ajanuw::SSString::toMemEx(hProcess, (void *)lpAddress, str);
 }
 
-void ajanuw::Mem::wWstrEx(HANDLE hProcess, void *lpAddress, std::wstring str)
+void ajanuw::Mem::wWstrEx(HANDLE hProcess, void *lpAddress, std::wstring_view str)
 {
   ajanuw::SSString::toMemEx(hProcess, (void *)lpAddress, str);
 }
 
-void ajanuw::Mem::wUstrEx(HANDLE hProcess, void *lpAddress, std::u16string str)
+void ajanuw::Mem::wUstrEx(HANDLE hProcess, void *lpAddress, std::u16string_view str)
 {
   ajanuw::SSString::toMemEx(hProcess, (void *)lpAddress, str);
 }
 
-void ajanuw::Mem::wByte(void *lpAddress, BYTE byte)
+void ajanuw::Mem::wByte(void *lpAddress, uint8_t byte)
 {
-  memset(lpAddress, byte, sizeof(BYTE));
+  memset(lpAddress, byte, sizeof(uint8_t));
 }
 
-void ajanuw::Mem::wBytes(void *lpAddress, std::vector<BYTE> bytes)
+void ajanuw::Mem::wBytes(void *lpAddress, const std::vector<uint8_t> &bytes)
 {
   memcpy_s(lpAddress, bytes.size(), bytes.data(), bytes.size());
 }
 
-void ajanuw::Mem::wWord(void *lpAddress, WORD value)
+void ajanuw::Mem::wWord(void *lpAddress, uint16_t value)
 {
-  memcpy_s(lpAddress, sizeof(WORD), &value, sizeof(WORD));
+  memcpy_s(lpAddress, sizeof(uint16_t), &value, sizeof(uint16_t));
 }
-void ajanuw::Mem::wDword(void *lpAddress, DWORD value)
+void ajanuw::Mem::wDword(void *lpAddress, uint32_t value)
 {
-  memcpy_s(lpAddress, sizeof(DWORD), &value, sizeof(DWORD));
+  memcpy_s(lpAddress, sizeof(uint32_t), &value, sizeof(uint32_t));
 }
 void ajanuw::Mem::wQword(void *lpAddress, uint64_t value)
 {
@@ -610,32 +546,32 @@ void ajanuw::Mem::wDouble(void *lpAddress, double value)
 {
   memcpy_s(lpAddress, sizeof(double), &value, sizeof(double));
 }
-void ajanuw::Mem::wRegionToFile(std::string filename, void *lpAddress, uintptr_t size)
+void ajanuw::Mem::wRegionToFile(std::string_view filename, void *lpAddress, uintptr_t size)
 {
   std::ofstream outFile;
-  outFile.open(filename.c_str());
+  outFile.open(filename.data());
   for (int i = 0; i < size; i++)
-    outFile << *(BYTE *)((uintptr_t)lpAddress + i);
+    outFile << *(uint8_t *)((uintptr_t)lpAddress + i);
   outFile.close();
 }
 
-void ajanuw::Mem::wByteEx(HANDLE hProcess, void *lpAddress, BYTE byte)
+void ajanuw::Mem::wByteEx(HANDLE hProcess, void *lpAddress, uint8_t byte)
 {
-  WriteProcessMemory(hProcess, lpAddress, &byte, sizeof(BYTE), NULL);
+  WriteProcessMemory(hProcess, lpAddress, &byte, sizeof(uint8_t), NULL);
 }
 
-void ajanuw::Mem::wBytesEx(HANDLE hProcess, void *lpAddress, std::vector<BYTE> bytes)
+void ajanuw::Mem::wBytesEx(HANDLE hProcess, void *lpAddress, const std::vector<uint8_t> &bytes)
 {
   WriteProcessMemory(hProcess, lpAddress, bytes.data(), bytes.size(), NULL);
 }
 
-void ajanuw::Mem::wWordEx(HANDLE hProcess, void *lpAddress, WORD value)
+void ajanuw::Mem::wWordEx(HANDLE hProcess, void *lpAddress, uint16_t value)
 {
-  WriteProcessMemory(hProcess, lpAddress, &value, sizeof(WORD), NULL);
+  WriteProcessMemory(hProcess, lpAddress, &value, sizeof(uint16_t), NULL);
 }
-void ajanuw::Mem::wDwordEx(HANDLE hProcess, void *lpAddress, DWORD value)
+void ajanuw::Mem::wDwordEx(HANDLE hProcess, void *lpAddress, uint32_t value)
 {
-  WriteProcessMemory(hProcess, lpAddress, &value, sizeof(DWORD), NULL);
+  WriteProcessMemory(hProcess, lpAddress, &value, sizeof(uint32_t), NULL);
 }
 void ajanuw::Mem::wQwordEx(HANDLE hProcess, void *lpAddress, uint64_t value)
 {
@@ -649,102 +585,102 @@ void ajanuw::Mem::wDoubleEx(HANDLE hProcess, void *lpAddress, double value)
 {
   WriteProcessMemory(hProcess, lpAddress, &value, sizeof(double), NULL);
 }
-void ajanuw::Mem::wRegionToFileEx(HANDLE hProcess, std::string filename, void *lpAddress, uintptr_t size)
+void ajanuw::Mem::wRegionToFileEx(HANDLE hProcess, std::string_view filename, void *lpAddress, uintptr_t size)
 {
   std::ofstream outFile;
-  outFile.open(filename.c_str());
+  outFile.open(filename.data());
   for (int i = 0; i < size; i++)
-    outFile << ajanuw::Mem::rByteEx(hProcess, (BYTE *)lpAddress + i);
+    outFile << ajanuw::Mem::rByteEx(hProcess, (uint8_t *)lpAddress + i);
   outFile.close();
 }
 
-void ajanuw::Mem::wStr(std::string CEAddressString, std::string str)
+void ajanuw::Mem::wStr(std::string_view CEAddressString, std::string_view str)
 {
   ajanuw::Mem::wStr(ajanuw::CEAddressString::getAddress(CEAddressString), str);
 }
-void ajanuw::Mem::wWstr(std::string CEAddressString, std::wstring str)
+void ajanuw::Mem::wWstr(std::string_view CEAddressString, std::wstring_view str)
 {
   ajanuw::Mem::wWstr(ajanuw::CEAddressString::getAddress(CEAddressString), str);
 }
-void ajanuw::Mem::wUstr(std::string CEAddressString, std::u16string str)
+void ajanuw::Mem::wUstr(std::string_view CEAddressString, std::u16string_view str)
 {
   ajanuw::Mem::wUstr(ajanuw::CEAddressString::getAddress(CEAddressString), str);
 }
-void ajanuw::Mem::wByte(std::string CEAddressString, BYTE byte)
+void ajanuw::Mem::wByte(std::string_view CEAddressString, uint8_t byte)
 {
   ajanuw::Mem::wByte(ajanuw::CEAddressString::getAddress(CEAddressString), byte);
 }
-void ajanuw::Mem::wBytes(std::string CEAddressString, std::vector<BYTE> bytes)
+void ajanuw::Mem::wBytes(std::string_view CEAddressString, const std::vector<uint8_t> &bytes)
 {
   ajanuw::Mem::wBytes(ajanuw::CEAddressString::getAddress(CEAddressString), bytes);
 }
-void ajanuw::Mem::wWord(std::string CEAddressString, WORD value)
+void ajanuw::Mem::wWord(std::string_view CEAddressString, uint16_t value)
 {
   ajanuw::Mem::wWord(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
-void ajanuw::Mem::wDword(std::string CEAddressString, DWORD value)
+void ajanuw::Mem::wDword(std::string_view CEAddressString, uint32_t value)
 {
   ajanuw::Mem::wDword(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
-void ajanuw::Mem::wQword(std::string CEAddressString, uint64_t value)
+void ajanuw::Mem::wQword(std::string_view CEAddressString, uint64_t value)
 {
   ajanuw::Mem::wQword(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
-void ajanuw::Mem::wFloat(std::string CEAddressString, float value)
+void ajanuw::Mem::wFloat(std::string_view CEAddressString, float value)
 {
   ajanuw::Mem::wFloat(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
-void ajanuw::Mem::wDouble(std::string CEAddressString, double value)
+void ajanuw::Mem::wDouble(std::string_view CEAddressString, double value)
 {
   ajanuw::Mem::wDouble(ajanuw::CEAddressString::getAddress(CEAddressString), value);
 }
-void ajanuw::Mem::wRegionToFile(std::string filename, std::string CEAddressString, uintptr_t size)
+void ajanuw::Mem::wRegionToFile(std::string_view filename, std::string_view CEAddressString, uintptr_t size)
 {
   wRegionToFile(filename, ajanuw::CEAddressString::getAddress(CEAddressString), size);
 }
 
-void ajanuw::Mem::wStrEx(HANDLE hProcess, std::string CEAddressString, std::string str)
+void ajanuw::Mem::wStrEx(HANDLE hProcess, std::string_view CEAddressString, std::string_view str)
 {
   ajanuw::Mem::wStrEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), str);
 }
-void ajanuw::Mem::wWstrEx(HANDLE hProcess, std::string CEAddressString, std::wstring str)
+void ajanuw::Mem::wWstrEx(HANDLE hProcess, std::string_view CEAddressString, std::wstring_view str)
 {
   ajanuw::Mem::wWstrEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), str);
 }
-void ajanuw::Mem::wUstrEx(HANDLE hProcess, std::string CEAddressString, std::u16string str)
+void ajanuw::Mem::wUstrEx(HANDLE hProcess, std::string_view CEAddressString, std::u16string_view str)
 {
   ajanuw::Mem::wUstrEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), str);
 }
-void ajanuw::Mem::wByteEx(HANDLE hProcess, std::string CEAddressString, BYTE byte)
+void ajanuw::Mem::wByteEx(HANDLE hProcess, std::string_view CEAddressString, uint8_t byte)
 {
   ajanuw::Mem::wByteEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), byte);
 }
-void ajanuw::Mem::wBytesEx(HANDLE hProcess, std::string CEAddressString, std::vector<BYTE> bytes)
+void ajanuw::Mem::wBytesEx(HANDLE hProcess, std::string_view CEAddressString, std::vector<uint8_t> bytes)
 {
   ajanuw::Mem::wBytesEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), bytes);
 }
-void ajanuw::Mem::wWordEx(HANDLE hProcess, std::string CEAddressString, WORD value)
+void ajanuw::Mem::wWordEx(HANDLE hProcess, std::string_view CEAddressString, uint16_t value)
 {
   ajanuw::Mem::wWordEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), value);
 }
-void ajanuw::Mem::wDwordEx(HANDLE hProcess, std::string CEAddressString, DWORD value)
+void ajanuw::Mem::wDwordEx(HANDLE hProcess, std::string_view CEAddressString, uint32_t value)
 {
   ajanuw::Mem::wDwordEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), value);
 }
-void ajanuw::Mem::wQwordEx(HANDLE hProcess, std::string CEAddressString, uint64_t value)
+void ajanuw::Mem::wQwordEx(HANDLE hProcess, std::string_view CEAddressString, uint64_t value)
 {
   ajanuw::Mem::wQwordEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), value);
 }
-void ajanuw::Mem::wFloatEx(HANDLE hProcess, std::string CEAddressString, float value)
+void ajanuw::Mem::wFloatEx(HANDLE hProcess, std::string_view CEAddressString, float value)
 {
   ajanuw::Mem::wFloatEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), value);
 }
-void ajanuw::Mem::wDoubleEx(HANDLE hProcess, std::string CEAddressString, double value)
+void ajanuw::Mem::wDoubleEx(HANDLE hProcess, std::string_view CEAddressString, double value)
 {
   ajanuw::Mem::wDoubleEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), value);
 }
 
-void ajanuw::Mem::wRegionToFileEx(HANDLE hProcess, std::string filename, std::string CEAddressString, uintptr_t size)
+void ajanuw::Mem::wRegionToFileEx(HANDLE hProcess, std::string_view filename, std::string_view CEAddressString, uintptr_t size)
 {
   ajanuw::Mem::wRegionToFileEx(hProcess, filename, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), size);
 }
@@ -777,51 +713,51 @@ std::u16string ajanuw::Mem::rUstrEx(HANDLE hProcess, char16_t *lpAddress, uintpt
   return ajanuw::SSString::ustrFormMemEx(hProcess, lpAddress, max);
 }
 
-std::string ajanuw::Mem::rStr(std::string CEAddressString, uintptr_t max)
+std::string ajanuw::Mem::rStr(std::string_view CEAddressString, uintptr_t max)
 {
   return ajanuw::Mem::rStr((char *)ajanuw::CEAddressString::getAddress(CEAddressString), max);
 }
-std::wstring ajanuw::Mem::rWstr(std::string CEAddressString, uintptr_t max)
+std::wstring ajanuw::Mem::rWstr(std::string_view CEAddressString, uintptr_t max)
 {
   return ajanuw::Mem::rWstr((wchar_t *)ajanuw::CEAddressString::getAddress(CEAddressString), max);
 }
-std::u16string ajanuw::Mem::rUstr(std::string CEAddressString, uintptr_t max)
+std::u16string ajanuw::Mem::rUstr(std::string_view CEAddressString, uintptr_t max)
 {
   return ajanuw::Mem::rUstr((char16_t *)ajanuw::CEAddressString::getAddress(CEAddressString), max);
 }
 
-std::string ajanuw::Mem::rStrEx(HANDLE hProcess, std::string CEAddressString, uintptr_t max)
+std::string ajanuw::Mem::rStrEx(HANDLE hProcess, std::string_view CEAddressString, uintptr_t max)
 {
   return ajanuw::Mem::rStrEx(hProcess, (char *)ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), max);
 }
-std::wstring ajanuw::Mem::rWstrEx(HANDLE hProcess, std::string CEAddressString, uintptr_t max)
+std::wstring ajanuw::Mem::rWstrEx(HANDLE hProcess, std::string_view CEAddressString, uintptr_t max)
 {
   return ajanuw::Mem::rWstrEx(hProcess, (wchar_t *)ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), max);
 }
-std::u16string ajanuw::Mem::rUstrEx(HANDLE hProcess, std::string CEAddressString, uintptr_t max)
+std::u16string ajanuw::Mem::rUstrEx(HANDLE hProcess, std::string_view CEAddressString, uintptr_t max)
 {
   return ajanuw::Mem::rUstrEx(hProcess, (char16_t *)ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), max);
 }
 
-std::vector<BYTE> ajanuw::Mem::rBytes(void *lpAddress, uintptr_t size)
+std::vector<uint8_t> ajanuw::Mem::rBytes(void *lpAddress, uintptr_t size)
 {
-  std::vector<BYTE> bytes(size);
+  std::vector<uint8_t> bytes(size);
   memcpy_s(bytes.data(), size, lpAddress, size);
   return bytes;
 }
 
-BYTE ajanuw::Mem::rByte(void *lpAddress)
+uint8_t ajanuw::Mem::rByte(void *lpAddress)
 {
-  return *(BYTE *)lpAddress;
+  return *(uint8_t *)lpAddress;
 }
 
-WORD ajanuw::Mem::rWord(void *lpAddress)
+uint16_t ajanuw::Mem::rWord(void *lpAddress)
 {
-  return *(WORD *)lpAddress;
+  return *(uint16_t *)lpAddress;
 }
-DWORD ajanuw::Mem::rDword(void *lpAddress)
+uint32_t ajanuw::Mem::rDword(void *lpAddress)
 {
-  return *(DWORD *)lpAddress;
+  return *(uint32_t *)lpAddress;
 }
 uint64_t ajanuw::Mem::rQword(void *lpAddress)
 {
@@ -843,53 +779,53 @@ double ajanuw::Mem::rDouble(void *lpAddress)
   return *(double *)lpAddress;
 }
 
-void ajanuw::Mem::rRegionFromFile(std::string fileame, void *lpAddress)
+void ajanuw::Mem::rRegionFromFile(std::string_view fileame, void *lpAddress)
 {
   rRegionFromFile(fileame, lpAddress, NULL);
 }
 
-void ajanuw::Mem::rRegionFromFile(std::string fileame, void *lpAddress, size_t *fileSize)
+void ajanuw::Mem::rRegionFromFile(std::string_view fileame, void *lpAddress, size_t *fileSize)
 {
   std::ifstream inFile;
-  inFile.open(fileame);
+  inFile.open(fileame.data());
   uintptr_t offset = (uintptr_t)lpAddress;
   while (inFile.good())
   {
     char r = inFile.get();
     if (inFile.eof())
       break;
-    memset((void *)offset, r, sizeof(BYTE));
-    offset += sizeof(BYTE);
+    memset((void *)offset, r, sizeof(uint8_t));
+    offset += sizeof(uint8_t);
     if (fileSize)
       (*fileSize)++;
   }
   inFile.close();
 }
 
-std::vector<BYTE> ajanuw::Mem::rBytesEx(HANDLE hProcess, void *lpAddress, uintptr_t size)
+std::vector<uint8_t> ajanuw::Mem::rBytesEx(HANDLE hProcess, void *lpAddress, uintptr_t size)
 {
-  std::vector<BYTE> bytes(size);
+  std::vector<uint8_t> bytes(size);
   ReadProcessMemory(hProcess, lpAddress, bytes.data(), size, NULL);
   return bytes;
 }
 
-BYTE ajanuw::Mem::rByteEx(HANDLE hProcess, void *lpAddress)
+uint8_t ajanuw::Mem::rByteEx(HANDLE hProcess, void *lpAddress)
 {
-  BYTE r;
-  ReadProcessMemory(hProcess, lpAddress, &r, sizeof(BYTE), NULL);
+  uint8_t r;
+  ReadProcessMemory(hProcess, lpAddress, &r, sizeof(uint8_t), NULL);
   return r;
 }
 
-WORD ajanuw::Mem::rWordEx(HANDLE hProcess, void *lpAddress)
+uint16_t ajanuw::Mem::rWordEx(HANDLE hProcess, void *lpAddress)
 {
-  WORD r;
-  ReadProcessMemory(hProcess, lpAddress, &r, sizeof(WORD), NULL);
+  uint16_t r;
+  ReadProcessMemory(hProcess, lpAddress, &r, sizeof(uint16_t), NULL);
   return r;
 }
-DWORD ajanuw::Mem::rDwordEx(HANDLE hProcess, void *lpAddress)
+uint32_t ajanuw::Mem::rDwordEx(HANDLE hProcess, void *lpAddress)
 {
-  DWORD r;
-  ReadProcessMemory(hProcess, lpAddress, &r, sizeof(DWORD), NULL);
+  uint32_t r;
+  ReadProcessMemory(hProcess, lpAddress, &r, sizeof(uint32_t), NULL);
   return r;
 }
 uint64_t ajanuw::Mem::rQwordEx(HANDLE hProcess, void *lpAddress)
@@ -901,7 +837,7 @@ uint64_t ajanuw::Mem::rQwordEx(HANDLE hProcess, void *lpAddress)
 
 uintptr_t ajanuw::Mem::rPointerEx(HANDLE hProcess, void *lpAddress)
 {
-  DWORD pid = GetProcessId(hProcess);
+  uint32_t pid = GetProcessId(hProcess);
 
   bool isx64 = ajanuw::PE::isX64(pid, (HMODULE)ajanuw::PE::GetModuleBase(pid).lpBaseOfDll);
 
@@ -933,15 +869,15 @@ double ajanuw::Mem::rDoubleEx(HANDLE hProcess, void *lpAddress)
   return r;
 }
 
-void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string fileame, void *lpAddress)
+void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, void *lpAddress)
 {
   rRegionFromFileEx(hProcess, fileame, lpAddress, NULL);
 }
 
-void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string fileame, void *lpAddress, size_t *fileSize)
+void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, void *lpAddress, size_t *fileSize)
 {
   std::ifstream inFile;
-  inFile.open(fileame);
+  inFile.open(fileame.data());
   uintptr_t offset = (uintptr_t)lpAddress;
   while (inFile.good())
   {
@@ -949,109 +885,109 @@ void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string fileame, void *
     if (inFile.eof())
       break;
     ajanuw::Mem::wByteEx(hProcess, (void *)offset, r);
-    offset += sizeof(BYTE);
+    offset += sizeof(uint8_t);
     if (fileSize)
       (*fileSize)++;
   }
   inFile.close();
 }
 
-std::vector<BYTE> ajanuw::Mem::rBytes(std::string CEAddressString, uintptr_t size)
+std::vector<uint8_t> ajanuw::Mem::rBytes(std::string_view CEAddressString, uintptr_t size)
 {
   return ajanuw::Mem::rBytes(ajanuw::CEAddressString::getAddress(CEAddressString), size);
 }
 
-BYTE ajanuw::Mem::rByte(std::string CEAddressString)
+uint8_t ajanuw::Mem::rByte(std::string_view CEAddressString)
 {
   return ajanuw::Mem::rByte(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-WORD ajanuw::Mem::rWord(std::string CEAddressString)
+uint16_t ajanuw::Mem::rWord(std::string_view CEAddressString)
 {
   return ajanuw::Mem::rWord(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-DWORD ajanuw::Mem::rDword(std::string CEAddressString)
+uint32_t ajanuw::Mem::rDword(std::string_view CEAddressString)
 {
   return ajanuw::Mem::rDword(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-uint64_t ajanuw::Mem::rQword(std::string CEAddressString)
+uint64_t ajanuw::Mem::rQword(std::string_view CEAddressString)
 {
   return ajanuw::Mem::rQword(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-uintptr_t ajanuw::Mem::rPointer(std::string CEAddressString)
+uintptr_t ajanuw::Mem::rPointer(std::string_view CEAddressString)
 {
   return ajanuw::Mem::rPointer(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-float ajanuw::Mem::rFloat(std::string CEAddressString)
+float ajanuw::Mem::rFloat(std::string_view CEAddressString)
 {
   return ajanuw::Mem::rFloat(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-double ajanuw::Mem::rDouble(std::string CEAddressString)
+double ajanuw::Mem::rDouble(std::string_view CEAddressString)
 {
   return ajanuw::Mem::rDouble(ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-void ajanuw::Mem::rRegionFromFile(std::string fileame, std::string CEAddressString)
+void ajanuw::Mem::rRegionFromFile(std::string_view fileame, std::string_view CEAddressString)
 {
   ajanuw::Mem::rRegionFromFile(fileame, ajanuw::CEAddressString::getAddress(CEAddressString));
 }
 
-void ajanuw::Mem::rRegionFromFile(std::string fileame, std::string CEAddressString, size_t *fileSize)
+void ajanuw::Mem::rRegionFromFile(std::string_view fileame, std::string_view CEAddressString, size_t *fileSize)
 {
   ajanuw::Mem::rRegionFromFile(fileame, ajanuw::CEAddressString::getAddress(CEAddressString), fileSize);
 }
 
-std::vector<BYTE> ajanuw::Mem::rBytesEx(HANDLE hProcess, std::string CEAddressString, uintptr_t size)
+std::vector<uint8_t> ajanuw::Mem::rBytesEx(HANDLE hProcess, std::string_view CEAddressString, uintptr_t size)
 {
   return ajanuw::Mem::rBytesEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), size);
 }
 
-BYTE ajanuw::Mem::rByteEx(HANDLE hProcess, std::string CEAddressString)
+uint8_t ajanuw::Mem::rByteEx(HANDLE hProcess, std::string_view CEAddressString)
 {
   return ajanuw::Mem::rByteEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess));
 }
 
-WORD ajanuw::Mem::rWordEx(HANDLE hProcess, std::string CEAddressString)
+uint16_t ajanuw::Mem::rWordEx(HANDLE hProcess, std::string_view CEAddressString)
 {
   return ajanuw::Mem::rWordEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess));
 }
 
-DWORD ajanuw::Mem::rDwordEx(HANDLE hProcess, std::string CEAddressString)
+uint32_t ajanuw::Mem::rDwordEx(HANDLE hProcess, std::string_view CEAddressString)
 {
   return ajanuw::Mem::rDwordEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess));
 }
 
-uint64_t ajanuw::Mem::rQwordEx(HANDLE hProcess, std::string CEAddressString)
+uint64_t ajanuw::Mem::rQwordEx(HANDLE hProcess, std::string_view CEAddressString)
 {
   return ajanuw::Mem::rQwordEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess));
 }
 
-uintptr_t ajanuw::Mem::rPointerEx(HANDLE hProcess, std::string CEAddressString)
+uintptr_t ajanuw::Mem::rPointerEx(HANDLE hProcess, std::string_view CEAddressString)
 {
   return ajanuw::Mem::rPointerEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess));
 }
 
-float ajanuw::Mem::rFloatEx(HANDLE hProcess, std::string CEAddressString)
+float ajanuw::Mem::rFloatEx(HANDLE hProcess, std::string_view CEAddressString)
 {
   return ajanuw::Mem::rFloatEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess));
 }
 
-double ajanuw::Mem::rDoubleEx(HANDLE hProcess, std::string CEAddressString)
+double ajanuw::Mem::rDoubleEx(HANDLE hProcess, std::string_view CEAddressString)
 {
   return ajanuw::Mem::rDoubleEx(hProcess, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess));
 }
 
-void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string fileame, std::string CEAddressString)
+void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, std::string_view CEAddressString)
 {
   ajanuw::Mem::rRegionFromFileEx(hProcess, fileame, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess));
 }
 
-void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string fileame, std::string CEAddressString, size_t *fileSize)
+void ajanuw::Mem::rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, std::string_view CEAddressString, size_t *fileSize)
 {
   ajanuw::Mem::rRegionFromFileEx(hProcess, fileame, ajanuw::CEAddressString::getAddress(CEAddressString, hProcess), fileSize);
 }
@@ -1117,7 +1053,7 @@ ATOM ajanuw::Gui::Win32::initRegisterClass()
 
 BOOL ajanuw::Gui::Win32::initWindow()
 {
-  hWnd = CreateWindowA(
+  _hWnd = CreateWindowA(
       className.c_str(),
       windowName.c_str(),
       style,
@@ -1125,19 +1061,19 @@ BOOL ajanuw::Gui::Win32::initWindow()
       width, height,
       NULL, NULL, NULL, NULL);
 
-  if (!hWnd)
+  if (!_hWnd)
     return FALSE;
   std::wstring ws = ajanuw::SSString::strToWstr(windowName);
-  SetWindowTextW(hWnd, ws.c_str());
-  hwndMap.insert(std::pair<HWND, uintptr_t>(hWnd, (uintptr_t)this));
-  ShowWindow(hWnd, SW_RESTORE);
-  UpdateWindow(hWnd);
+  SetWindowTextW(_hWnd, ws.c_str());
+  hwndMap.insert(std::pair<HWND, uintptr_t>(_hWnd, (uintptr_t)this));
+  ShowWindow(_hWnd, SW_RESTORE);
+  UpdateWindow(_hWnd);
   return TRUE;
 }
 
-std::vector<WORD> ajanuw::Gui::Win32::getHLMessage(DWORD message)
+std::vector<uint16_t> ajanuw::Gui::Win32::getHLMessage(uint32_t message)
 {
-  return std::vector<WORD>{HIWORD(message), LOWORD(message)};
+  return {HIWORD(message), LOWORD(message)};
 }
 
 bool ajanuw::Gui::Win32::getCheck(HWND hWnd)
@@ -1145,83 +1081,83 @@ bool ajanuw::Gui::Win32::getCheck(HWND hWnd)
   return Button_GetCheck(hWnd);
 }
 
-DWORD ajanuw::Gui::Win32::rgb(DWORD r, DWORD g, DWORD b)
+uint32_t ajanuw::Gui::Win32::rgb(uint32_t r, uint32_t g, uint32_t b)
 {
   return RGB(r, g, b);
 }
 
-HWND ajanuw::Gui::Win32::createWindow(Win32CreateOption opt)
+HWND ajanuw::Gui::Win32::createWindow(std::unique_ptr<Win32CreateOption> opt)
 {
-  HWND _hWnd = CreateWindowA(opt.className.c_str(), opt.windowName.c_str(),
-                             opt.style,
-                             opt.x, opt.y,
-                             opt.width, opt.height,
-                             opt.parent ? opt.parent : this->hWnd,
-                             opt.id,
+  HWND hWnd = CreateWindowA(opt->className.c_str(), opt->windowName.c_str(),
+                             opt->style,
+                             opt->x, opt->y,
+                             opt->width, opt->height,
+                             opt->parent ? opt->parent : _hWnd,
+                             opt->id,
                              NULL, NULL);
-  std::wstring ws = ajanuw::SSString::strToWstr(opt.windowName);
-  SetWindowTextW(_hWnd, ws.c_str());
-  return _hWnd;
+  auto ws = ajanuw::SSString::strToWstr(opt->windowName);
+  SetWindowTextW(hWnd, ws.data());
+  return hWnd;
 }
 
-HWND ajanuw::Gui::Win32::button(Win32CreateOption opt)
+HWND ajanuw::Gui::Win32::button(std::unique_ptr<Win32CreateOption> opt)
 {
-  opt.className = "button";
-  opt.style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_CENTER | BS_MULTILINE | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
+  opt->className = "button";
+  opt->style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_CENTER | BS_MULTILINE | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
 }
 
-HWND ajanuw::Gui::Win32::checkbox(Win32CreateOption opt)
+HWND ajanuw::Gui::Win32::checkbox(std::unique_ptr<Win32CreateOption> opt)
 {
-  opt.className = "button";
-  opt.style = WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_CENTER | BS_MULTILINE | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
+  opt->className = "button";
+  opt->style = WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_CENTER | BS_MULTILINE | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
 }
 
-HWND ajanuw::Gui::Win32::radio(Win32CreateOption opt)
+HWND ajanuw::Gui::Win32::radio(std::unique_ptr<Win32CreateOption> opt)
 {
-  opt.className = "button";
-  opt.style = WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON | BS_CENTER | BS_MULTILINE | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
+  opt->className = "button";
+  opt->style = WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON | BS_CENTER | BS_MULTILINE | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
 }
-HWND ajanuw::Gui::Win32::groupbox(Win32CreateOption opt)
+HWND ajanuw::Gui::Win32::groupbox(std::unique_ptr<Win32CreateOption> opt)
 {
-  opt.className = "button";
-  opt.style = WS_CHILD | WS_VISIBLE | BS_GROUPBOX | BS_MULTILINE | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
-}
-
-HWND ajanuw::Gui::Win32::text(Win32CreateOption opt)
-{
-  opt.className = "static";
-  opt.style = WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOTIFY | SS_SIMPLE | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
+  opt->className = "button";
+  opt->style = WS_CHILD | WS_VISIBLE | BS_GROUPBOX | BS_MULTILINE | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
 }
 
-HWND ajanuw::Gui::Win32::input(Win32CreateOption opt)
+HWND ajanuw::Gui::Win32::text(std::unique_ptr<Win32CreateOption> opt)
 {
-  opt.className = "edit";
-  opt.style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_AUTOHSCROLL | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
+  opt->className = "static";
+  opt->style = WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOTIFY | SS_SIMPLE | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
 }
 
-HWND ajanuw::Gui::Win32::textarea(Win32CreateOption opt)
+HWND ajanuw::Gui::Win32::input(std::unique_ptr<Win32CreateOption> opt)
 {
-  opt.className = "edit";
-  opt.style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | WS_HSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
+  opt->className = "edit";
+  opt->style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | ES_AUTOHSCROLL | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
 }
-HWND ajanuw::Gui::Win32::listbox(Win32CreateOption opt)
+
+HWND ajanuw::Gui::Win32::textarea(std::unique_ptr<Win32CreateOption> opt)
 {
-  opt.className = "LISTBOX";
-  opt.style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
+  opt->className = "edit";
+  opt->style = WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT | WS_HSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
 }
-HWND ajanuw::Gui::Win32::select(Win32CreateOption opt)
+HWND ajanuw::Gui::Win32::listbox(std::unique_ptr<Win32CreateOption> opt)
 {
-  opt.className = "combobox";
-  opt.style = WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST | WS_VSCROLL | opt.style;
-  return ajanuw::Gui::Win32::createWindow(opt);
+  opt->className = "LISTBOX";
+  opt->style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
+}
+HWND ajanuw::Gui::Win32::select(std::unique_ptr<Win32CreateOption> opt)
+{
+  opt->className = "combobox";
+  opt->style = WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST | WS_VSCROLL | opt->style;
+  return ajanuw::Gui::Win32::createWindow(std::move(opt));
 }
 
 ajanuw::Mem::VAManage::VAManage(size_t size)
@@ -1250,18 +1186,18 @@ ajanuw::Mem::VAManage::VAManage(size_t size, HANDLE hProcess)
 
 uint8_t *ajanuw::Mem::VAManage::ptr()
 {
-  return (BYTE *)memory + position;
+  return (uint8_t *)memory + position;
 }
 
-std::vector<uint8_t> ajanuw::Mem::VAManage::read(size_t size)
+std::vector<uint8_t> ajanuw::Mem::VAManage::read(size_t _size)
 {
   if (hProcess == NULL)
   {
-    return ajanuw::Mem::rBytes(ptr(), size);
+    return ajanuw::Mem::rBytes(ptr(), _size);
   }
   else
   {
-    return ajanuw::Mem::rBytesEx(hProcess, ptr(), size);
+    return ajanuw::Mem::rBytesEx(hProcess, ptr(), _size);
   }
 }
 
@@ -1310,7 +1246,7 @@ std::u16string ajanuw::Mem::VAManage::readUstr(size_t maxSize)
   return hProcess == NULL ? ajanuw::Mem::rUstr((char16_t *)ptr(), maxSize) : ajanuw::Mem::rUstrEx(hProcess, (char16_t *)ptr(), maxSize);
 }
 
-void ajanuw::Mem::VAManage::write(std::vector<uint8_t> table, size_t count)
+void ajanuw::Mem::VAManage::write(std::vector<uint8_t> &table, size_t count)
 {
   if (count < table.size())
   {
@@ -1408,7 +1344,7 @@ void ajanuw::Mem::VAManage::writeDouble(double v)
   position += sizeof(double);
 }
 
-void ajanuw::Mem::VAManage::writeStr(std::string str)
+void ajanuw::Mem::VAManage::writeStr(std::string_view str)
 {
   if (hProcess == NULL)
   {
@@ -1422,7 +1358,7 @@ void ajanuw::Mem::VAManage::writeStr(std::string str)
   position += ajanuw::SSString::count(str);
 }
 
-void ajanuw::Mem::VAManage::writeWstr(std::wstring wstr)
+void ajanuw::Mem::VAManage::writeWstr(std::wstring_view wstr)
 {
   if (hProcess == NULL)
   {
@@ -1435,7 +1371,7 @@ void ajanuw::Mem::VAManage::writeWstr(std::wstring wstr)
   position += ajanuw::SSString::count(wstr);
 }
 
-void ajanuw::Mem::VAManage::writeUstr(std::u16string ustr)
+void ajanuw::Mem::VAManage::writeUstr(std::u16string_view ustr)
 {
   if (hProcess == NULL)
   {
@@ -1448,7 +1384,7 @@ void ajanuw::Mem::VAManage::writeUstr(std::u16string ustr)
   position += ajanuw::SSString::count(ustr);
 }
 
-void ajanuw::Mem::VAManage::loadFromFile(std::string filename)
+void ajanuw::Mem::VAManage::loadFromFile(std::string_view filename)
 {
   if (hProcess == NULL)
   {
@@ -1460,7 +1396,7 @@ void ajanuw::Mem::VAManage::loadFromFile(std::string filename)
   }
 }
 
-void ajanuw::Mem::VAManage::saveToFile(std::string filename)
+void ajanuw::Mem::VAManage::saveToFile(std::string_view filename)
 {
   if (hProcess == NULL)
   {
@@ -1489,7 +1425,7 @@ BOOL ajanuw::Mem::VAManage::destroy()
     return FALSE;
 }
 
-uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
+uintptr_t ajanuw::Asm::AAScript::aa(std::string_view asmString, uintptr_t rcx = 0)
 {
   JitRuntime rt;
   CodeHolder code;
@@ -1498,7 +1434,7 @@ uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
   x86::Assembler a(&code);
   AsmParser p(&a);
 
-  asmjit::Error err = p.parse(asmString.c_str());
+  asmjit::Error err = p.parse(asmString.data());
   if (err)
   {
     char msg[100];
@@ -1514,24 +1450,16 @@ uintptr_t ajanuw::Asm::AAScript::aa(std::string asmString, uintptr_t rcx = 0)
   return r;
 }
 
-std::vector<BYTE> ajanuw::Asm::AAScript::asmBytes(std::string asmString, bool isX64)
+std::vector<uint8_t> ajanuw::Asm::AAScript::asmBytes(std::string_view asmString, bool isX64)
 {
-
   CodeHolder code;
   Environment env = hostEnvironment();
-  if (isX64)
-  {
-    env.setArch(Environment::kArchX64);
-  }
-  else
-  {
-    env.setArch(Environment::kArchX86);
-  }
+  env.setArch(isX64 ? Environment::kArchX64 : Environment::kArchX86);
   code.init(env);
 
   x86::Assembler a(&code);
   AsmParser p(&a);
-  asmjit::Error err = p.parse(asmString.c_str());
+  asmjit::Error err = p.parse(asmString.data());
   if (err)
   {
     char msg[100];
@@ -1539,7 +1467,7 @@ std::vector<BYTE> ajanuw::Asm::AAScript::asmBytes(std::string asmString, bool is
     throw std::exception(msg);
   }
 
-  std::vector<BYTE> r(a.offset());
+  std::vector<uint8_t> r(a.offset());
   memcpy_s(r.data(), r.size(), a.bufferData(), r.size());
   return r;
 }
@@ -1550,28 +1478,28 @@ void ajanuw::Symbol::registerSymbol(std::string symbolname, LPVOID address)
   ajanuw::Symbol::_symbolMap[symbolname] = address;
 }
 
-void ajanuw::Symbol::unregisterSymbol(std::string symbolname)
+void ajanuw::Symbol::unregisterSymbol(std::string_view symbolname)
 {
-  ajanuw::Symbol::_symbolMap.erase(symbolname);
+  ajanuw::Symbol::_symbolMap.erase(symbolname.data());
 }
 
-LPVOID ajanuw::Symbol::get(std::string symbolname)
+LPVOID ajanuw::Symbol::get(std::string_view symbolname)
 {
-  if (ajanuw::Symbol::_symbolMap.count(symbolname) == NULL)
+  if (ajanuw::Symbol::_symbolMap.count(symbolname.data()) == NULL)
     return NULL;
-  return ajanuw::Symbol::_symbolMap.at(symbolname);
+  return ajanuw::Symbol::_symbolMap.at(symbolname.data());
 }
 
-bool ajanuw::Symbol::has(std::string symbolname)
+bool ajanuw::Symbol::has(std::string_view symbolname)
 {
-  return ajanuw::Symbol::_symbolMap.count(symbolname) != NULL;
+  return ajanuw::Symbol::_symbolMap.count(symbolname.data()) != NULL;
 }
 
-LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE hProcess)
+LPVOID ajanuw::CEAddressString::getAddress(std::string_view CEAddressString, HANDLE hProcess)
 {
   try
   {
-    ces::BaseNode *node = ces::parse(CEAddressString);
+    auto node = ces::parse(CEAddressString.data());
     if (!node)
     {
       throw std::exception("parser error.\n");
@@ -1579,7 +1507,7 @@ LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE h
     // printf("id:%d\n", node->id());
 
     Interpreter interpreter{hProcess};
-    LPVOID addr = (LPVOID)interpreter.visit(node);
+    auto addr = (LPVOID)interpreter.visit(node);
     delete node;
     return addr;
   }
@@ -1588,10 +1516,13 @@ LPVOID ajanuw::CEAddressString::getAddress(std::string CEAddressString, HANDLE h
     throw e;
   }
 }
-
-DWORD ajanuw::PE::GetPID(std::wstring name)
+uint32_t ajanuw::PE::GetPID(std::string_view name)
 {
-  DWORD pid = NULL;
+  return ajanuw::PE::GetPID(ajanuw::SSString::strToWstr(name));
+}
+uint32_t ajanuw::PE::GetPID(std::wstring_view name)
+{
+  uint32_t pid = NULL;
   HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
   if (hSnap != INVALID_HANDLE_VALUE)
   {
@@ -1601,7 +1532,7 @@ DWORD ajanuw::PE::GetPID(std::wstring name)
     {
       do
       {
-        if (!_wcsicmp(pe.szExeFile, name.c_str()))
+        if (!_wcsicmp(pe.szExeFile, name.data()))
         {
           pid = pe.th32ProcessID;
           break;
@@ -1614,7 +1545,7 @@ DWORD ajanuw::PE::GetPID(std::wstring name)
   return pid;
 }
 
-MODULEINFO ajanuw::PE::GetModuleBase(DWORD pid)
+MODULEINFO ajanuw::PE::GetModuleBase(uint32_t pid)
 {
   MODULEINFO mi{0};
   HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
@@ -1632,21 +1563,21 @@ MODULEINFO ajanuw::PE::GetModuleBase(DWORD pid)
   return mi;
 }
 
-std::wstring ajanuw::PE::GetModuleName(WCHAR *moduleName)
-{
-  return ajanuw::PE::GetModuleName(std::wstring(moduleName));
-}
-
-std::wstring ajanuw::PE::GetModuleName(std::wstring moduleName)
+std::wstring ajanuw::PE::GetModuleName(std::wstring_view moduleName)
 {
   auto index = moduleName.rfind(L".");
-  return moduleName.substr(0, index);
+  return std::wstring(moduleName.substr(0, index));
+}
+std::string ajanuw::PE::GetModuleName(std::string_view moduleName)
+{
+  auto index = moduleName.rfind(".");
+  return std::string(moduleName.substr(0, index));
 }
 
 // 忽略大小写判断
 // user32.dll
 // user32
-MODULEINFO ajanuw::PE::GetModuleInfo(std::wstring moduleName, DWORD pid)
+MODULEINFO ajanuw::PE::GetModuleInfo(std::wstring_view moduleName, uint32_t pid)
 {
   MODULEINFO mi{0};
   HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
@@ -1659,7 +1590,9 @@ MODULEINFO ajanuw::PE::GetModuleInfo(std::wstring moduleName, DWORD pid)
       do
       {
         // me.szModule 带有模块后缀 .dll .exe .node
-        if (ajanuw::SSString::icmp(ajanuw::PE::GetModuleName(me.szModule).c_str(), moduleName.c_str()) || ajanuw::SSString::icmp(me.szModule, moduleName.c_str()))
+        if (
+            ajanuw::SSString::icmp(ajanuw::PE::GetModuleName(me.szModule), moduleName) ||
+            ajanuw::SSString::icmp(me.szModule, moduleName))
         {
           mi.lpBaseOfDll = (LPVOID)me.modBaseAddr;
           mi.SizeOfImage = me.modBaseSize;
@@ -1672,9 +1605,9 @@ MODULEINFO ajanuw::PE::GetModuleInfo(std::wstring moduleName, DWORD pid)
   return mi;
 }
 
-bool ajanuw::PE::isX64(DWORD pid, HMODULE hModule)
+bool ajanuw::PE::isX64(uint32_t pid, HMODULE hModule)
 {
-  BYTE *buf = new BYTE[0x1000];
+  uint8_t *buf = new uint8_t[0x1000];
   HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
   ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
 
@@ -1690,15 +1623,15 @@ bool ajanuw::PE::isX64(DWORD pid, HMODULE hModule)
   return isX64;
 }
 
-bool ajanuw::PE::isX86(DWORD pid, HMODULE hModule)
+bool ajanuw::PE::isX86(uint32_t pid, HMODULE hModule)
 {
   return !isX64(pid, hModule);
 }
 
-std::map<std::string, uintptr_t> ajanuw::PE::exports(DWORD pid, HMODULE hModule)
+std::map<std::string, uintptr_t> ajanuw::PE::exports(uint32_t pid, HMODULE hModule)
 {
   std::map<std::string, uintptr_t> result;
-  BYTE *buf = new BYTE[0x1000];
+  uint8_t *buf = new uint8_t[0x1000];
   HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
   ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
 
@@ -1708,7 +1641,7 @@ std::map<std::string, uintptr_t> ajanuw::PE::exports(DWORD pid, HMODULE hModule)
   bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
   auto RVA2VA = [&](size_t rva)
   {
-    return (BYTE *)hModule + rva;
+    return (uint8_t *)hModule + rva;
   };
 
   IMAGE_DATA_DIRECTORY exportEntry;
@@ -1730,32 +1663,32 @@ std::map<std::string, uintptr_t> ajanuw::PE::exports(DWORD pid, HMODULE hModule)
     return result;
   }
 
-  BYTE *src = RVA2VA(exportEntry.VirtualAddress);
+  uint8_t *src = RVA2VA(exportEntry.VirtualAddress);
   IMAGE_EXPORT_DIRECTORY exportDes{0};
   ReadProcessMemory(hProcess, src, &exportDes, sizeof(IMAGE_EXPORT_DIRECTORY), NULL);
 
   // 以函数名称导出数量,指针列表
-  DWORD *AddressOfNames = (DWORD *)RVA2VA(exportDes.AddressOfNames);             // 函数名称表
-  DWORD *AddressOfFunctions = (DWORD *)RVA2VA(exportDes.AddressOfFunctions);     // 函数地址表
-  WORD *AddressOfNameOrdinals = (WORD *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
+  uint32_t *AddressOfNames = (uint32_t *)RVA2VA(exportDes.AddressOfNames);               // 函数名称表
+  uint32_t *AddressOfFunctions = (uint32_t *)RVA2VA(exportDes.AddressOfFunctions);       // 函数地址表
+  uint16_t *AddressOfNameOrdinals = (uint16_t *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
 
   size_t i = 0;
-  DWORD namePtrRVA = 0;
+  uint32_t namePtrRVA = 0;
   while (i < exportDes.NumberOfNames)
   {
     char funme[MAX_PATH] = {0};
-    ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(DWORD), NULL);
+    ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(uint32_t), NULL);
     ReadProcessMemory(hProcess, RVA2VA(namePtrRVA), &funme, MAX_PATH, NULL);
 
     // get function address index
-    WORD AddressOfFunctionsIndex = 0;
-    ReadProcessMemory(hProcess, AddressOfNameOrdinals + i, &AddressOfFunctionsIndex, sizeof(WORD), NULL);
+    uint16_t AddressOfFunctionsIndex = 0;
+    ReadProcessMemory(hProcess, AddressOfNameOrdinals + i, &AddressOfFunctionsIndex, sizeof(uint16_t), NULL);
 
     // get function address
-    DWORD funAddrRVA = 0;
-    ReadProcessMemory(hProcess, AddressOfFunctions + AddressOfFunctionsIndex, &funAddrRVA, sizeof(DWORD), NULL);
+    uint32_t funAddrRVA = 0;
+    ReadProcessMemory(hProcess, AddressOfFunctions + AddressOfFunctionsIndex, &funAddrRVA, sizeof(uint32_t), NULL);
 
-    BYTE *funPtr = RVA2VA(funAddrRVA);
+    uint8_t *funPtr = RVA2VA(funAddrRVA);
     result[funme] = (uintptr_t)funPtr;
     //printf("name: %s-%p\n", funme, funPtr);
     i++;
@@ -1766,10 +1699,10 @@ std::map<std::string, uintptr_t> ajanuw::PE::exports(DWORD pid, HMODULE hModule)
   return result;
 }
 
-BYTE *ajanuw::PE::GetProcAddress(DWORD pid, HMODULE hModule, std::string method)
+uint8_t *ajanuw::PE::GetProcAddress(uint32_t pid, HMODULE hModule, std::string_view method)
 {
-  BYTE *result = NULL;
-  BYTE *buf = new BYTE[0x1000];
+  uint8_t *result = NULL;
+  uint8_t *buf = new uint8_t[0x1000];
   HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
   ReadProcessMemory(hProcess, hModule, buf, 0x1000, NULL);
 
@@ -1779,7 +1712,7 @@ BYTE *ajanuw::PE::GetProcAddress(DWORD pid, HMODULE hModule, std::string method)
   bool isX64 = fileHeader->SizeOfOptionalHeader == 0xf0;
   auto RVA2VA = [&](size_t rva)
   {
-    return (BYTE *)hModule + rva;
+    return (uint8_t *)hModule + rva;
   };
 
   IMAGE_DATA_DIRECTORY exportEntry;
@@ -1801,32 +1734,32 @@ BYTE *ajanuw::PE::GetProcAddress(DWORD pid, HMODULE hModule, std::string method)
     return result;
   }
 
-  BYTE *src = RVA2VA(exportEntry.VirtualAddress);
+  uint8_t *src = RVA2VA(exportEntry.VirtualAddress);
   IMAGE_EXPORT_DIRECTORY exportDes{0};
   ReadProcessMemory(hProcess, src, &exportDes, sizeof(IMAGE_EXPORT_DIRECTORY), NULL);
 
   // 以函数名称导出数量,指针列表
-  DWORD *AddressOfNames = (DWORD *)RVA2VA(exportDes.AddressOfNames);             // 函数名称表
-  DWORD *AddressOfFunctions = (DWORD *)RVA2VA(exportDes.AddressOfFunctions);     // 函数地址表
-  WORD *AddressOfNameOrdinals = (WORD *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
+  uint32_t *AddressOfNames = (uint32_t *)RVA2VA(exportDes.AddressOfNames);               // 函数名称表
+  uint32_t *AddressOfFunctions = (uint32_t *)RVA2VA(exportDes.AddressOfFunctions);       // 函数地址表
+  uint16_t *AddressOfNameOrdinals = (uint16_t *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
 
   size_t i = 0;
-  DWORD namePtrRVA = 0;
+  uint32_t namePtrRVA = 0;
   while (i < exportDes.NumberOfNames)
   {
     char funme[MAX_PATH] = {0};
-    ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(DWORD), NULL);
+    ReadProcessMemory(hProcess, AddressOfNames + i, &namePtrRVA, sizeof(uint32_t), NULL);
     ReadProcessMemory(hProcess, RVA2VA(namePtrRVA), &funme, MAX_PATH, NULL);
 
-    if (ajanuw::SSString::icmp(funme, method.c_str()))
+    if (ajanuw::SSString::icmp(funme, method))
     {
       // get function address index
-      WORD AddressOfFunctionsIndex = 0;
-      ReadProcessMemory(hProcess, AddressOfNameOrdinals + i, &AddressOfFunctionsIndex, sizeof(WORD), NULL);
+      uint16_t AddressOfFunctionsIndex = 0;
+      ReadProcessMemory(hProcess, AddressOfNameOrdinals + i, &AddressOfFunctionsIndex, sizeof(uint16_t), NULL);
 
       // get function address
-      DWORD funAddrRVA = 0;
-      ReadProcessMemory(hProcess, AddressOfFunctions + AddressOfFunctionsIndex, &funAddrRVA, sizeof(DWORD), NULL);
+      uint32_t funAddrRVA = 0;
+      ReadProcessMemory(hProcess, AddressOfFunctions + AddressOfFunctionsIndex, &funAddrRVA, sizeof(uint32_t), NULL);
 
       result = RVA2VA(funAddrRVA);
       break;

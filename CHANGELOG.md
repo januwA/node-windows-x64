@@ -3,6 +3,7 @@
 - *test version*
 - feat: CEAddresSstring ignore case
 - perf: CEAddresSstring Rewrite the parser (use Flex&Bison)
+- perf: use c++17
 
 ## 0.0.9 [2021-4-1]
 

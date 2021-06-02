@@ -4,7 +4,7 @@
   if (o.Has(#type))     \
   ##type = nm_getto(#type, funref)
 
-Win32GuiEvent::Win32GuiEvent(Napi::Object o)
+Win32GuiEvent::Win32GuiEvent(const Napi::Object &o)
 {
   SET_EVENT(click);
   SET_EVENT(keydown);
@@ -12,12 +12,11 @@ Win32GuiEvent::Win32GuiEvent(Napi::Object o)
 
 LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-
   const std::initializer_list<napi_value> args = {
-      Napi::Number::New(env, (uintptr_t)hWnd),
-      Napi::Number::New(env, (uintptr_t)message),
-      Napi::Number::New(env, (uintptr_t)wParam),
-      Napi::Number::New(env, (uintptr_t)lParam),
+      Napi::Number::New(_env, (uintptr_t)hWnd),
+      Napi::Number::New(_env, (uintptr_t)message),
+      Napi::Number::New(_env, (uintptr_t)wParam),
+      Napi::Number::New(_env, (uintptr_t)lParam),
   };
   switch (message)
   {
@@ -82,13 +81,13 @@ Napi::Object Win32Gui::Init(Napi::Env env, Napi::Object exports)
 Win32Gui::Win32Gui(const Napi::CallbackInfo &info)
     : ObjectWrap<Win32Gui>(info),
       ajanuw::Gui::Win32(nmi_str(0), nmi_str(1)),
-      env(info.Env())
+      _env(info.Env())
 {
   nm_init;
 
   if (info.Length() > 2)
   {
-    Napi::Object o = nmi_obj(2);
+    auto o = nmi_obj(2);
     if (o.Has("x"))
       ajanuw::Gui::Win32::x = nm_getto("x", int);
     if (o.Has("y"))
@@ -125,7 +124,7 @@ Napi::Value Win32Gui::rgb(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::GetHwnd(const Napi::CallbackInfo &info)
 {
   nm_init;
-  nm_ret((uintptr_t)ajanuw::Gui::Win32::hWnd);
+  nm_ret((uintptr_t)ajanuw::Gui::Win32::_hWnd);
 }
 
 Napi::Value Win32Gui::GetX(const Napi::CallbackInfo &info)
@@ -211,7 +210,7 @@ Napi::Value Win32Gui::button(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
@@ -222,7 +221,7 @@ Napi::Value Win32Gui::button(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::checkbox(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
@@ -234,7 +233,7 @@ Napi::Value Win32Gui::radio(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
@@ -246,7 +245,7 @@ Napi::Value Win32Gui::groupbox(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
 
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
@@ -258,8 +257,7 @@ Napi::Value Win32Gui::groupbox(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::text(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 50, 4);
@@ -270,7 +268,7 @@ Napi::Value Win32Gui::text(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::input(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 100, 4);
@@ -281,7 +279,7 @@ Napi::Value Win32Gui::input(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::textarea(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 100, 4);
@@ -292,7 +290,7 @@ Napi::Value Win32Gui::textarea(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::listbox(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 100, 4);
@@ -303,7 +301,7 @@ Napi::Value Win32Gui::listbox(const Napi::CallbackInfo &info)
 Napi::Value Win32Gui::select(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   setEvents(o);
   LONG units = GetDialogBaseUnits();
   int dw = MulDiv(LOWORD(units), 100, 4);
@@ -311,9 +309,9 @@ Napi::Value Win32Gui::select(const Napi::CallbackInfo &info)
   nm_ret((uintptr_t)ajanuw::Gui::Win32::select(getCreateOption(o, dw, dh)));
 }
 
-ajanuw::Gui::Win32CreateOption Win32Gui::getCreateOption(Napi::Object o, int dw, int dh)
+std::unique_ptr<ajanuw::Gui::Win32CreateOption> Win32Gui::getCreateOption(const Napi::Object &o, int dw, int dh)
 {
-  ajanuw::Gui::Win32CreateOption opt{
+  return std::make_unique<ajanuw::Gui::Win32CreateOption>(
       nm_is_nullishOr(o.Get("className"), nm_str, ""),
       nm_is_nullishOr(o.Get("windowName"), nm_str, ""),
       nm_is_nullishOr(o.Get("style"), nm_dword, 0),
@@ -322,17 +320,14 @@ ajanuw::Gui::Win32CreateOption Win32Gui::getCreateOption(Napi::Object o, int dw,
       nm_is_nullishOr(o.Get("width"), nm_int, dw),
       nm_is_nullishOr(o.Get("height"), nm_int, dh),
       (HMENU)nm_qword(o.Get("id")),
-      (HWND)(nm_is_nullishOr(o.Get("parent"), nm_qword, 0)),
-  };
-
-  return opt;
+      (HWND)(nm_is_nullishOr(o.Get("parent"), nm_qword, 0)));
 }
 
-void Win32Gui::setEvents(Napi::Object options)
+void Win32Gui::setEvents(const Napi::Object &opt)
 {
-  if (options.Has("events"))
+  if (opt.Has("events"))
   {
-    HMENU id = (HMENU)nm_qword(options.Get("id"));
-    eventMap[id] = new Win32GuiEvent{nm_obj(options.Get("events"))};
+    HMENU id = (HMENU)nm_qword(opt.Get("id"));
+    eventMap[id] = new Win32GuiEvent{nm_obj(opt.Get("events"))};
   }
 }

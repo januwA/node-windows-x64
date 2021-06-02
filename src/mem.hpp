@@ -14,8 +14,8 @@ Napi::Value memAlloc(const Napi::CallbackInfo &info)
 
   uintptr_t lpAddress = 0;
   SIZE_T dwSize;
-  DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE;
-  DWORD flProtect = PAGE_EXECUTE_READWRITE;
+  uint32_t flAllocationType = MEM_COMMIT | MEM_RESERVE;
+  uint32_t flProtect = PAGE_EXECUTE_READWRITE;
 
   if (!info.Length() || info[0].IsNumber())
   {
@@ -40,8 +40,8 @@ Napi::Value memAllocEx(const Napi::CallbackInfo &info)
   HANDLE hProcess = NULL;
   uintptr_t lpAddress = 0;
   SIZE_T dwSize;
-  DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE;
-  DWORD flProtect = PAGE_EXECUTE_READWRITE;
+  uint32_t flAllocationType = MEM_COMMIT | MEM_RESERVE;
+  uint32_t flProtect = PAGE_EXECUTE_READWRITE;
 
   if (info[0].IsNumber())
   {
@@ -129,7 +129,7 @@ Napi::Value memWriteStrEx(const Napi::CallbackInfo &info)
 Napi::Value memWriteBytes(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
-  std::vector<BYTE> vect_bytes;
+  std::vector<uint8_t> vect_bytes;
 
   if (nmi_is_arr(1))
   {
@@ -146,7 +146,7 @@ Napi::Value memWriteBytes(const Napi::CallbackInfo &info)
   if (nmi_is_str(0))
     ajanuw::Mem::wBytes(nmi_str(0), vect_bytes);
   else
-    ajanuw::Mem::wBytes((BYTE *)nmi_qword(0), vect_bytes);
+    ajanuw::Mem::wBytes((uint8_t *)nmi_qword(0), vect_bytes);
   nm_retbt;
 }
 
@@ -156,7 +156,7 @@ Napi::Value memWriteBytesEx(const Napi::CallbackInfo &info)
   HANDLE hProcess = (HANDLE)nmi_qword(0);
 
   Napi::Array table = nmi_arr(2);
-  std::vector<BYTE> vect_bytes(table.Length());
+  std::vector<uint8_t> vect_bytes(table.Length());
 
   for (size_t i = 0; i < table.Length(); i++)
     vect_bytes.push_back(nm_dword(table.Get(i)));
@@ -164,7 +164,7 @@ Napi::Value memWriteBytesEx(const Napi::CallbackInfo &info)
   if (nmi_is_str(1))
     ajanuw::Mem::wBytesEx(hProcess, nmi_str(1), vect_bytes);
   else
-    ajanuw::Mem::wBytesEx(hProcess, (BYTE *)nmi_qword(1), vect_bytes);
+    ajanuw::Mem::wBytesEx(hProcess, (uint8_t *)nmi_qword(1), vect_bytes);
   nm_retbt;
 }
 
@@ -342,7 +342,7 @@ Napi::Value memReadBytes(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
   uintptr_t size = nmi_qword(1);
-  std::vector<BYTE> result;
+  std::vector<uint8_t> result;
 
   if (nmi_is_str(0))
     result = ajanuw::Mem::rBytes(nmi_str(0), size);
@@ -359,7 +359,7 @@ Napi::Value memReadBytesEx(const Napi::CallbackInfo &info)
   nm_init_cal(3);
   HANDLE hProcess = (HANDLE)nmi_qword(0);
   uintptr_t size = nmi_qword(2);
-  std::vector<BYTE> result;
+  std::vector<uint8_t> result;
 
   if (nmi_is_str(1))
     result = ajanuw::Mem::rBytesEx(hProcess, nmi_str(1), size);

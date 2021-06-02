@@ -70,7 +70,8 @@
     "stop_token": "cpp",
     "cerrno": "cpp",
     "cfloat": "cpp",
-    "climits": "cpp"
+    "climits": "cpp",
+    "format": "cpp"
   },
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "python.formatting.provider": "yapf"
