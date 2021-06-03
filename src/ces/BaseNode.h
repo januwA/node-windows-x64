@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include "location.hh"
 
 namespace ces
 {
@@ -17,15 +18,17 @@ namespace ces
   class BaseNode
   {
   public:
-    virtual ~BaseNode() {}
-    virtual NT id() = 0;
+    ces::location loc;
+    BaseNode(ces::location loc) : loc(loc){};
+    virtual ~BaseNode() = default;
+    virtual NT id() const = 0;
   };
 
   class IdentsNode : public BaseNode
   {
   public:
-    std::vector<std::string>* idents;
-    IdentsNode(std::vector<std::string>* idents) : idents(idents)
+    std::vector<std::string> *idents;
+    IdentsNode(std::vector<std::string> *idents, const ces::location &loc) : BaseNode(loc), idents(idents)
     {
     }
 
@@ -34,7 +37,7 @@ namespace ces
       delete idents;
     }
 
-    NT id()
+    NT id() const override
     {
       return NT::IDENTS;
     }
@@ -44,11 +47,11 @@ namespace ces
   {
   public:
     std::string value;
-    HexNode(std::string value) : value(value) {}
+    HexNode(std::string value, const ces::location &loc) : BaseNode(loc), value(value) {}
     ~HexNode()
     {
     }
-    NT id()
+    NT id() const override
     {
       return NT::HEX;
     }
@@ -58,15 +61,15 @@ namespace ces
   {
   public:
     int op;
-    BaseNode* node;
-    UnaryNode(int op, BaseNode* node) : op(op), node(node) {}
+    BaseNode *node;
+    UnaryNode(int op, BaseNode *node, const ces::location &loc) : BaseNode(loc), op(op), node(node) {}
 
     ~UnaryNode()
     {
       delete node;
     }
 
-    NT id()
+    NT id() const override
     {
       return NT::UNARY;
     }
@@ -75,18 +78,18 @@ namespace ces
   class BinaryNode : public BaseNode
   {
   public:
-    BaseNode* left;
+    BaseNode *left;
     int op;
-    BaseNode* right;
-    BinaryNode(BaseNode* left, int op, BaseNode* right)
-      : left(left), op(op), right(right) { }
+    BaseNode *right;
+    BinaryNode(BaseNode *left, int op, BaseNode *right, const ces::location &loc)
+        : BaseNode(loc), left(left), op(op), right(right) {}
     ~BinaryNode()
     {
       delete left;
       delete right;
     }
 
-    NT id()
+    NT id() const override
     {
       return NT::BINARY;
     }
@@ -95,13 +98,13 @@ namespace ces
   class PointerNode : public BaseNode
   {
   public:
-    BaseNode* node;
-    PointerNode(BaseNode* node) : node(node) {}
+    BaseNode *node;
+    PointerNode(BaseNode *node, const ces::location &loc) : BaseNode(loc), node(node) {}
     ~PointerNode()
     {
       delete node;
     }
-    NT id()
+    NT id() const override
     {
       return NT::POINTER;
     }

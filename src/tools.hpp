@@ -322,7 +322,7 @@ Napi::Value e_setlocale(const Napi::CallbackInfo &info)
   nm_init;
   int _Category = nmi_is_nullishOr(0, nm_dword, LC_ALL);
   std::string _Locale = nmi_is_nullishOr(1, nm_str, "chs");
-  nm_rets(ajanuw::SSString::setLocale(_Category, _Locale.c_str()));
+  nm_rets(ajanuw::sstr::setLocale(_Category, _Locale.c_str()));
 }
 
 Napi::Value registerSymbol(const Napi::CallbackInfo &info)
@@ -344,7 +344,8 @@ Napi::Value getAddress(const Napi::CallbackInfo &info)
   nm_init_cal(1);
   try
   {
-    nm_ret((uintptr_t)(info.Length() == 1 ? ajanuw::CEAddressString::getAddress(nmi_str(0)) : ajanuw::CEAddressString::getAddress(nmi_str(0), (HANDLE)nmi_qword(1))));
+    auto r = info.Length() == 1 ? ajanuw::CEAS::getAddress(nmi_str(0)) : ajanuw::CEAS::getAddress(nmi_str(0), (HANDLE)nmi_qword(1));
+    nm_ret((uintptr_t)r);
   }
   catch (const std::exception &e)
   {

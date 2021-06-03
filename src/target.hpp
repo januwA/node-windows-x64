@@ -50,7 +50,7 @@ public:
   Napi::Value GetName(const Napi::CallbackInfo &info)
   {
     nm_init;
-    nm_rets(ajanuw::SSString::wstrToStr(_Mybase::name));
+    nm_rets(ajanuw::sstr::wstrToStr(_Mybase::name));
   }
   Napi::Value GetPID(const Napi::CallbackInfo &info)
   {
@@ -96,7 +96,7 @@ public:
     result.Set("bEnable", r->bEnable);
     result.Set("addr", (uintptr_t)r->addr);
     result.Set("size", r->size);
-    result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->origenBytes.data(), r->origenBytes.size())));
+    result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->oldBytes.data(), r->oldBytes.size())));
     return result;
   }
 
@@ -150,7 +150,7 @@ public:
     result.Set("addr", (uintptr_t)r->addr);
     result.Set("newmem", (uintptr_t)r->newmem);
     result.Set("size", r->size);
-    result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->origenBytes.data(), r->origenBytes.size())));
+    result.Set("origenBytes", Napi::Uint8Array::From(env, Napi::ArrayBuffer::New(env, r->oldBytes.data(), r->oldBytes.size())));
 
     return result;
   }

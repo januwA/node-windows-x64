@@ -44,7 +44,7 @@ size_t getStringsCount(const Napi::Array &args, bool isWideChar)
     auto it = args.Get(i);
     if (it.IsString())
     {
-      count += isWideChar ? ajanuw::SSString::count(nm_ustr(it)) : nm_str(it).length();
+      count += isWideChar ? ajanuw::sstr::count(nm_ustr(it)) : nm_str(it).length();
       count++;
     }
   }
@@ -76,7 +76,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
   else
   {
     auto sMethod = nm_getto("method", str);
-    bWideChar = ajanuw::SSString::endWith(sMethod, "W");
+    bWideChar = ajanuw::sstr::endWith(sMethod, "W");
     auto js_isWideChar = o.Get("isWideChar");
     if (!nm_is_nullish(js_isWideChar))
       bWideChar = nm_bool(js_isWideChar);
@@ -87,7 +87,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
       hModule = LoadLibraryA(sModule.data());
       if (hModule == NULL)
       {
-        nm_jserr("not find \"" + sModule + "\" module.");
+        nm_jserr(std::format("not find '{}' module.", sModule));
         nm_retu;
       }
     }
@@ -97,7 +97,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     {
       try
       {
-        lpMethod = (uint8_t *)ajanuw::CEAddressString::getAddress(sMethod);
+        lpMethod = (uint8_t *)ajanuw::CEAS::getAddress(sMethod);
       }
       catch (const std::exception &e)
       {
@@ -161,7 +161,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
       {
         auto str = text.Utf16Value();
         ajanuw::Mem::wUstr(addr, str);
-        strMemOffset += ajanuw::SSString::count(str) + sizeof(char16_t);
+        strMemOffset += ajanuw::sstr::count(str) + sizeof(char16_t);
       }
       else
       {

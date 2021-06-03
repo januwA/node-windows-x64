@@ -48,7 +48,7 @@
 	#include <iostream>
 	#include "BaseNode.h"
 
-	extern ces::parser::symbol_type yylex ();
+	extern ces::parser::symbol_type yylex (std::string_view source);
 
 
 
@@ -143,14 +143,15 @@
 namespace ces {
 
   /// Build a parser object.
-  parser::parser (BaseNode** result_yyarg)
+  parser::parser (BaseNode** result_yyarg, std::string_view source_yyarg)
 #if CESDEBUG
     : yydebug_ (false),
       yycdebug_ (&std::cerr),
 #else
     :
 #endif
-      result (result_yyarg)
+      result (result_yyarg),
+      source (source_yyarg)
   {}
 
   parser::~parser ()
@@ -501,7 +502,7 @@ namespace ces {
         try
 #endif // YY_EXCEPTIONS
           {
-            symbol_type yylookahead (yylex ());
+            symbol_type yylookahead (yylex (source));
             yyla.move (yylookahead);
           }
 #if YY_EXCEPTIONS
@@ -624,43 +625,43 @@ namespace ces {
     break;
 
   case 5: // binaryExpr: binaryExpr "+" binaryExpr
-                             { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::PLUS, yystack_[0].value.as < BaseNode* > ()); }
+                             { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::PLUS, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location); }
     break;
 
   case 6: // binaryExpr: binaryExpr "-" binaryExpr
-                              { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::MINUS, yystack_[0].value.as < BaseNode* > ()); }
+                              { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::MINUS, yystack_[0].value.as < BaseNode* > (),yystack_[2].location += yystack_[0].location); }
     break;
 
   case 7: // binaryExpr: binaryExpr "*" binaryExpr
-                            { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::MUL, yystack_[0].value.as < BaseNode* > ()); }
+                            { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::MUL, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location); }
     break;
 
-  case 8: // binaryExpr: binaryExpr "**" binaryExpr
-                            { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::POW, yystack_[0].value.as < BaseNode* > ()); }
+  case 8: // binaryExpr: binaryExpr "/" binaryExpr
+                            { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::DIV, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location); }
     break;
 
-  case 9: // unaryExpr: "+" atom
-                     { yylhs.value.as < BaseNode* > () = new UnaryNode(token::PLUS, yystack_[0].value.as < BaseNode* > ()); }
+  case 9: // binaryExpr: binaryExpr "**" binaryExpr
+                            { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::POW, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location); }
     break;
 
-  case 10: // unaryExpr: "-" atom
-             { yylhs.value.as < BaseNode* > () = new UnaryNode(token::MINUS, yystack_[0].value.as < BaseNode* > ()); }
+  case 10: // unaryExpr: "+" atom
+                     { yylhs.value.as < BaseNode* > () = new UnaryNode(token::PLUS, yystack_[0].value.as < BaseNode* > (), yystack_[1].location+yystack_[0].location); }
     break;
 
-  case 11: // atom: "hex"
-                { yylhs.value.as < BaseNode* > () = new HexNode(yystack_[0].value.as < std::string > ()); }
+  case 11: // unaryExpr: "-" atom
+             { yylhs.value.as < BaseNode* > () = new UnaryNode(token::MINUS, yystack_[0].value.as < BaseNode* > (), yystack_[1].location+yystack_[0].location); }
     break;
 
-  case 12: // atom: "(" binaryExpr ")"
-                           { yylhs.value.as < BaseNode* > () = yystack_[1].value.as < BaseNode* > (); }
+  case 12: // atom: "hex"
+                { yylhs.value.as < BaseNode* > () = new HexNode(yystack_[0].value.as < std::string > (), yystack_[0].location); }
     break;
 
   case 13: // atom: "[" binaryExpr "]"
-                             { yylhs.value.as < BaseNode* > () = new PointerNode(yystack_[1].value.as < BaseNode* > ()); }
+                     { yylhs.value.as < BaseNode* > () = new PointerNode(yystack_[1].value.as < BaseNode* > (), yystack_[2].location+yystack_[0].location); }
     break;
 
   case 14: // atom: identList
-                { yylhs.value.as < BaseNode* > () = new IdentsNode(yystack_[0].value.as < std::vector<std::string>* > ()); }
+                { yylhs.value.as < BaseNode* > () = new IdentsNode(yystack_[0].value.as < std::vector<std::string>* > (), yystack_[0].location);}
     break;
 
   case 15: // identList: "ident"
@@ -867,71 +868,69 @@ namespace ces {
   const signed char
   parser::yypact_[] =
   {
-      -1,    -6,    -6,    19,    19,    -1,    -1,    20,    12,    -6,
-      -6,    10,    -6,    -6,    30,    21,    -6,    -6,    -1,    -1,
-      -1,    -1,    28,    -6,    -6,     1,     1,    16,    -6,    -6
+      13,    -6,    -6,    17,    17,    13,     2,     1,    -6,    -6,
+      10,    -6,    -6,    23,    -6,    -6,    13,    13,    13,    13,
+      13,    22,    -6,    -4,    -4,    24,    24,    -6,    -6
   };
 
   const signed char
   parser::yydefact_[] =
   {
-       0,    11,    15,     0,     0,     0,     0,     0,     0,     4,
-       3,    14,     9,    10,     0,     0,     1,     2,     0,     0,
-       0,     0,     0,    12,    13,     5,     6,     7,     8,    16
+       0,    12,    15,     0,     0,     0,     0,     0,     4,     3,
+      14,    10,    11,     0,     1,     2,     0,     0,     0,     0,
+       0,     0,    13,     5,     6,     7,     8,     9,    16
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-      -6,    -6,    -5,    -6,     3,    -6
+      -6,    -6,    -5,    -6,    21,    -6
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     7,     8,     9,    10,    11
+      -1,     6,     7,     8,     9,    10
   };
 
   const signed char
   parser::yytable_[] =
   {
-      14,    15,     1,     2,     3,     4,    12,    13,    20,     5,
-      21,     6,    17,    25,    26,    27,    28,    18,    19,    20,
-      16,    21,     1,     2,    22,    21,    18,    19,    20,     5,
-      21,     6,    29,     0,    24,    18,    19,    20,     0,    21,
-       0,    23
+      13,    15,    14,    18,    19,    20,    16,    17,    18,    19,
+      20,    23,    24,    25,    26,    27,     1,     2,     3,     4,
+       1,     2,    21,     5,    11,    12,    28,     5,    16,    17,
+      18,    19,    20,    20,    22
   };
 
   const signed char
   parser::yycheck_[] =
   {
-       5,     6,     3,     4,     5,     6,     3,     4,     7,    10,
-       9,    12,     0,    18,    19,    20,    21,     5,     6,     7,
-       0,     9,     3,     4,    14,     9,     5,     6,     7,    10,
-       9,    12,     4,    -1,    13,     5,     6,     7,    -1,     9,
-      -1,    11
+       5,     0,     0,     7,     8,     9,     5,     6,     7,     8,
+       9,    16,    17,    18,    19,    20,     3,     4,     5,     6,
+       3,     4,    12,    10,     3,     4,     4,    10,     5,     6,
+       7,     8,     9,     9,    11
   };
 
   const signed char
   parser::yystos_[] =
   {
-       0,     3,     4,     5,     6,    10,    12,    16,    17,    18,
-      19,    20,    19,    19,    17,    17,     0,     0,     5,     6,
-       7,     9,    14,    11,    13,    17,    17,    17,    17,     4
+       0,     3,     4,     5,     6,    10,    14,    15,    16,    17,
+      18,    17,    17,    15,     0,     0,     5,     6,     7,     8,
+       9,    12,    11,    15,    15,    15,    15,    15,     4
   };
 
   const signed char
   parser::yyr1_[] =
   {
-       0,    15,    16,    17,    17,    17,    17,    17,    17,    18,
-      18,    19,    19,    19,    19,    20,    20
+       0,    13,    14,    15,    15,    15,    15,    15,    15,    15,
+      16,    16,    17,    17,    17,    18,    18
   };
 
   const signed char
   parser::yyr2_[] =
   {
-       0,     2,     2,     1,     1,     3,     3,     3,     3,     2,
-       2,     1,     3,     3,     1,     1,     3
+       0,     2,     2,     1,     1,     3,     3,     3,     3,     3,
+       2,     2,     1,     3,     1,     1,     3
   };
 
 
@@ -942,9 +941,9 @@ namespace ces {
   const parser::yytname_[] =
   {
   "\"end of file\"", "error", "\"invalid token\"", "\"hex\"", "\"ident\"",
-  "\"+\"", "\"-\"", "\"*\"", "\"/\"", "\"**\"", "\"(\"", "\")\"", "\"[\"",
-  "\"]\"", "\".\"", "$accept", "CEAddressString", "binaryExpr",
-  "unaryExpr", "atom", "identList", YY_NULLPTR
+  "\"+\"", "\"-\"", "\"*\"", "\"/\"", "\"**\"", "\"[\"", "\"]\"", "\".\"",
+  "$accept", "CEAddressString", "binaryExpr", "unaryExpr", "atom",
+  "identList", YY_NULLPTR
   };
 #endif
 
@@ -953,8 +952,8 @@ namespace ces {
   const signed char
   parser::yyrline_[] =
   {
-       0,    37,    37,    40,    41,    42,    43,    44,    45,    48,
-      49,    52,    53,    54,    55,    58,    59
+       0,    39,    39,    42,    43,    44,    45,    46,    47,    48,
+      51,    52,    55,    56,    57,    60,    61
   };
 
   void
@@ -991,5 +990,5 @@ namespace ces {
 
 void ces::parser::error(const location_type& loc, const std::string& msg)
 {
-  printf("Parser Error:%s\n%d:%d,%d:%d\n", msg.c_str(), loc.begin.line, loc.begin.column, loc.end.line, loc.end.column);
+  throw ces::parser_error(source, loc);
 }

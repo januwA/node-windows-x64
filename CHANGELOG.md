@@ -1,9 +1,10 @@
 ## 0.0.10 [2021-5-19]
 
 - *test version*
-- feat: CEAddresSstring ignore case
-- perf: CEAddresSstring Rewrite the parser (use Flex&Bison)
-- perf: use c++17
+- feat: CEAddressString ignore case
+- perf: CEAddressString Rewrite the parser (use Flex&Bison)
+- perf: use c++20
+- Remove the `(expr)` syntax of CEAddressString
 
 ## 0.0.9 [2021-4-1]
 
@@ -15,7 +16,7 @@
 ## 0.0.8 [2021-3-29]
 
 - *test version*
-- perf: CEAddresSstring
+- perf: CEAddressString
 - perf: function getAddress(CEAddressString: string, hProcess?: number): number;
 - feat: class Target
 - feat: function asmBytes(asmString: string): ArrayBuffer; 
@@ -25,7 +26,7 @@
 - *test version*
 - perf: Use asmjit to rewrite invoke
 - fix: fix globalDefineScript.js
-- perf: Improve CEAddresSstring parser
+- perf: Improve CEAddressString parser
 
 ## 0.0.6 [2021-2-27]
 
@@ -41,12 +42,12 @@
 ## 0.0.4 [2021-2-27]
 
 - *test version*
-- feat: Support parsing CEAddresSstring
+- feat: Support parsing CEAddressString
 - feat: add registerSymbol and unregisterSymbol
 - perf: Use asmjit to rewrite the "createCallback" function
 - perf: The module of invoke is now an optional parameter
 - docs: undate invoke docs
-- feat: "nw.mem_*" Series supports CEAddresSstring
+- feat: "nw.mem_*" Series supports CEAddressString
 - feat: Map attributes that do not exist on node_windows_x64 to the invoke function
 - feat: Add "globalDefineScript" script to define a large number of global variables in global
 - feat: win32 gui add more functions to generate controls

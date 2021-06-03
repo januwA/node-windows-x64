@@ -47,6 +47,7 @@
 // "%code requires" blocks.
 
 	#include "BaseNode.h"
+  #include "error.hpp"
 
 
 
@@ -441,11 +442,9 @@ namespace ces {
     MUL = 262,                     // "*"
     DIV = 263,                     // "/"
     POW = 264,                     // "**"
-    LPAREN = 265,                  // "("
-    RPAREN = 266,                  // ")"
-    LSQUARE = 267,                 // "["
-    RSQUARE = 268,                 // "]"
-    DOT = 269                      // "."
+    LSQUARE = 265,                 // "["
+    RSQUARE = 266,                 // "]"
+    DOT = 267                      // "."
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -462,7 +461,7 @@ namespace ces {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 15, ///< Number of tokens.
+        YYNTOKENS = 13, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -474,17 +473,15 @@ namespace ces {
         S_MUL = 7,                               // "*"
         S_DIV = 8,                               // "/"
         S_POW = 9,                               // "**"
-        S_LPAREN = 10,                           // "("
-        S_RPAREN = 11,                           // ")"
-        S_LSQUARE = 12,                          // "["
-        S_RSQUARE = 13,                          // "]"
-        S_DOT = 14,                              // "."
-        S_YYACCEPT = 15,                         // $accept
-        S_CEAddressString = 16,                  // CEAddressString
-        S_binaryExpr = 17,                       // binaryExpr
-        S_unaryExpr = 18,                        // unaryExpr
-        S_atom = 19,                             // atom
-        S_identList = 20                         // identList
+        S_LSQUARE = 10,                          // "["
+        S_RSQUARE = 11,                          // "]"
+        S_DOT = 12,                              // "."
+        S_YYACCEPT = 13,                         // $accept
+        S_CEAddressString = 14,                  // CEAddressString
+        S_binaryExpr = 15,                       // binaryExpr
+        S_unaryExpr = 16,                        // unaryExpr
+        S_atom = 17,                             // atom
+        S_identList = 18                         // identList
       };
     };
 
@@ -748,7 +745,7 @@ switch (yykind)
     };
 
     /// Build a parser object.
-    parser (BaseNode** result_yyarg);
+    parser (BaseNode** result_yyarg, std::string_view source_yyarg);
     virtual ~parser ();
 
 #if 201103L <= YY_CPLUSPLUS
@@ -944,36 +941,6 @@ switch (yykind)
       make_POW (const location_type& l)
       {
         return symbol_type (token::POW, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_LPAREN (location_type l)
-      {
-        return symbol_type (token::LPAREN, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_LPAREN (const location_type& l)
-      {
-        return symbol_type (token::LPAREN, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_RPAREN (location_type l)
-      {
-        return symbol_type (token::RPAREN, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_RPAREN (const location_type& l)
-      {
-        return symbol_type (token::RPAREN, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1325,14 +1292,15 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 41,     ///< Last index in yytable_.
+      yylast_ = 34,     ///< Last index in yytable_.
       yynnts_ = 6,  ///< Number of nonterminal symbols.
-      yyfinal_ = 16 ///< Termination state number.
+      yyfinal_ = 14 ///< Termination state number.
     };
 
 
     // User arguments.
     BaseNode** result;
+    std::string_view source;
 
   };
 
@@ -1372,10 +1340,10 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14
+       5,     6,     7,     8,     9,    10,    11,    12
     };
     // Last valid token kind.
-    const int code_max = 269;
+    const int code_max = 267;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;

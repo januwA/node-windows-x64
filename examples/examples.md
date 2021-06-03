@@ -136,3 +136,12 @@ setTimeout(() => {
   nw["Kernel32.ResumeThread"](hThread);
 }, 2000);
 ```
+
+## getAddress
+```ts
+nw.registerSymbol("中文", 1);
+nw.registerSymbol("한글", 2);
+nw.registerSymbol("ああさっそうとしている", 3);
+
+ console.log( nw.getAddress("中文 + 한글 + ああさっそうとしている + 2") ); // 8
+```

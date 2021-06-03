@@ -10,6 +10,7 @@
 #include <string>
 #include <memory>
 #include <ranges>
+#include <format>
 
 #include <Windows.h>
 #include <Windowsx.h>
@@ -21,13 +22,13 @@
 
 #include "./ces/export.h"
 
-#define uptr_size sizeof(uintptr_t)
+using namespace std::string_literals;
 
 namespace ajanuw
 {
   LPVOID createCallback(void *lpCallback, size_t index, void *vCC);
 
-  namespace SSString
+  namespace sstr
   {
     char *setLocale(int _Category = LC_ALL, const char *_Locale = "chs");
     std::wstring strToWstr(std::string_view str);
@@ -174,7 +175,7 @@ namespace ajanuw
       return r;
     };
   }
-  
+
   namespace Mem
   {
     LPVOID alloc(SIZE_T dwSize, LPVOID lpAddress = 0, uint32_t flAllocationType = MEM_COMMIT | MEM_RESERVE, uint32_t flProtect = PAGE_EXECUTE_READWRITE);
@@ -360,25 +361,6 @@ namespace ajanuw
       int height;
       HMENU id;
       HWND parent;
-      Win32CreateOption(std::string className,
-                        std::string windowName,
-                        uint32_t style,
-                        int x,
-                        int y,
-                        int width,
-                        int height,
-                        HMENU id,
-                        HWND parent) : className(className),
-                                       windowName(windowName),
-                                       style(style),
-                                       x(x),
-                                       y(y),
-                                       width(width),
-                                       height(height),
-                                       id(id),
-                                       parent(parent)
-      {
-      }
     };
 
     class Win32
@@ -390,23 +372,17 @@ namespace ajanuw
       static uint32_t rgb(uint32_t r, uint32_t g, uint32_t b);
 
       // 主窗口句柄
-      HWND _hWnd;
-
+      HWND _hWnd{NULL};
       std::string windowName;
       std::string className;
-      size_t x;
-      size_t y;
-      size_t width;
-      size_t height;
-      uint32_t style;
+      int x{CW_USEDEFAULT};
+      int y{CW_USEDEFAULT};
+      int width{CW_USEDEFAULT};
+      int height{CW_USEDEFAULT};
+      uint32_t style{WS_OVERLAPPEDWINDOW};
 
-      Win32(std::string className, std::string windowName) : x(CW_USEDEFAULT),
-                                                             y(CW_USEDEFAULT),
-                                                             width(CW_USEDEFAULT), height(CW_USEDEFAULT),
-                                                             style(WS_OVERLAPPEDWINDOW),
-                                                             className(className),
-                                                             windowName(windowName),
-                                                             _hWnd(NULL){};
+      Win32(std::string className, std::string windowName) : className(className),
+                                                             windowName(windowName){};
       ~Win32() { DeleteObject(_hWnd); };
 
       // 消息循环
@@ -450,7 +426,6 @@ namespace ajanuw
 
     class AAScript
     {
-    private:
     public:
       std::string_view script;
       AAScript(std::string_view script) : script(script){};
@@ -471,7 +446,7 @@ namespace ajanuw
     static bool has(std::string_view symbolname);
 
   private:
-    static std::map<std::string, LPVOID> _symbolMap;
+    static std::map<std::string, LPVOID> symbols;
   };
 
   class PE
@@ -482,11 +457,16 @@ namespace ajanuw
     // exe module
     static MODULEINFO GetModuleBase(uint32_t pid);
     static MODULEINFO GetModuleInfo(std::wstring_view moduleName, uint32_t pid);
+    static MODULEINFO GetModuleInfo(std::string_view moduleName, uint32_t pid);
+
     static bool isX64(uint32_t pid, HMODULE hModule);
     static bool isX86(uint32_t pid, HMODULE hModule);
-    // 获取模块的导出表,通常一个模块会导出函数
+    // 获取模块的导出表,通常一个模块会导出大量函数
     static std::map<std::string, uintptr_t> exports(uint32_t pid, HMODULE hModule);
+
+    // 获取模块中的函数地址
     static uint8_t *GetProcAddress(uint32_t pid, HMODULE hModule, std::string_view method);
+    static uint8_t *GetProcAddress(uint32_t pid, HMODULE hModule, std::wstring_view method);
 
     // user32.dll => user32
     // user32.xxx.dll => user32.xxx
@@ -494,7 +474,8 @@ namespace ajanuw
     static std::string GetModuleName(std::string_view moduleName);
   };
 
-  class CEAddressString
+  // CEAddressString
+  class CEAS
   {
   public:
     static LPVOID getAddress(std::string_view address, HANDLE hProcess = NULL);
@@ -503,180 +484,19 @@ namespace ajanuw
     class Interpreter
     {
     public:
+      std::string_view source;
       HANDLE hProcess;
-      uint32_t pid = NULL;
+      uint32_t pid{NULL};
       bool isX86;
-      Interpreter(HANDLE hProcess) : hProcess(hProcess)
-      {
-        if (hProcess != NULL)
-        {
-          pid = GetProcessId(hProcess);
-          isX86 = PE::isX86(pid, (HMODULE)(PE::GetModuleBase(pid).lpBaseOfDll));
-        }
-        else
-        {
-          hProcess = GetCurrentProcess();
-          pid = GetCurrentProcessId();
-          isX86 = PE::isX86(pid, (HMODULE)(PE::GetModuleBase(pid).lpBaseOfDll));
-        }
-      }
+      Interpreter(HANDLE hProcess, std::string_view source);
+      uintptr_t visit(ces::BaseNode *node);
 
-      uintptr_t visit(ces::BaseNode *node)
-      {
-        switch (node->id())
-        {
-        case ces::NT::HEX:
-          return visitHex(reinterpret_cast<ces::HexNode *>(node));
-        case ces::NT::IDENTS:
-          return visitIdent(reinterpret_cast<ces::IdentsNode *>(node));
-        case ces::NT::UNARY:
-          return visitUnary(reinterpret_cast<ces::UnaryNode *>(node));
-        case ces::NT::POINTER:
-          return visitPointer(reinterpret_cast<ces::PointerNode *>(node));
-        case ces::NT::BINARY:
-          return visitBinary(reinterpret_cast<ces::BinaryNode *>(node));
-        default:
-          throw std::exception("Unexpected CEAddressString Node");
-        }
-      }
-
-      uintptr_t visitHex(ces::HexNode *node)
-      {
-        return std::stoull(node->value, nullptr, 16);
-      }
-
-      uintptr_t visitIdent(ces::IdentsNode *node)
-      {
-        // 优先级 SYMBOL -> HEX -> MODULE
-        auto idents = *node->idents;
-        if (idents.size() == 1)
-        {
-          // symbol -> hex -> method
-          auto val = idents.at(0);
-          if (ajanuw::Symbol::has(val))
-          {
-            return (uintptr_t)ajanuw::Symbol::get(val);
-          }
-          else if (std::all_of(val.begin(), val.end(), ::isxdigit))
-          {
-            return std::stoull(val, nullptr, 16);
-          }
-          else
-          {
-            // 遍历所有模块中的方法，直到找到为止
-            uintptr_t r = NULL;
-            auto hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
-            if (hSnap != INVALID_HANDLE_VALUE)
-            {
-              MODULEENTRY32 me;
-              me.dwSize = sizeof(me);
-              if (Module32First(hSnap, &me))
-              {
-                do
-                {
-                  r = (uintptr_t)PE::GetProcAddress(pid, (HMODULE)me.modBaseAddr, val);
-                  if (r != NULL)
-                    break;
-                } while (Module32Next(hSnap, &me));
-              }
-            }
-            CloseHandle(hSnap);
-
-            if (r == NULL)
-            {
-              throw std::exception(("Not defined symbol \"" + val + "\"").c_str());
-            }
-
-            return r;
-          }
-        }
-        else
-        {
-          auto last = idents.back();
-          idents.pop_back();
-          auto first = ajanuw::SSString::join(idents, ".");
-
-          // printf("first:%s\nlast:%s\n", first.c_str(), last.c_str());
-
-          // user32.messageboxa
-          // user32.dll
-          // node.exe
-          if (last == "dll" || last == "exe")
-          {
-            auto hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(first), pid).lpBaseOfDll);
-            if (hModule == NULL)
-            {
-              throw std::exception(("MODULE not module \"" + first + "\"").c_str());
-            }
-            return (uintptr_t)hModule;
-          }
-
-          auto hModule = (HMODULE)(PE::GetModuleInfo(ajanuw::SSString::strToWstr(first), pid).lpBaseOfDll);
-          if (hModule == NULL)
-          {
-            throw std::exception(("not find module \"" + first + "\"").c_str());
-          }
-
-          auto hMethod = (uintptr_t)PE::GetProcAddress(pid, hModule, last);
-          if (hMethod == NULL)
-          {
-            throw std::exception(("not find method \"" + last + "\"").c_str());
-          }
-          return (uintptr_t)hMethod;
-        }
-      }
-
-      uintptr_t visitUnary(ces::UnaryNode *node)
-      {
-        auto value = visit(node->node);
-        if (node->op == ces::parser::token::MINUS)
-        {
-          return value * -1;
-        }
-        return value;
-      }
-
-      uintptr_t visitPointer(ces::PointerNode *node)
-      {
-        auto address = visit(node->node);
-        uintptr_t result = NULL;
-        if (ReadProcessMemory(hProcess == NULL ? GetCurrentProcess() : hProcess, (LPCVOID)address, (LPVOID)&result, isX86 ? 4 : 8, NULL))
-        {
-          return result;
-        }
-        else
-        {
-          throw std::exception("Read Pointer Error.");
-        }
-      }
-
-      uintptr_t visitBinary(ces::BinaryNode *node)
-      {
-        auto left = visit(node->left);
-        auto right = visit(node->right);
-        switch (node->op)
-        {
-        case ces::parser::token::PLUS:
-          return left + right;
-        case ces::parser::token::MINUS:
-          return left - right;
-        case ces::parser::token::MUL:
-          return left * right;
-        case ces::parser::token::DIV:
-        {
-          if (right == 0)
-          {
-            throw std::exception("Division by zero");
-          }
-          return left / right;
-        }
-        case ces::parser::token::POW:
-          return pow(left, right);
-
-        default:
-          throw std::exception("Unexpected Binary Node");
-        }
-      }
+    private:
+      uintptr_t visitHex(ces::HexNode *node);
+      uintptr_t visitIdent(ces::IdentsNode *node);
+      uintptr_t visitUnary(ces::UnaryNode *node);
+      uintptr_t visitPointer(ces::PointerNode *node);
+      uintptr_t visitBinary(ces::BinaryNode *node);
     };
   };
 
@@ -690,28 +510,28 @@ namespace ajanuw
     class HookBase
     {
     public:
-      HANDLE hProcess = NULL;
+      HANDLE hProcess{NULL};
 
       // 拷贝的原始字节
-      std::vector<uint8_t> origenBytes = {};
+      std::vector<uint8_t> oldBytes{};
 
       // hook的地址
-      uint8_t *addr = NULL;
+      uint8_t *addr{NULL};
 
       // 字节大小
-      size_t size = NULL;
+      size_t size{NULL};
 
       // 是否开启
-      bool bEnable = false;
+      bool bEnable{false};
 
       // hook过程 是否成功
-      bool bSuccess = false;
+      bool bSuccess{false};
 
       HookBase(HANDLE hProcess, uint8_t *addr, size_t size)
           : hProcess(hProcess), addr(addr), size(size)
       {
-        origenBytes.resize(size);
-        bSuccess = ReadProcessMemory(hProcess, addr, origenBytes.data(), size, NULL);
+        oldBytes.resize(size);
+        bSuccess = ReadProcessMemory(hProcess, addr, oldBytes.data(), size, NULL);
       }
 
       void enable()
@@ -734,7 +554,7 @@ namespace ajanuw
           return;
         uint32_t oldProc;
         VirtualProtectEx(hProcess, addr, size, PAGE_EXECUTE_READWRITE, reinterpret_cast<PDWORD>(&oldProc));
-        WriteProcessMemory(hProcess, addr, origenBytes.data(), size, 0);
+        WriteProcessMemory(hProcess, addr, oldBytes.data(), size, 0);
         VirtualProtectEx(hProcess, addr, size, oldProc, reinterpret_cast<PDWORD>(&oldProc));
       }
 
@@ -830,6 +650,10 @@ namespace ajanuw
           isX64 = !isX86;
         }
       }
+      else
+      {
+        throw std::exception(("GetPID error: "s + std::to_string(GetLastError())).data());
+      }
     }
 
     Target(uint32_t pid) : pid(pid)
@@ -846,7 +670,7 @@ namespace ajanuw
       }
       else
       {
-        printf("OpenProcess error: %d\n", GetLastError());
+        throw std::exception(("OpenProcess error: "s + std::to_string(GetLastError())).data());
       }
     }
 
@@ -858,7 +682,7 @@ namespace ajanuw
 
     std::vector<uint8_t *> moduleScan(const std::string &strbytes, size_t offset = NULL)
     {
-      auto maskList = ajanuw::SSString::split(strbytes, std::regex("\\s+"));
+      auto maskList = ajanuw::sstr::split(strbytes, std::regex("\\s+"));
       auto base = (uint8_t *)mi.lpBaseOfDll;
       std::vector<uint8_t *> addrs;
       uint8_t v = NULL;

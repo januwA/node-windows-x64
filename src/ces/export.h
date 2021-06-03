@@ -9,5 +9,5 @@ extern void ces_delete_buffer(YY_BUFFER_STATE buffer);
 
 namespace ces
 {
-  BaseNode* parse(const std::string& src);
+  BaseNode* parse(std::string_view src);
 }

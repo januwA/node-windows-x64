@@ -46,13 +46,13 @@ Napi::Value strToByteTable(const Napi::CallbackInfo &info)
 {
   nm_init;
   auto str = nm_str(info[0]);
-  return _toTable(env, str.data(), ajanuw::SSString::count(str));
+  return _toTable(env, str.data(), ajanuw::sstr::count(str));
 }
 Napi::Value wstrToByteTable(const Napi::CallbackInfo &info)
 {
   nm_init;
   auto ustr = nm_ustr(info[0]);
-  return _toTable(env, ustr.data(), ajanuw::SSString::count(ustr));
+  return _toTable(env, ustr.data(), ajanuw::sstr::count(ustr));
 }
 
 #define BYTE_TABEL_TO(type)                       \

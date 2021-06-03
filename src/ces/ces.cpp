@@ -9,11 +9,20 @@ extern void ces_delete_buffer(YY_BUFFER_STATE buffer);
 
 int main()
 {
-  YY_BUFFER_STATE state = ces_scan_string("1 + 3");
-  ces::BaseNode* result = nullptr;
-  ces::parser parser(&result);
-  parser.parse();
-  ces_delete_buffer(state);
-  if(result) printf("%d\n", result->id());
-  return 0;
+  try
+  {
+    string src = "中文.exe + 한글+[\"ああさっそう  と\tしている\"] + 2";
+    YY_BUFFER_STATE state = ces_scan_string(src.data());
+    ces::BaseNode* result = nullptr;
+    ces::parser parser(&result, src);
+    parser.parse();
+    ces_delete_buffer(state);
+    if(result) printf("node id:%d\n", result->id());
+    return 0;
+  }
+  catch (const std::exception& e)
+  {
+    std::cout << e.what() << std::endl;
+    return 1;
+  }
 }
