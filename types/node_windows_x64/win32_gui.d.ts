@@ -20,6 +20,7 @@ export interface Win32CreateOption {
 export class Win32Gui {
   static getCheck(hwnd: number): boolean;
   static rgb(r: number, g: number, b: number): number;
+  static getHLMessage(num: number): [number, number];
 
   hwnd: number;
   x: number;

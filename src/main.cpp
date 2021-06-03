@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #include <napi.h>
 #include "mem.hpp"
 #include "test.hpp"

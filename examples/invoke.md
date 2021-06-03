@@ -155,12 +155,12 @@ nw["user32.MessageBoxA"](0, "body", "title", 3);
 The code above is actually
 
 ```js
-target.invoke({
+nw.invoke({
   method: "MessageBoxA",
   args: [0, "body", "title", 3],
 });
 
-target.invoke({
+nw.invoke({
   method: "user32.MessageBoxA",
   args: [0, "body", "title", 3],
 });

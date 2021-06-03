@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 #include <memory>
+#include <ranges>
 
 #include <Windows.h>
 #include <Windowsx.h>
@@ -173,6 +174,7 @@ namespace ajanuw
       return r;
     };
   }
+  
   namespace Mem
   {
     LPVOID alloc(SIZE_T dwSize, LPVOID lpAddress = 0, uint32_t flAllocationType = MEM_COMMIT | MEM_RESERVE, uint32_t flProtect = PAGE_EXECUTE_READWRITE);

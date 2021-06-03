@@ -53,28 +53,34 @@ https://docs.microsoft.com/en-us/windows/win32/inputdev/mouse-input-notification
 ```js
 nw.globalDefine();
 
-wui.messageLoop((hWnd, message, wParam, lParam) => {
-  const [wh, wl] = nw.Win32Gui.getHLMessage(wParam);
-  const [lh, ll] = nw.Win32Gui.getHLMessage(lParam);
-
-  const x = ll,
-    y = lh,
-    CTRL = (wParam & MK_CONTROL) !== 0,
-    SHIFT = (wParam & MK_SHIFT) !== 0,
-    Back = (wParam & MK_XBUTTON1) !== 0,
-    Go = (wParam & MK_XBUTTON2) !== 0;
-
-  switch (message) {
-    case WM_LBUTTONDBLCLK:
-      console.log(
-        "dbclick: x: %d, y: %d, CTRL:%o, SHIFT: %o, Go: %o, Back: %o",
-        x, y, CTRL, SHIFT, Go, Back
-      );
-      break;
-    default:
-      break;
-  }
+const wui = new nw.Win32Gui(className, windowName, {
+  style: WS_OVERLAPPEDWINDOW,
 });
+
+if (wui.initRegisterClass() && wui.initWindow()) {
+  wui.messageLoop((hWnd, message, wParam, lParam) => {
+    const [wh, wl] = nw.Win32Gui.getHLMessage(wParam);
+    const [lh, ll] = nw.Win32Gui.getHLMessage(lParam);
+
+    const x = ll,
+      y = lh,
+      CTRL = (wParam & MK_CONTROL) !== 0,
+      SHIFT = (wParam & MK_SHIFT) !== 0,
+      Back = (wParam & MK_XBUTTON1) !== 0,
+      Go = (wParam & MK_XBUTTON2) !== 0;
+
+    switch (message) {
+      case WM_LBUTTONDBLCLK:
+        console.log(
+          "dbclick: x: %d, y: %d, CTRL:%o, SHIFT: %o, Go: %o, Back: %o",
+          x, y, CTRL, SHIFT, Go, Back
+        );
+        break;
+      default:
+        break;
+    }
+  });
+}
 ```
 
 

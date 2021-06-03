@@ -6,7 +6,8 @@
 #include "_napi_macro.h"
 #include "ajanuw.h"
 
-class VAManage : public Napi::ObjectWrap<VAManage>, public ajanuw::Mem::VAManage
+class VAManage : public Napi::ObjectWrap<VAManage>,
+                 public ajanuw::Mem::VAManage
 {
 private:
   Napi::Value GetSize(const Napi::CallbackInfo &info);
@@ -15,6 +16,7 @@ private:
   void SetPosition(const Napi::CallbackInfo &info, const Napi::Value &value);
 
 public:
+  using _Mybase = ajanuw::Mem::VAManage;
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   VAManage(const Napi::CallbackInfo &info);
   ~VAManage();

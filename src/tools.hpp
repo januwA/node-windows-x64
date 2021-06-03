@@ -10,14 +10,7 @@
 Napi::Number getProcessID(const Napi::CallbackInfo &info)
 {
   nm_init;
-  if (info.Length() != NULL)
-  {
-    nm_ret(ajanuw::PE::GetPID(nmi_str(0)));
-  }
-  else
-  {
-    nm_ret(GetCurrentProcessId());
-  }
+  nm_ret(info.Length() ? ajanuw::PE::GetPID(nmi_str(0)) : GetCurrentProcessId());
 }
 Napi::Number getCurrentProcess(const Napi::CallbackInfo &info)
 {
@@ -42,7 +35,7 @@ Napi::Value getMousePos(const Napi::CallbackInfo &info)
 {
   nm_init;
   POINT pos{0};
-  if (GetCursorPos(&pos) == NULL)
+  if (!GetCursorPos(&pos))
     nm_retu;
   auto r = Napi::Object::New(env);
   r.Set("x", pos.x);
@@ -53,18 +46,7 @@ Napi::Value getMousePos(const Napi::CallbackInfo &info)
 Napi::Value setMousePos(const Napi::CallbackInfo &info)
 {
   nm_init_cal(2);
-  int x, y;
-  if (info[0].IsObject())
-  {
-    x = nm_int(nmi_obj(0).Get("x"));
-    y = nm_int(nmi_obj(0).Get("y"));
-  }
-  else
-  {
-    x = nmi_int(0);
-    y = nmi_int(1);
-  }
-  nm_retb(SetCursorPos(x, y));
+  nm_retb(SetCursorPos(nmi_int(0), nmi_int(1)));
 }
 
 Napi::Value isKeyPressed(const Napi::CallbackInfo &info)
@@ -90,8 +72,9 @@ Napi::Value keyUp(const Napi::CallbackInfo &info)
 Napi::Value doKeyPress(const Napi::CallbackInfo &info)
 {
   nm_init_cal(1);
-  keyDown(info);
-  keyUp(info);
+  auto bVK = (uint8_t)nmi_dword(0);
+  keybd_event(bVK, 0, 0, 0);
+  keybd_event(bVK, 0, KEYEVENTF_KEYUP, 0);
   nm_retu;
 }
 
@@ -127,11 +110,11 @@ Napi::Value readFromClipboard(const Napi::CallbackInfo &info)
   if (!OpenClipboard(nullptr))
     nm_retbf;
 
-  HGLOBAL hglb = GetClipboardData(CF_TEXT);
+  auto hglb = GetClipboardData(CF_TEXT);
   if (!hglb)
     nm_retbf;
 
-  LPTSTR lptstr = (LPTSTR)GlobalLock(hglb);
+  auto lptstr = (LPTSTR)GlobalLock(hglb);
   if (!lptstr)
     nm_retbf;
 
@@ -149,9 +132,9 @@ Napi::Value writeToClipboard(const Napi::CallbackInfo &info)
     nm_retbf;
   EmptyClipboard();
 
-  std::string output = nmi_str(0);
-  HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, output.size());
-  if (hMem == NULL)
+  auto output = nmi_str(0);
+  auto hMem = GlobalAlloc(GMEM_MOVEABLE, output.size());
+  if (!hMem)
     nm_retbf;
 
   memcpy_s(GlobalLock(hMem), output.size(), output.c_str(), output.size());
@@ -193,8 +176,8 @@ Napi::Value getPixel(const Napi::CallbackInfo &info)
   int x = nmi_int(0);
   int y = nmi_int(1);
 
-  HDC dc = GetDC(NULL);
-  COLORREF rgbColor = GetPixel(dc, x, y);
+  auto dc = GetDC(NULL);
+  auto rgbColor = GetPixel(dc, x, y);
   auto r = Napi::Object::New(env);
   r.Set("r", Napi::Number::New(env, GetRValue(rgbColor)));
   r.Set("g", Napi::Number::New(env, GetGValue(rgbColor)));
@@ -215,8 +198,8 @@ Napi::Value beep(const Napi::CallbackInfo &info)
 // https://docs.microsoft.com/en-us/previous-versions/office/developer/speech-technologies/jj127460(v=msdn.10)?redirectedfrom=MSDN
 Napi::Value speak(const Napi::CallbackInfo &info)
 {
-  nm_init;
-  std::u16string pwcs = nmi_ustr(0);
+  nm_init_cal(1);
+  auto pwcs = nmi_ustr(0);
   uint32_t dwFlags = SPF_DEFAULT;
   ULONG *pulStreamNumber = NULL;
 
@@ -233,9 +216,8 @@ Napi::Value speak(const Napi::CallbackInfo &info)
 
 Napi::Value sleep(const Napi::CallbackInfo &info)
 {
-  nm_init;
-  uint32_t dwMilliseconds = nmi_dword(0);
-  Sleep(dwMilliseconds);
+  nm_init_cal(1);
+  Sleep(nmi_dword(0));
   nm_retu;
 }
 
@@ -249,8 +231,8 @@ Napi::Value findWindow(const Napi::CallbackInfo &info)
   BOOL hasLpClassName = info[0].ToBoolean();
   BOOL hasLpWindowName = info[0].ToBoolean();
 
-  LPCSTR lpClassName = hasLpClassName ? sClassName.c_str() : NULL;
-  LPCSTR lpWindowName = hasLpWindowName ? sWindowName.c_str() : NULL;
+  LPCSTR lpClassName = hasLpClassName ? sClassName.data() : NULL;
+  LPCSTR lpWindowName = hasLpWindowName ? sWindowName.data() : NULL;
 
   nm_ret((uintptr_t)FindWindowA(lpClassName, lpWindowName));
 }
@@ -258,46 +240,42 @@ Napi::Value findWindow(const Napi::CallbackInfo &info)
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindow
 Napi::Value getWindow(const Napi::CallbackInfo &info)
 {
-  nm_init;
-  uintptr_t hWnd = nmi_qword(0);
-  UINT uCmd = nmi_dword(1);
-  nm_ret((uintptr_t)GetWindow((HWND)hWnd, uCmd));
+  nm_init_cal(2);
+  nm_ret((uintptr_t)GetWindow((HWND)nmi_qword(0), (UINT)nmi_dword(1)));
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtexta
 Napi::Value getWindowCaption(const Napi::CallbackInfo &info)
 {
-  nm_init;
-  uintptr_t hWnd = nmi_qword(0);
-  std::u16string usCaption;
-  usCaption.resize(1024);
-  if (GetWindowTextW((HWND)hWnd, (LPWSTR)usCaption.data(), usCaption.size()) == NULL)
+  nm_init_cal(1);
+  std::u16string uCaption;
+  uCaption.resize(MAX_CLASS_NAME);
+  if (!GetWindowTextW((HWND)nmi_qword(0), (LPWSTR)uCaption.data(), MAX_CLASS_NAME))
     nm_retu;
-  nm_rets(usCaption);
+  nm_rets(uCaption);
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclassname
 Napi::Value getWindowClassName(const Napi::CallbackInfo &info)
 {
-  nm_init;
-  uintptr_t hWnd = nmi_qword(0);
-  std::u16string sClassName;
-  sClassName.resize(1024);
-  if (GetClassNameW((HWND)hWnd, (LPWSTR)sClassName.data(), sClassName.size()) == NULL)
+  nm_init_cal(1);
+  std::u16string uClassName;
+  uClassName.resize(MAX_CLASS_NAME);
+  if (!GetClassNameW((HWND)nmi_qword(0), (LPWSTR)uClassName.data(), MAX_CLASS_NAME))
     nm_retu;
-  nm_rets(sClassName);
+  nm_rets(uClassName);
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowthreadprocessid
 Napi::Value getWindowProcessID(const Napi::CallbackInfo &info)
 {
-  nm_init;
+  nm_init_cal(1);
   uintptr_t hWnd = nmi_qword(0);
 
   int lpdwProcessId;
   int id = GetWindowThreadProcessId((HWND)hWnd, (LPDWORD)&lpdwProcessId);
 
-  Napi::Object r = Napi::Object::New(env);
+  auto r = Napi::Object::New(env);
   r.Set("pid", Napi::Number::New(env, lpdwProcessId));
   r.Set("tid", Napi::Number::New(env, id));
 
@@ -366,14 +344,7 @@ Napi::Value getAddress(const Napi::CallbackInfo &info)
   nm_init_cal(1);
   try
   {
-    if (info.Length() == 1)
-    {
-      nm_ret((uintptr_t)ajanuw::CEAddressString::getAddress(nmi_str(0)));
-    }
-    else
-    {
-      nm_ret((uintptr_t)ajanuw::CEAddressString::getAddress(nmi_str(0), (HANDLE)nmi_qword(1)));
-    }
+    nm_ret((uintptr_t)(info.Length() == 1 ? ajanuw::CEAddressString::getAddress(nmi_str(0)) : ajanuw::CEAddressString::getAddress(nmi_str(0), (HANDLE)nmi_qword(1))));
   }
   catch (const std::exception &e)
   {
@@ -387,7 +358,7 @@ Napi::Value aa(const Napi::CallbackInfo &info)
   nm_init_cal(1);
   try
   {
-    nm_ret(ajanuw::Asm::AAScript::aa(nmi_str(0), nm_is_nullishOr(info[1], nm_qword, 0)));
+    nm_ret(ajanuw::Asm::AAScript::aa(nmi_str(0), nm_is_nullishOr(info[1], nm_qword, NULL)));
   }
   catch (const std::exception &e)
   {
@@ -401,14 +372,8 @@ Napi::Value asmBytes(const Napi::CallbackInfo &info)
   nm_init_cal(1);
   try
   {
-    bool isX64 = true;
-
-    if (info.Length() > 1)
-    {
-      isX64 = nmi_bool(1);
-    }
-
-    std::vector<uint8_t> r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0), isX64);
+    auto isX64 = info.Length() > 1 ? nmi_bool(1) : true;
+    auto r = ajanuw::Asm::AAScript::asmBytes(nmi_str(0), isX64);
     auto buf = Napi::ArrayBuffer::New(env, r.size());
     memcpy_s((BYTE *)buf.Data(), buf.ByteLength(), r.data(), buf.ByteLength());
     return buf;

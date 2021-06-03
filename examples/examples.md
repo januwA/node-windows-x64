@@ -8,12 +8,6 @@ nw.getProcessID()
 nw.getCurrentProcess()
 ```
 
-## writeBytes
-```js
-nw.writeBytes(lpAddress, 1, 2, 3, 4, 0xff);
-nw.writeBytes(lpAddress, [1, 2, 3, 4, 0xff]);
-```
-
 ## isKeyPressed
 ```js
 VK_A = 65
@@ -49,8 +43,7 @@ nw.doKeyPress(VK_C);
 
 ## readFromClipboard
 ```js
-r = nw.readFromClipboard();
-console.log(r);
+console.log(nw.readFromClipboard());
 ```
 
 ## mouse_event

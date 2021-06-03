@@ -1,3 +1,9 @@
+## writeBytes
+```js
+nw.writeBytes(lpAddress, 1, 2, 3, 4, 0xff);
+nw.writeBytes(lpAddress, [1, 2, 3, 4, 0xff]);
+```
+
 ## writeWord
 ```js
 nw.writeWord(lpAddress, 1);

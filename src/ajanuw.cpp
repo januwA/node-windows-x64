@@ -155,10 +155,9 @@ std::vector<uint8_t> ajanuw::SSString::toBytes(std::string_view byteStr)
 {
   byteStr = ajanuw::SSString::trim(byteStr);
   auto byteStrList = ajanuw::SSString::split(byteStr.data(), std::regex{"[\\s\\n]+"});
-  std::vector<uint8_t> result;
-  std::transform(byteStrList.begin(), byteStrList.end(), std::back_inserter(result), [](const std::string &s)
-                 { return std::stoi(s, nullptr, 16); });
-  return result;
+  auto a = byteStrList | std::views::transform([](const std::string &s)
+                                               { return std::stoi(s, nullptr, 16); });
+  return std::vector<uint8_t>(a.begin(), a.end());
 }
 char *ajanuw::SSString::setLocale(int _Category, const char *_Locale)
 {
@@ -1089,12 +1088,12 @@ uint32_t ajanuw::Gui::Win32::rgb(uint32_t r, uint32_t g, uint32_t b)
 HWND ajanuw::Gui::Win32::createWindow(std::unique_ptr<Win32CreateOption> opt)
 {
   HWND hWnd = CreateWindowA(opt->className.c_str(), opt->windowName.c_str(),
-                             opt->style,
-                             opt->x, opt->y,
-                             opt->width, opt->height,
-                             opt->parent ? opt->parent : _hWnd,
-                             opt->id,
-                             NULL, NULL);
+                            opt->style,
+                            opt->x, opt->y,
+                            opt->width, opt->height,
+                            opt->parent ? opt->parent : _hWnd,
+                            opt->id,
+                            NULL, NULL);
   auto ws = ajanuw::SSString::strToWstr(opt->windowName);
   SetWindowTextW(hWnd, ws.data());
   return hWnd;

@@ -1,4 +1,4 @@
-#pragma warning(disable: 4100)
+#pragma warning(disable : 4100)
 
 #pragma once
 #include <iostream>
@@ -11,6 +11,7 @@ class Target : public Napi::ObjectWrap<Target>,
                public ajanuw::Target
 {
 public:
+  using _Mybase = ajanuw::Target;
   static Napi::Object Init(Napi::Env env, Napi::Object exports)
   {
     Napi::Function func = DefineClass(
@@ -42,24 +43,24 @@ public:
 
   Target(const Napi::CallbackInfo &info)
       : ObjectWrap<Target>(info),
-        ajanuw::Target(nmi_dword(0))
+        _Mybase(nmi_dword(0))
   {
   }
 
   Napi::Value GetName(const Napi::CallbackInfo &info)
   {
     nm_init;
-    nm_rets(ajanuw::SSString::wstrToStr(ajanuw::Target::name));
+    nm_rets(ajanuw::SSString::wstrToStr(_Mybase::name));
   }
   Napi::Value GetPID(const Napi::CallbackInfo &info)
   {
     nm_init;
-    nm_ret(ajanuw::Target::pid);
+    nm_ret(_Mybase::pid);
   }
   Napi::Value GethProcess(const Napi::CallbackInfo &info)
   {
     nm_init;
-    nm_ret((uintptr_t)ajanuw::Target::hProcess);
+    nm_ret((uintptr_t)_Mybase::hProcess);
   }
   Napi::Value setNop(const Napi::CallbackInfo &info)
   {
@@ -67,7 +68,7 @@ public:
     uint8_t *addr = (uint8_t *)nmi_qword(0);
     size_t size = nmi_dword(1);
 
-    ajanuw::Target::SetNop *r = new ajanuw::Target::SetNop(hProcess, addr, size);
+    _Mybase::SetNop *r = new _Mybase::SetNop(hProcess, addr, size);
 
     auto result = Napi::Object::New(env);
 
@@ -117,7 +118,7 @@ public:
       memcpy_s(hookBytes.data(), hookBytes.size(), buf.Data(), hookBytes.size());
     }
 
-    ajanuw::Target::SetHook *r = new ajanuw::Target::SetHook(hProcess, addr, size, hookBytes);
+    _Mybase::SetHook *r = new _Mybase::SetHook(hProcess, addr, size, hookBytes);
 
     Napi::Object result = Napi::Object::New(env);
 
@@ -165,7 +166,7 @@ public:
       offset = nmi_dword(2);
     }
 
-    std::vector<uint8_t *> addrs = ajanuw::Target::moduleScan(strbytes, offset);
+    std::vector<uint8_t *> addrs = _Mybase::moduleScan(strbytes, offset);
     Napi::Array r = Napi::Array::New(env, addrs.size());
     for (size_t i = 0; i < addrs.size(); i++)
     {

@@ -63,7 +63,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
 
   nm_init_cal(1);
   std::vector<CallbackContext *> vCC;
-  Napi::Object o = nmi_obj(0);
+  auto o = nmi_obj(0);
   HMODULE hModule = NULL;
   uint8_t *lpMethod = nullptr;
   bool bWideChar = false;
@@ -84,7 +84,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     if (o.Has("module"))
     {
       auto sModule = nm_getto("module", str);
-      hModule = LoadLibraryA(sModule.c_str());
+      hModule = LoadLibraryA(sModule.data());
       if (hModule == NULL)
       {
         nm_jserr("not find \"" + sModule + "\" module.");
@@ -148,8 +148,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     uintptr_t value = NULL;
     if (nm_is_fun(it))
     {
-      auto CC = new CallbackContext(env, it.As<Napi::Function>(),
-                                    ajanuw::createCallback(&cccccc, i, &vCC));
+      auto CC = new CallbackContext(env, it.As<Napi::Function>(), ajanuw::createCallback(&cccccc, i, &vCC));
       vCC.push_back(CC);
       value = (uintptr_t)CC->address;
     }
@@ -173,7 +172,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     }
     else
     {
-      // null and undefined to 0
+      // other value to number
       value = nm_qword(it);
     }
 

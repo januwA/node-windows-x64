@@ -44,7 +44,7 @@ export function getPixel(
   rgb: number;
 };
 
-export function beep(dwFreq: number, dwDuration: number): boolean;
+export function beep(dwFreq?: number, dwDuration?: number): boolean;
 
 // https://docs.microsoft.com/en-us/previous-versions/office/developer/speech-technologies/jj127460(v=msdn.10)?redirectedfrom=MSDN
 export function speak(pwcs: string): boolean;
