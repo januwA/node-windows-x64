@@ -36,3 +36,17 @@ module_root_dir   -> <project-dir>
 ![](./images/2021-02-22-16-56-15.png)
 
 ![](./images/2021-02-22-16-56-34.png)
+
+
+## api函数使用宏替换
+```
+Napi::Value ([\w:]+)\(const Napi::CallbackInfo &info\)
+
+nm_api($1)
+```
+
+```
+void ([\w:]+)\(const Napi::CallbackInfo &info, const Napi::Value &value\)
+
+nm_sapi($1)
+```

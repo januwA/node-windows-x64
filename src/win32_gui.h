@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <napi.h>
 #include "_napi_macro.h"
+#include "_util.hpp"
 #include "ajanuw.h"
 
 class Win32GuiEvent
@@ -32,38 +33,38 @@ public:
   Win32Gui(const Napi::CallbackInfo &info);
   inline ~Win32Gui(){};
 
-  static nm_method(getHLMessage);
-  static nm_method(getCheck);
-  static nm_method(rgb);
+  static nm_api(getHLMessage);
+  static nm_api(getCheck);
+  static nm_api(rgb);
 
-  nm_method(GetHwnd);
+  nm_api(GetHwnd);
 
-  nm_method(GetX);
-  nm_method_set(SetX);
+  nm_api(GetX);
+  nm_sapi(SetX);
 
-  nm_method(GetY);
-  nm_method_set(SetY);
+  nm_api(GetY);
+  nm_sapi(SetY);
 
-  nm_method(GetWidth);
-  nm_method_set(SetWidth);
+  nm_api(GetWidth);
+  nm_sapi(SetWidth);
 
-  nm_method(GetHeight);
-  nm_method_set(SetHeight);
+  nm_api(GetHeight);
+  nm_sapi(SetHeight);
 
-  nm_method(GetStyle);
-  nm_method_set(SetStyle);
+  nm_api(GetStyle);
+  nm_sapi(SetStyle);
 
-  nm_method(initRegisterClass);
-  nm_method(initWindow);
-  nm_method(messageLoop);
-  nm_method(createWindow);
-  nm_method(button);
-  nm_method(checkbox);
-  nm_method(radio);
-  nm_method(groupbox);
-  nm_method(text);
-  nm_method(input);
-  nm_method(textarea);
-  nm_method(listbox);
-  nm_method(select);
+  nm_api(initRegisterClass);
+  nm_api(initWindow);
+  nm_api(messageLoop);
+  nm_api(createWindow);
+  nm_api(button);
+  nm_api(checkbox);
+  nm_api(radio);
+  nm_api(groupbox);
+  nm_api(text);
+  nm_api(input);
+  nm_api(textarea);
+  nm_api(listbox);
+  nm_api(select);
 };

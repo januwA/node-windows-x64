@@ -33,7 +33,7 @@ Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
                                         InstanceMethod<&VAManage::saveToFile>("saveToFile"),
                                         InstanceMethod<&VAManage::destroy>("destroy"),
                                     });
-  Napi::FunctionReference *constructor = new Napi::FunctionReference();
+  auto constructor = new Napi::FunctionReference();
   *constructor = Napi::Persistent(func);
   constructor->SuppressDestruct();
 
@@ -41,32 +41,30 @@ Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
   return exports;
 }
 
-Napi::Value VAManage::GetSize(const Napi::CallbackInfo &info)
+nm_api(VAManage::GetSize)
 {
   nm_init;
   nm_ret(_Mybase::size);
 }
-Napi::Value VAManage::GetMemory(const Napi::CallbackInfo &info)
+nm_api(VAManage::GetMemory)
 {
   nm_init;
   nm_ret((uintptr_t)_Mybase::memory);
 }
-Napi::Value VAManage::GetPosition(const Napi::CallbackInfo &info)
+nm_api(VAManage::GetPosition)
 {
   nm_init;
   nm_ret((uintptr_t)_Mybase::position);
 }
-void VAManage::SetPosition(const Napi::CallbackInfo &info, const Napi::Value &value)
+nm_sapi(VAManage::SetPosition)
 {
   nm_init;
-  this->position = nm_qword(value);
+  this->position = nm_ull(value);
 }
 
 VAManage::VAManage(const Napi::CallbackInfo &info)
     : ObjectWrap<VAManage>(info),
-      _Mybase(
-          nm_is_nullishOr(info[0], nm_qword, 1024),
-          info.Length() > 1 ? (HANDLE)nmi_qword(1) : NULL)
+      _Mybase(nmi_is_und(0, ull, 1024), (HANDLE)(nmi_is_und(1, ull, NULL)))
 {
 }
 
@@ -74,132 +72,149 @@ VAManage::~VAManage()
 {
 }
 
-Napi::Value VAManage::read(const Napi::CallbackInfo &info)
+nm_api(VAManage::read)
 {
   nm_init;
-  auto size = nmi_qword(0);
+  auto size = nmi_ull(0);
   auto table = _Mybase::read(size);
-  nm_arr_form_vect(result, table);
-  return result;
+  return span_to_array<uint8_t>(env, table);
 }
 
 #define WRITE_TYPE_FORM(type) \
   nm_init;                    \
   nm_ret(_Mybase::read##type());
 
-Napi::Value VAManage::readByte(const Napi::CallbackInfo &info)
+nm_api(VAManage::readByte)
 {
   WRITE_TYPE_FORM(Byte);
 }
 
-Napi::Value VAManage::readWord(const Napi::CallbackInfo &info)
+nm_api(VAManage::readWord)
 {
   WRITE_TYPE_FORM(Word);
 }
 
-Napi::Value VAManage::readDword(const Napi::CallbackInfo &info)
+nm_api(VAManage::readDword)
 {
   WRITE_TYPE_FORM(Dword);
 }
 
-Napi::Value VAManage::readQword(const Napi::CallbackInfo &info)
+nm_api(VAManage::readQword)
 {
   WRITE_TYPE_FORM(Qword);
 }
 
-Napi::Value VAManage::readFloat(const Napi::CallbackInfo &info)
+nm_api(VAManage::readFloat)
 {
   WRITE_TYPE_FORM(Float);
 }
 
-Napi::Value VAManage::readDouble(const Napi::CallbackInfo &info)
+nm_api(VAManage::readDouble)
 {
   WRITE_TYPE_FORM(Double);
 }
 
-Napi::Value VAManage::readStr(const Napi::CallbackInfo &info)
+nm_api(VAManage::readStr)
 {
   nm_init;
-  size_t maxSize = nm_is_nullishOr(info[0], nm_qword, -1);
+  size_t maxSize = nmi_is_und(0, ull, -1);
   nm_rets(_Mybase::readStr(maxSize));
 }
 
-Napi::Value VAManage::readWstr(const Napi::CallbackInfo &info)
+nm_api(VAManage::readWstr)
 {
   nm_init;
-  size_t maxSize = nm_is_nullishOr(info[0], nm_qword, -1);
+  size_t maxSize = nmi_is_und(0, ull, -1);
   nm_rets(_Mybase::readUstr(maxSize));
 }
 
-void VAManage::write(const Napi::CallbackInfo &info)
+nm_api(VAManage::write)
 {
-  nm_init;
-  auto table = nmi_arr(0);
-  size_t count = nmi_is_nullishOr(1, nm_qword, table.Length());
-
-  std::vector<uint8_t> vect;
-  for (size_t i = 0; i < count; i++)
-    vect.push_back(nm_dword(table.Get(i)));
-
+  nm_init_cal(1);
+  auto table = nmi_a(0);
+  size_t count = nmi_is_und(1, ull, table.Length());
+  auto vect = array_to_vector<uint8_t>(table, [](auto i)
+                                       { return nm_ui(i); });
   _Mybase::write(vect, count);
+  nm_retu;
 }
 
-void VAManage::writeByte(const Napi::CallbackInfo &info)
+nm_api(VAManage::writeByte)
 {
-  _Mybase::writeByte(nmi_dword(0));
+  nm_init_cal(1);
+  _Mybase::writeByte(nmi_ui(0));
+  nm_retu;
 }
 
-void VAManage::writeWord(const Napi::CallbackInfo &info)
+nm_api(VAManage::writeWord)
 {
-  _Mybase::writeWord(nmi_dword(0));
+  nm_init_cal(1);
+  _Mybase::writeWord(nmi_ui(0));
+  nm_retu;
 }
 
-void VAManage::writeDword(const Napi::CallbackInfo &info)
+nm_api(VAManage::writeDword)
 {
-  _Mybase::writeDword(nmi_dword(0));
+  nm_init_cal(1);
+  _Mybase::writeDword(nmi_ui(0));
+  nm_retu;
 }
 
-void VAManage::writeQword(const Napi::CallbackInfo &info)
+nm_api(VAManage::writeQword)
 {
-  _Mybase::writeQword(nmi_qword(0));
+  nm_init_cal(1);
+  _Mybase::writeQword(nmi_ull(0));
+  nm_retu;
 }
-void VAManage::writeFloat(const Napi::CallbackInfo &info)
+nm_api(VAManage::writeFloat)
 {
-  _Mybase::writeFloat(nmi_float(0));
-}
-
-void VAManage::writeDouble(const Napi::CallbackInfo &info)
-{
-  _Mybase::writeDouble(nmi_double(0));
-}
-
-void VAManage::writeStr(const Napi::CallbackInfo &info)
-{
-  _Mybase::writeStr(nmi_str(0));
+  nm_init_cal(1);
+  _Mybase::writeFloat(nmi_f(0));
+  nm_retu;
 }
 
-void VAManage::writeWstr(const Napi::CallbackInfo &info)
+nm_api(VAManage::writeDouble)
 {
-  _Mybase::writeUstr(nmi_ustr(0));
+  nm_init_cal(1);
+  _Mybase::writeDouble(nmi_d(0));
+  nm_retu;
 }
 
-void VAManage::loadFromFile(const Napi::CallbackInfo &info)
+nm_api(VAManage::writeStr)
 {
-  _Mybase::loadFromFile(nmi_str(0));
+  nm_init_cal(1);
+  _Mybase::writeStr(nmi_s(0));
+  nm_retu;
 }
 
-void VAManage::saveToFile(const Napi::CallbackInfo &info)
+nm_api(VAManage::writeWstr)
 {
-  _Mybase::saveToFile(nmi_str(0));
+  nm_init_cal(1);
+  _Mybase::writeUstr(nmi_us(0));
+  nm_retu;
 }
 
-Napi::Value VAManage::destroy(const Napi::CallbackInfo &info)
+nm_api(VAManage::loadFromFile)
+{
+  nm_init_cal(1);
+  _Mybase::loadFromFile(nmi_s(0));
+  nm_retu;
+}
+
+nm_api(VAManage::saveToFile)
+{
+  nm_init_cal(1);
+  _Mybase::saveToFile(nmi_s(0));
+  nm_retu;
+}
+
+nm_api(VAManage::destroy)
 {
   nm_init;
   nm_retb(_Mybase::destroy());
 }
 
-Napi::Value VAManage::GetPtr(const Napi::CallbackInfo &info)
+nm_api(VAManage::GetPtr)
 {
   nm_init;
   nm_ret((uintptr_t)_Mybase::ptr());

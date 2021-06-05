@@ -43,30 +43,30 @@ public:
 
   Target(const Napi::CallbackInfo &info)
       : ObjectWrap<Target>(info),
-        _Mybase(nmi_dword(0))
+        _Mybase(nmi_ui(0))
   {
   }
 
-  Napi::Value GetName(const Napi::CallbackInfo &info)
+  nm_api(GetName)
   {
     nm_init;
     nm_rets(ajanuw::sstr::wstrToStr(_Mybase::name));
   }
-  Napi::Value GetPID(const Napi::CallbackInfo &info)
+  nm_api(GetPID)
   {
     nm_init;
     nm_ret(_Mybase::pid);
   }
-  Napi::Value GethProcess(const Napi::CallbackInfo &info)
+  nm_api(GethProcess)
   {
     nm_init;
     nm_ret((uintptr_t)_Mybase::hProcess);
   }
-  Napi::Value setNop(const Napi::CallbackInfo &info)
+  nm_api(setNop)
   {
     nm_init_cal(2);
-    uint8_t *addr = (uint8_t *)nmi_qword(0);
-    size_t size = nmi_dword(1);
+    uint8_t *addr = (uint8_t *)nmi_ull(0);
+    size_t size = nmi_ui(1);
 
     _Mybase::SetNop *r = new _Mybase::SetNop(hProcess, addr, size);
 
@@ -100,16 +100,16 @@ public:
     return result;
   }
 
-  Napi::Value setHook(const Napi::CallbackInfo &info)
+  nm_api(setHook)
   {
     nm_init_cal(2);
-    uint8_t *addr = (uint8_t *)nmi_qword(0);
-    size_t size = nmi_dword(1);
+    uint8_t *addr = (uint8_t *)nmi_ull(0);
+    size_t size = nmi_ui(1);
 
     std::vector<uint8_t> hookBytes;
-    if (nmi_is_str(2))
+    if (nmi_is_s(2))
     {
-      hookBytes = ajanuw::Asm::AAScript::asmBytes(nmi_str(2), isX64);
+      hookBytes = ajanuw::Asm::AAScript::asmBytes(nmi_s(2), isX64);
     }
     else
     {
@@ -155,15 +155,15 @@ public:
     return result;
   }
 
-  Napi::Value moduleScan(const Napi::CallbackInfo &info)
+  nm_api(moduleScan)
   {
     nm_init_cal(1);
-    std::string strbytes = nmi_str(0);
+    std::string strbytes = nmi_s(0);
     size_t offset = NULL;
 
     if (info.Length() > 1)
     {
-      offset = nmi_dword(2);
+      offset = nmi_ui(2);
     }
 
     std::vector<uint8_t *> addrs = _Mybase::moduleScan(strbytes, offset);
@@ -176,14 +176,14 @@ public:
   }
 };
 
-Napi::Object createTargetWithName(const Napi::CallbackInfo &info)
+nm_api(createTargetWithName)
 {
   nm_init;
-  auto pid = ajanuw::PE::GetPID(nmi_str(0));
+  auto pid = ajanuw::PE::GetPID(nmi_s(0));
   return Target::NewInstance(env, Napi::Number::New(env, pid));
 }
 
-Napi::Object createTargetWithPID(const Napi::CallbackInfo &info)
+nm_api(createTargetWithPID)
 {
   nm_init;
   return Target::NewInstance(env, info[0].ToNumber());

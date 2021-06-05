@@ -5,11 +5,12 @@
 #include <fstream>
 #include <napi.h>
 #include "_napi_macro.h"
+#include "_util.hpp"
 #include "ajanuw.h"
 
-#define EX_PROCESS HANDLE hProcess = (HANDLE)nmi_qword(0)
+#define EX_PROCESS HANDLE hProcess = (HANDLE)nmi_ull(0)
 
-Napi::Value memAlloc(const Napi::CallbackInfo &info)
+nm_api(memAlloc)
 {
   nm_init;
 
@@ -20,21 +21,21 @@ Napi::Value memAlloc(const Napi::CallbackInfo &info)
 
   if (!info.Length() || info[0].IsNumber())
   {
-    dwSize = nm_is_nullishOr(info[0], nm_qword, 1024);
+    dwSize = nmi_is_und(0, ull, 1024);
     nm_ret((uintptr_t)ajanuw::Mem::alloc(dwSize));
   }
   else
   {
-    Napi::Object opt = nmi_obj(0);
-    dwSize = nm_qword(opt.Get("dwSize"));
-    lpAddress = nm_is_nullishOr(opt.Get("lpAddress"), nm_qword, lpAddress);
-    flAllocationType = nm_is_nullishOr(opt.Get("flAllocationType"), nm_dword, flAllocationType);
-    flProtect = nm_is_nullishOr(opt.Get("flProtect"), nm_dword, flProtect);
+    auto o = nmi_o(0);
+    dwSize = nmo_get("dwSize", ull);
+    lpAddress = nmo_is_und("lpAddress", ull, lpAddress);
+    flAllocationType = nmo_is_und("flAllocationType", ui, flAllocationType);
+    flProtect = nmo_is_und("flProtect", ui, flProtect);
     nm_ret((uintptr_t)ajanuw::Mem::alloc(dwSize, (LPVOID)lpAddress, flAllocationType, flProtect));
   }
 }
 
-Napi::Value memAllocEx(const Napi::CallbackInfo &info)
+nm_api(memAllocEx)
 {
   nm_init_cal(1);
 
@@ -46,459 +47,449 @@ Napi::Value memAllocEx(const Napi::CallbackInfo &info)
 
   if (info[0].IsNumber())
   {
-    hProcess = (HANDLE)nmi_qword(0);
-    dwSize = nm_is_nullishOr(info[1], nm_qword, 1024);
+    hProcess = (HANDLE)nmi_ull(0);
+    dwSize = nmi_is_und(1, ull, 1024);
     nm_ret((uintptr_t)ajanuw::Mem::allocEx(hProcess, dwSize));
   }
   else
   {
-    Napi::Object opt = nmi_obj(0);
-    hProcess = (HANDLE)nm_qword(opt.Get("hProcess"));
-    dwSize = nm_qword(opt.Get("dwSize"));
-    lpAddress = nm_is_nullishOr(opt.Get("lpAddress"), nm_qword, lpAddress);
-    flAllocationType = nm_is_nullishOr(opt.Get("flAllocationType"), nm_dword, flAllocationType);
-    flProtect = nm_is_nullishOr(opt.Get("flProtect"), nm_dword, flProtect);
+    Napi::Object o = nmi_o(0);
+    hProcess = (HANDLE)nmo_get("hProcess", ull);
+    dwSize = nmo_get("dwSize", ull);
+    lpAddress = nmo_is_und("lpAddress", ull, lpAddress);
+    flAllocationType = nmo_is_und("flAllocationType", ui, flAllocationType);
+    flProtect = nmo_is_und("flProtect", ui, flProtect);
     nm_ret((uintptr_t)ajanuw::Mem::allocEx(hProcess, dwSize, (LPVOID)lpAddress, flAllocationType, flProtect));
   }
 }
 
-Napi::Value memFree(const Napi::CallbackInfo &info)
+nm_api(memFree)
 {
   nm_init_cal(1);
-  if (nmi_is_str(0))
-    nm_retb(ajanuw::Mem::free(nmi_str(0)));
+  if (nmi_is_s(0))
+    nm_retb(ajanuw::Mem::free(nmi_s(0)));
   else
-    nm_retb(ajanuw::Mem::free((LPVOID)nmi_qword(0)));
+    nm_retb(ajanuw::Mem::free((LPVOID)nmi_ull(0)));
 }
 
-Napi::Value memFreeEx(const Napi::CallbackInfo &info)
+nm_api(memFreeEx)
 {
   nm_init_cal(2);
-  if (nmi_is_str(1))
-    nm_retb(ajanuw::Mem::freeEx((HANDLE)nmi_qword(0), nmi_str(1)));
+  if (nmi_is_s(1))
+    nm_retb(ajanuw::Mem::freeEx((HANDLE)nmi_ull(0), nmi_s(1)));
   else
-    nm_retb(ajanuw::Mem::freeEx((HANDLE)nmi_qword(0), (LPVOID)nmi_qword(1)));
+    nm_retb(ajanuw::Mem::freeEx((HANDLE)nmi_ull(0), (LPVOID)nmi_ull(1)));
 }
 
-Napi::Value memWriteStr(const Napi::CallbackInfo &info)
+nm_api(memWriteStr)
 {
   nm_init_cal(2);
   Napi::String text = info[1].As<Napi::String>();
   Napi::Boolean isWideChar = info[2].ToBoolean();
   if (isWideChar)
   {
-    if (nmi_is_str(0))
-      ajanuw::Mem::wUstr(nmi_str(0), text.Utf16Value());
+    if (nmi_is_s(0))
+      ajanuw::Mem::wUstr(nmi_s(0), text.Utf16Value());
     else
-      ajanuw::Mem::wUstr((void *)nmi_qword(0), text.Utf16Value());
+      ajanuw::Mem::wUstr((void *)nmi_ull(0), text.Utf16Value());
   }
   else
   {
-    if (nmi_is_str(0))
-      ajanuw::Mem::wStr(nmi_str(0), text.Utf8Value());
+    if (nmi_is_s(0))
+      ajanuw::Mem::wStr(nmi_s(0), text.Utf8Value());
     else
-      ajanuw::Mem::wStr((void *)nmi_qword(0), text.Utf8Value());
+      ajanuw::Mem::wStr((void *)nmi_ull(0), text.Utf8Value());
   }
   nm_retbt;
 }
 
-Napi::Value memWriteStrEx(const Napi::CallbackInfo &info)
+nm_api(memWriteStrEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
   const uint8_t ADDR_ARG_INDEX = 1;
 
-  Napi::String text = info[2].As<Napi::String>();
-  Napi::Boolean isWideChar = info[3].ToBoolean();
+  auto text = info[2].As<Napi::String>();
+  auto isWideChar = info[3].ToBoolean();
   if (isWideChar)
   {
-    if (nmi_is_str(ADDR_ARG_INDEX))
-      ajanuw::Mem::wUstrEx(hProcess, nmi_str(ADDR_ARG_INDEX), text.Utf16Value());
+    if (nmi_is_s(ADDR_ARG_INDEX))
+      ajanuw::Mem::wUstrEx(hProcess, nmi_s(ADDR_ARG_INDEX), text.Utf16Value());
     else
-      ajanuw::Mem::wUstrEx(hProcess, (void *)nmi_qword(ADDR_ARG_INDEX), text.Utf16Value());
+      ajanuw::Mem::wUstrEx(hProcess, (void *)nmi_ull(ADDR_ARG_INDEX), text.Utf16Value());
   }
   else
   {
-    if (nmi_is_str(ADDR_ARG_INDEX))
-      ajanuw::Mem::wStrEx(hProcess, nmi_str(ADDR_ARG_INDEX), text.Utf8Value());
+    if (nmi_is_s(ADDR_ARG_INDEX))
+      ajanuw::Mem::wStrEx(hProcess, nmi_s(ADDR_ARG_INDEX), text.Utf8Value());
     else
-      ajanuw::Mem::wStrEx(hProcess, (void *)nmi_qword(ADDR_ARG_INDEX), text.Utf8Value());
+      ajanuw::Mem::wStrEx(hProcess, (void *)nmi_ull(ADDR_ARG_INDEX), text.Utf8Value());
   }
   nm_retbt;
 }
 
-Napi::Value memWriteBytes(const Napi::CallbackInfo &info)
+nm_api(memWriteBytes)
 {
   nm_init_cal(2);
-  std::vector<uint8_t> vect_bytes;
+  auto table = nmi_a(1);
+  auto bytes = array_to_vector<uint8_t>(table, [](const Napi::Value &i)
+                                        { return nm_ui(i); });
 
-  if (nmi_is_arr(1))
-  {
-    Napi::Array table = nmi_arr(1);
-    for (size_t i = 0; i < table.Length(); i++)
-      vect_bytes.push_back(nm_dword(table.Get(i)));
-  }
+  if (nmi_is_s(0))
+    ajanuw::Mem::wBytes(nmi_s(0), bytes);
   else
-  {
-    for (size_t i = 1; i < info.Length(); i++)
-      vect_bytes.push_back(nm_dword(info[i]));
-  }
-
-  if (nmi_is_str(0))
-    ajanuw::Mem::wBytes(nmi_str(0), vect_bytes);
-  else
-    ajanuw::Mem::wBytes((uint8_t *)nmi_qword(0), vect_bytes);
+    ajanuw::Mem::wBytes((uint8_t *)nmi_ull(0), bytes);
   nm_retbt;
 }
 
-Napi::Value memWriteBytesEx(const Napi::CallbackInfo &info)
+nm_api(memWriteBytesEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
 
-  Napi::Array table = nmi_arr(2);
-  std::vector<uint8_t> vect_bytes(table.Length());
+  auto table = nmi_a(2);
+  auto bytes = array_to_vector<uint8_t>(table, [](const Napi::Value &i)
+                                        { return nm_ui(i); });
 
-  for (size_t i = 0; i < table.Length(); i++)
-    vect_bytes.push_back(nm_dword(table.Get(i)));
-
-  if (nmi_is_str(1))
-    ajanuw::Mem::wBytesEx(hProcess, nmi_str(1), vect_bytes);
+  if (nmi_is_s(1))
+    ajanuw::Mem::wBytesEx(hProcess, nmi_s(1), bytes);
   else
-    ajanuw::Mem::wBytesEx(hProcess, (uint8_t *)nmi_qword(1), vect_bytes);
+    ajanuw::Mem::wBytesEx(hProcess, (uint8_t *)nmi_ull(1), bytes);
   nm_retbt;
 }
 
-Napi::Value memWriteWord(const Napi::CallbackInfo &info)
+nm_api(memWriteWord)
 {
   nm_init_cal(2);
-  if (nmi_is_str(0))
-    ajanuw::Mem::wWord(nmi_str(0), nmi_dword(1));
+  if (nmi_is_s(0))
+    ajanuw::Mem::wWord(nmi_s(0), nmi_ui(1));
   else
-    ajanuw::Mem::wWord((void *)nmi_qword(0), nmi_dword(1));
+    ajanuw::Mem::wWord((void *)nmi_ull(0), nmi_ui(1));
   nm_retbt;
 }
 
-Napi::Value memWriteWordEx(const Napi::CallbackInfo &info)
+nm_api(memWriteWordEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    ajanuw::Mem::wWordEx(hProcess, nmi_str(1), nmi_dword(2));
+  if (nmi_is_s(1))
+    ajanuw::Mem::wWordEx(hProcess, nmi_s(1), nmi_ui(2));
   else
-    ajanuw::Mem::wWordEx(hProcess, (void *)nmi_qword(1), nmi_dword(2));
+    ajanuw::Mem::wWordEx(hProcess, (void *)nmi_ull(1), nmi_ui(2));
   nm_retbt;
 }
 
-Napi::Value memWriteDword(const Napi::CallbackInfo &info)
+nm_api(memWriteDword)
 {
   nm_init_cal(2);
-  if (nmi_is_str(0))
-    ajanuw::Mem::wDword(nmi_str(0), nmi_dword(1));
+  if (nmi_is_s(0))
+    ajanuw::Mem::wDword(nmi_s(0), nmi_ui(1));
   else
-    ajanuw::Mem::wDword((void *)nmi_qword(0), nmi_dword(1));
+    ajanuw::Mem::wDword((void *)nmi_ull(0), nmi_ui(1));
   nm_retbt;
 }
 
-Napi::Value memWriteDwordEx(const Napi::CallbackInfo &info)
+nm_api(memWriteDwordEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    ajanuw::Mem::wDwordEx(hProcess, nmi_str(1), nmi_dword(2));
+  if (nmi_is_s(1))
+    ajanuw::Mem::wDwordEx(hProcess, nmi_s(1), nmi_ui(2));
   else
-    ajanuw::Mem::wDwordEx(hProcess, (void *)nmi_qword(1), nmi_dword(2));
+    ajanuw::Mem::wDwordEx(hProcess, (void *)nmi_ull(1), nmi_ui(2));
   nm_retbt;
 }
 
-Napi::Value memWriteQword(const Napi::CallbackInfo &info)
+nm_api(memWriteQword)
 {
   nm_init_cal(2);
-  if (nmi_is_str(0))
-    ajanuw::Mem::wQword(nmi_str(0), nmi_qword(1));
+  if (nmi_is_s(0))
+    ajanuw::Mem::wQword(nmi_s(0), nmi_ull(1));
   else
-    ajanuw::Mem::wQword((void *)nmi_qword(0), nmi_qword(1));
+    ajanuw::Mem::wQword((void *)nmi_ull(0), nmi_ull(1));
   nm_retbt;
 }
 
-Napi::Value memWriteQwordEx(const Napi::CallbackInfo &info)
+nm_api(memWriteQwordEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    ajanuw::Mem::wQwordEx(hProcess, nmi_str(1), nmi_qword(2));
+  if (nmi_is_s(1))
+    ajanuw::Mem::wQwordEx(hProcess, nmi_s(1), nmi_ull(2));
   else
-    ajanuw::Mem::wQwordEx(hProcess, (void *)nmi_qword(1), nmi_qword(2));
+    ajanuw::Mem::wQwordEx(hProcess, (void *)nmi_ull(1), nmi_ull(2));
   nm_retbt;
 }
 
-Napi::Value memWriteFloat(const Napi::CallbackInfo &info)
+nm_api(memWriteFloat)
 {
   nm_init_cal(2);
-  if (nmi_is_str(0))
-    ajanuw::Mem::wFloat(nmi_str(0), nmi_float(1));
+  if (nmi_is_s(0))
+    ajanuw::Mem::wFloat(nmi_s(0), nmi_f(1));
   else
-    ajanuw::Mem::wFloat((void *)nmi_qword(0), nmi_float(1));
+    ajanuw::Mem::wFloat((void *)nmi_ull(0), nmi_f(1));
   nm_retbt;
 }
-Napi::Value memWriteFloatEx(const Napi::CallbackInfo &info)
+nm_api(memWriteFloatEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    ajanuw::Mem::wFloatEx(hProcess, nmi_str(1), nmi_float(2));
+  if (nmi_is_s(1))
+    ajanuw::Mem::wFloatEx(hProcess, nmi_s(1), nmi_f(2));
   else
-    ajanuw::Mem::wFloatEx(hProcess, (void *)nmi_qword(1), nmi_float(2));
+    ajanuw::Mem::wFloatEx(hProcess, (void *)nmi_ull(1), nmi_f(2));
   nm_retbt;
 }
 
-Napi::Value memWriteDouble(const Napi::CallbackInfo &info)
+nm_api(memWriteDouble)
 {
   nm_init_cal(2);
-  if (nmi_is_str(0))
-    ajanuw::Mem::wDouble(nmi_str(0), nmi_double(1));
+  if (nmi_is_s(0))
+    ajanuw::Mem::wDouble(nmi_s(0), nmi_d(1));
   else
-    ajanuw::Mem::wDouble((void *)nmi_qword(0), nmi_double(1));
+    ajanuw::Mem::wDouble((void *)nmi_ull(0), nmi_d(1));
   nm_retbt;
 }
-Napi::Value memWriteDoubleEx(const Napi::CallbackInfo &info)
+nm_api(memWriteDoubleEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    ajanuw::Mem::wDoubleEx(hProcess, nmi_str(1), nmi_double(2));
+  if (nmi_is_s(1))
+    ajanuw::Mem::wDoubleEx(hProcess, nmi_s(1), nmi_d(2));
   else
-    ajanuw::Mem::wDoubleEx(hProcess, (void *)nmi_qword(1), nmi_double(2));
+    ajanuw::Mem::wDoubleEx(hProcess, (void *)nmi_ull(1), nmi_d(2));
   nm_retbt;
 }
 
-Napi::Value memWriteRegionRoRile(const Napi::CallbackInfo &info)
+nm_api(memWriteRegionToFile)
 {
   nm_init_cal(3);
-  std::string filename = nmi_str(0);
-  uint32_t size = nmi_qword(2);
+  std::string filename = nmi_s(0);
+  uint32_t size = nmi_ull(2);
 
-  if (nmi_is_str(1))
-    ajanuw::Mem::wRegionToFile(filename, nmi_str(1), size);
+  if (nmi_is_s(1))
+    ajanuw::Mem::wRegionToFile(filename, nmi_s(1), size);
   else
-    ajanuw::Mem::wRegionToFile(filename, (void *)nmi_qword(1), size);
+    ajanuw::Mem::wRegionToFile(filename, (void *)nmi_ull(1), size);
   nm_retbt;
 }
 
-Napi::Value memWriteRegionToFileEx(const Napi::CallbackInfo &info)
+nm_api(memWriteRegionToFileEx)
 {
   nm_init_cal(4);
   EX_PROCESS;
-  std::string filename = nmi_str(1);
-  uint32_t size = nmi_qword(3);
+  std::string filename = nmi_s(1);
+  uint32_t size = nmi_ull(3);
 
-  if (nmi_is_str(2))
-    ajanuw::Mem::wRegionToFileEx(hProcess, filename, nmi_str(2), size);
+  if (nmi_is_s(2))
+    ajanuw::Mem::wRegionToFileEx(hProcess, filename, nmi_s(2), size);
   else
-    ajanuw::Mem::wRegionToFileEx(hProcess, filename, (void *)nmi_qword(2), size);
+    ajanuw::Mem::wRegionToFileEx(hProcess, filename, (void *)nmi_ull(2), size);
   nm_retbt;
 }
 
-Napi::Value memReadStr(const Napi::CallbackInfo &info)
+nm_api(memReadStr)
 {
   nm_init_cal(1);
-  uintptr_t maxSize = nm_is_nullishOr(info[1], nm_qword, -1);
-  Napi::Boolean isWideChar = info[2].ToBoolean();
+  auto max = nmi_is_und(1, ull, -1);
+  auto bWideChar = nmi_b(2);
 
-  if (isWideChar)
-    if (nmi_is_str(0))
-      nm_rets(ajanuw::Mem::rUstr(nmi_str(0), maxSize));
+  if (bWideChar)
+    if (nmi_is_s(0))
+      nm_rets(ajanuw::Mem::rUstr(nmi_s(0), max));
     else
-      nm_rets(ajanuw::Mem::rUstr((char16_t *)nmi_qword(0), maxSize));
-  else if (nmi_is_str(0))
-    nm_rets(ajanuw::Mem::rStr(nmi_str(0), maxSize));
+      nm_rets(ajanuw::Mem::rUstr((char16_t *)nmi_ull(0), max));
+  else if (nmi_is_s(0))
+    nm_rets(ajanuw::Mem::rStr(nmi_s(0), max));
   else
-    nm_rets(ajanuw::Mem::rStr((char *)nmi_qword(0), maxSize));
+    nm_rets(ajanuw::Mem::rStr((char *)nmi_ull(0), max));
 }
 
-Napi::Value memReadStrEx(const Napi::CallbackInfo &info)
+nm_api(memReadStrEx)
 {
   nm_init_cal(2);
   EX_PROCESS;
-  uintptr_t maxSize = nm_is_nullishOr(info[2], nm_qword, -1);
-  Napi::Boolean isWideChar = info[3].ToBoolean();
+  auto maxSize = nmi_is_und(2, ull, -1);
+  auto isWideChar = info[3].ToBoolean();
 
   if (isWideChar)
   {
-    if (nmi_is_str(1))
-      nm_rets(ajanuw::Mem::rUstrEx(hProcess, nmi_str(1), maxSize));
+    if (nmi_is_s(1))
+      nm_rets(ajanuw::Mem::rUstrEx(hProcess, nmi_s(1), maxSize));
     else
-      nm_rets(ajanuw::Mem::rUstrEx(hProcess, (char16_t *)nmi_qword(1), maxSize));
+      nm_rets(ajanuw::Mem::rUstrEx(hProcess, (char16_t *)nmi_ull(1), maxSize));
   }
   else
   {
-    if (nmi_is_str(1))
-      nm_rets(ajanuw::Mem::rStrEx(hProcess, nmi_str(1), maxSize));
+    if (nmi_is_s(1))
+      nm_rets(ajanuw::Mem::rStrEx(hProcess, nmi_s(1), maxSize));
     else
-      nm_rets(ajanuw::Mem::rStrEx(hProcess, (char *)nmi_qword(1), maxSize));
+      nm_rets(ajanuw::Mem::rStrEx(hProcess, (char *)nmi_ull(1), maxSize));
   }
 }
 
-Napi::Value memReadBytes(const Napi::CallbackInfo &info)
+nm_api(memReadBytes)
 {
   nm_init_cal(2);
-  uintptr_t size = nmi_qword(1);
+  auto size = nmi_ll(1);
+
+  if (size <= 0)
+    return Napi::Array::New(env);
+
   std::vector<uint8_t> result;
 
-  if (nmi_is_str(0))
-    result = ajanuw::Mem::rBytes(nmi_str(0), size);
+  if (nmi_is_s(0))
+    result = ajanuw::Mem::rBytes(nmi_s(0), size);
   else
-    result = ajanuw::Mem::rBytes((void *)nmi_qword(0), size);
+    result = ajanuw::Mem::rBytes((void *)nmi_ull(0), size);
 
-  Napi::Array table = Napi::Array::New(env, size);
-  for (int i = 0; i < size; i++)
-    table.Set(i, result.at(i));
-  return table;
+  return span_to_array<uint8_t>(env, result);
 }
-Napi::Value memReadBytesEx(const Napi::CallbackInfo &info)
+nm_api(memReadBytesEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
-  uintptr_t size = nmi_qword(2);
+  auto size = nmi_ll(2);
+
+  if (size <= 0)
+    return Napi::Array::New(env);
+
   std::vector<uint8_t> result;
 
-  if (nmi_is_str(1))
-    result = ajanuw::Mem::rBytesEx(hProcess, nmi_str(1), size);
+  if (nmi_is_s(1))
+    result = ajanuw::Mem::rBytesEx(hProcess, nmi_s(1), size);
   else
-    result = ajanuw::Mem::rBytesEx(hProcess, (void *)nmi_qword(1), size);
+    result = ajanuw::Mem::rBytesEx(hProcess, (void *)nmi_ull(1), size);
 
-  Napi::Array table = Napi::Array::New(env, size);
-  for (int i = 0; i < size; i++)
-    table.Set(i, result.at(i));
-  return table;
+  return span_to_array<uint8_t>(env, result);
 }
 
-Napi::Value memReadWord(const Napi::CallbackInfo &info)
+nm_api(memReadWord)
 {
   nm_init_cal(1);
-  if (nmi_is_str(0))
-    nm_ret(ajanuw::Mem::rWord(nmi_str(0)));
+  if (nmi_is_s(0))
+    nm_ret(ajanuw::Mem::rWord(nmi_s(0)));
   else
-    nm_ret(ajanuw::Mem::rWord((void *)nmi_qword(0)));
+    nm_ret(ajanuw::Mem::rWord((void *)nmi_ull(0)));
 }
-Napi::Value memReadWordEx(const Napi::CallbackInfo &info)
+nm_api(memReadWordEx)
 {
   nm_init_cal(2);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    nm_ret(ajanuw::Mem::rWordEx(hProcess, nmi_str(1)));
+  if (nmi_is_s(1))
+    nm_ret(ajanuw::Mem::rWordEx(hProcess, nmi_s(1)));
   else
-    nm_ret(ajanuw::Mem::rWordEx(hProcess, (void *)nmi_qword(1)));
+    nm_ret(ajanuw::Mem::rWordEx(hProcess, (void *)nmi_ull(1)));
 }
 
-Napi::Value memReadDword(const Napi::CallbackInfo &info)
+nm_api(memReadDword)
 {
   nm_init_cal(1);
-  if (nmi_is_str(0))
-    nm_ret(ajanuw::Mem::rDword(nmi_str(0)));
+  if (nmi_is_s(0))
+    nm_ret(ajanuw::Mem::rDword(nmi_s(0)));
   else
-    nm_ret(ajanuw::Mem::rDword((void *)nmi_qword(0)));
+    nm_ret(ajanuw::Mem::rDword((void *)nmi_ull(0)));
 }
-Napi::Value memReadDwordEx(const Napi::CallbackInfo &info)
+nm_api(memReadDwordEx)
 {
   nm_init_cal(2);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    nm_ret(ajanuw::Mem::rDwordEx(hProcess, nmi_str(1)));
+  if (nmi_is_s(1))
+    nm_ret(ajanuw::Mem::rDwordEx(hProcess, nmi_s(1)));
   else
-    nm_ret(ajanuw::Mem::rDwordEx(hProcess, (void *)nmi_qword(1)));
+    nm_ret(ajanuw::Mem::rDwordEx(hProcess, (void *)nmi_ull(1)));
 }
 
-Napi::Value memReadQword(const Napi::CallbackInfo &info)
+nm_api(memReadQword)
 {
   nm_init_cal(1);
-  if (nmi_is_str(0))
-    nm_ret(ajanuw::Mem::rQword(nmi_str(0)));
+  if (nmi_is_s(0))
+    nm_ret(ajanuw::Mem::rQword(nmi_s(0)));
   else
-    nm_ret(ajanuw::Mem::rQword((void *)nmi_qword(0)));
+    nm_ret(ajanuw::Mem::rQword((void *)nmi_ull(0)));
 }
-Napi::Value memReadQwordEx(const Napi::CallbackInfo &info)
+nm_api(memReadQwordEx)
 {
   nm_init_cal(2);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    nm_ret(ajanuw::Mem::rQwordEx(hProcess, nmi_str(1)));
+  if (nmi_is_s(1))
+    nm_ret(ajanuw::Mem::rQwordEx(hProcess, nmi_s(1)));
   else
-    nm_ret(ajanuw::Mem::rQwordEx(hProcess, (void *)nmi_qword(1)));
+    nm_ret(ajanuw::Mem::rQwordEx(hProcess, (void *)nmi_ull(1)));
 }
 
-Napi::Value memReadPointer(const Napi::CallbackInfo &info)
+nm_api(memReadPointer)
 {
   nm_init_cal(1);
-  if (nmi_is_str(0))
-    nm_ret(ajanuw::Mem::rPointer(nmi_str(0)));
+  if (nmi_is_s(0))
+    nm_ret(ajanuw::Mem::rPointer(nmi_s(0)));
   else
-    nm_ret(ajanuw::Mem::rPointer((void *)nmi_qword(0)));
+    nm_ret(ajanuw::Mem::rPointer((void *)nmi_ull(0)));
 }
-Napi::Value memReadPointerEx(const Napi::CallbackInfo &info)
+nm_api(memReadPointerEx)
 {
   nm_init_cal(2);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    nm_ret(ajanuw::Mem::rPointerEx(hProcess, nmi_str(1)));
+  if (nmi_is_s(1))
+    nm_ret(ajanuw::Mem::rPointerEx(hProcess, nmi_s(1)));
   else
-    nm_ret(ajanuw::Mem::rPointerEx(hProcess, (void *)nmi_qword(1)));
+    nm_ret(ajanuw::Mem::rPointerEx(hProcess, (void *)nmi_ull(1)));
 }
 
-Napi::Value memReadFloat(const Napi::CallbackInfo &info)
+nm_api(memReadFloat)
 {
   nm_init_cal(1);
-  if (nmi_is_str(0))
-    nm_ret(ajanuw::Mem::rFloat(nmi_str(0)));
+  if (nmi_is_s(0))
+    nm_ret(ajanuw::Mem::rFloat(nmi_s(0)));
   else
-    nm_ret(ajanuw::Mem::rFloat((void *)nmi_qword(0)));
+    nm_ret(ajanuw::Mem::rFloat((void *)nmi_ull(0)));
 }
-Napi::Value memReadFloatEx(const Napi::CallbackInfo &info)
+nm_api(memReadFloatEx)
 {
   nm_init_cal(2);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    nm_ret(ajanuw::Mem::rFloatEx(hProcess, nmi_str(1)));
+  if (nmi_is_s(1))
+    nm_ret(ajanuw::Mem::rFloatEx(hProcess, nmi_s(1)));
   else
-    nm_ret(ajanuw::Mem::rFloatEx(hProcess, (void *)nmi_qword(1)));
+    nm_ret(ajanuw::Mem::rFloatEx(hProcess, (void *)nmi_ull(1)));
 }
-Napi::Value memReadDouble(const Napi::CallbackInfo &info)
+nm_api(memReadDouble)
 {
   nm_init_cal(1);
-  if (nmi_is_str(0))
-    nm_ret(ajanuw::Mem::rDouble(nmi_str(0)));
+  if (nmi_is_s(0))
+    nm_ret(ajanuw::Mem::rDouble(nmi_s(0)));
   else
-    nm_ret(ajanuw::Mem::rDouble((void *)nmi_qword(0)));
+    nm_ret(ajanuw::Mem::rDouble((void *)nmi_ull(0)));
 }
-Napi::Value memReadDoubleEx(const Napi::CallbackInfo &info)
+nm_api(memReadDoubleEx)
 {
   nm_init_cal(2);
   EX_PROCESS;
-  if (nmi_is_str(1))
-    nm_ret(ajanuw::Mem::rDoubleEx(hProcess, nmi_str(1)));
+  if (nmi_is_s(1))
+    nm_ret(ajanuw::Mem::rDoubleEx(hProcess, nmi_s(1)));
   else
-    nm_ret(ajanuw::Mem::rDoubleEx(hProcess, (void *)nmi_qword(1)));
+    nm_ret(ajanuw::Mem::rDoubleEx(hProcess, (void *)nmi_ull(1)));
 }
 
-Napi::Value memReadRegionFromFile(const Napi::CallbackInfo &info)
+nm_api(memReadRegionFromFile)
 {
   nm_init_cal(2);
-  auto filename = nmi_str(0);
-  if (nmi_is_str(1))
-    ajanuw::Mem::rRegionFromFile(filename, nmi_str(1));
+  auto filename = nmi_s(0);
+  if (nmi_is_s(1))
+    ajanuw::Mem::rRegionFromFile(filename, nmi_s(1));
   else
-    ajanuw::Mem::rRegionFromFile(filename, (void *)nmi_qword(1));
+    ajanuw::Mem::rRegionFromFile(filename, (void *)nmi_ull(1));
   nm_retbt;
 }
 
-Napi::Value memReadRegionFromFileEx(const Napi::CallbackInfo &info)
+nm_api(memReadRegionFromFileEx)
 {
   nm_init_cal(3);
   EX_PROCESS;
-  auto filename = nmi_str(1);
-  if (nmi_is_str(2))
-    ajanuw::Mem::rRegionFromFileEx(hProcess, filename, nmi_str(2));
+  auto filename = nmi_s(1);
+  if (nmi_is_s(2))
+    ajanuw::Mem::rRegionFromFileEx(hProcess, filename, nmi_s(2));
   else
-    ajanuw::Mem::rRegionFromFileEx(hProcess, filename, (void *)nmi_qword(2));
+    ajanuw::Mem::rRegionFromFileEx(hProcess, filename, (void *)nmi_ull(2));
   nm_retbt;
 }

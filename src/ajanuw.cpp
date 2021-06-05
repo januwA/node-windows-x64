@@ -1,57 +1,44 @@
 #include "ajanuw.h"
 
-std::string ajanuw::sstr::strFormNumber(uintptr_t number, bool isHex)
+std::string ajanuw::sstr::formHex(uintptr_t _hex)
 {
   std::stringstream stream;
-  if (isHex)
-  {
-    stream << std::hex << number;
-  }
-  else
-  {
-    stream << number;
-  }
+  stream << std::hex << _hex;
   return stream.str();
 }
 
-std::string ajanuw::sstr::tolower(std::string s)
+std::string ajanuw::sstr::tolower(std::string_view s)
 {
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c)
-                 { return std::tolower(c); } // correct
-  );
-  return s;
+  auto r = s | std::views::transform([](unsigned char c)
+                                     { return std::tolower(c); });
+  return std::string(r.begin(), r.end());
 }
 
-std::string ajanuw::sstr::toupper(std::string s)
+std::string ajanuw::sstr::toupper(std::string_view s)
 {
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c)
-                 { return std::toupper(c); } // correct
-  );
-  return s;
+  auto r = s | std::views::transform([](unsigned char c)
+                                     { return std::toupper(c); });
+  return std::string(r.begin(), r.end());
 }
 
-std::wstring ajanuw::sstr::tolower(std::wstring s)
+std::wstring ajanuw::sstr::tolower(std::wstring_view s)
 {
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c)
-                 { return std::tolower(c); });
-  return s;
+  auto r = s | std::views::transform([](unsigned char c)
+                                     { return std::tolower(c); });
+  return std::wstring(r.begin(), r.end());
 }
 
-std::wstring ajanuw::sstr::toupper(std::wstring s)
+std::wstring ajanuw::sstr::toupper(std::wstring_view s)
 {
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c)
-                 { return std::toupper(c); });
-  return s;
+  auto r = s | std::views::transform([](unsigned char c)
+                                     { return std::toupper(c); });
+  return std::wstring(r.begin(), r.end());
 }
 
 std::string ajanuw::sstr::pad(std::string_view str, size_t size, std::string_view padStr = " ", bool isStart = true)
 {
   if (str.size() >= size)
-    return std::string(str.begin(), str.end());
+    return std::string(str);
 
   std::string result;
   while (true)
@@ -357,15 +344,14 @@ void ajanuw::sstr::toMemEx(HANDLE hProcess, void *dst, std::u16string_view str)
 std::string ajanuw::sstr::strFormMem(void *src, size_t max)
 {
   std::string str;
-  uintptr_t addr = (uintptr_t)src;
-  while (true)
+  auto addr = (uint8_t *)src;
+  while (max--)
   {
-    uint8_t wc = *(uint8_t *)addr;
-    if (wc == NULL || max == 0)
+    auto c = *(uint8_t *)addr;
+    if (c == NULL)
       break;
-    str.push_back(wc);
+    str.push_back(c);
     addr++;
-    max--;
   }
   str.push_back(0);
   return str;
@@ -391,15 +377,14 @@ std::wstring ajanuw::sstr::wstrFormMem(void *src, size_t max)
 std::u16string ajanuw::sstr::ustrFormMem(void *src, size_t max)
 {
   std::u16string ustr;
-  uintptr_t addr = (uintptr_t)src;
-  while (true)
+  auto addr = (uint8_t *)src;
+  while (max--)
   {
-    char16_t wc = *(char16_t *)addr;
-    if (wc == NULL || max == 0)
+    auto wc = *(char16_t *)addr;
+    if (wc == NULL)
       break;
     ustr.push_back(wc);
     addr += sizeof(char16_t);
-    max--;
   }
   ustr.push_back(0);
   return ustr;
@@ -520,9 +505,10 @@ void ajanuw::Mem::wByte(void *addr, uint8_t byte)
   memset(addr, byte, sizeof(uint8_t));
 }
 
-void ajanuw::Mem::wBytes(void *addr, const std::vector<uint8_t> &bytes)
+void ajanuw::Mem::wBytes(void *addr, const std::span<uint8_t> &bytes, intptr_t max)
 {
-  memcpy_s(addr, bytes.size(), bytes.data(), bytes.size());
+  auto size = max >= 0 ? max : bytes.size();
+  memcpy_s(addr, size, bytes.data(), size);
 }
 
 void ajanuw::Mem::wWord(void *addr, uint16_t value)
@@ -559,9 +545,10 @@ void ajanuw::Mem::wByteEx(HANDLE hProcess, void *addr, uint8_t byte)
   WriteProcessMemory(hProcess, addr, &byte, sizeof(uint8_t), NULL);
 }
 
-void ajanuw::Mem::wBytesEx(HANDLE hProcess, void *addr, const std::vector<uint8_t> &bytes)
+void ajanuw::Mem::wBytesEx(HANDLE hProcess, void *addr, const std::span<uint8_t> &bytes, intptr_t max)
 {
-  WriteProcessMemory(hProcess, addr, bytes.data(), bytes.size(), NULL);
+  auto size = max >= 0 ? max : bytes.size();
+  WriteProcessMemory(hProcess, addr, bytes.data(), size, NULL);
 }
 
 void ajanuw::Mem::wWordEx(HANDLE hProcess, void *addr, uint16_t value)
@@ -609,9 +596,9 @@ void ajanuw::Mem::wByte(std::string_view ceas, uint8_t byte)
 {
   ajanuw::Mem::wByte(ajanuw::CEAS::getAddress(ceas), byte);
 }
-void ajanuw::Mem::wBytes(std::string_view ceas, const std::vector<uint8_t> &bytes)
+void ajanuw::Mem::wBytes(std::string_view ceas, const std::span<uint8_t> &bytes, intptr_t max)
 {
-  ajanuw::Mem::wBytes(ajanuw::CEAS::getAddress(ceas), bytes);
+  ajanuw::Mem::wBytes(ajanuw::CEAS::getAddress(ceas), bytes, max);
 }
 void ajanuw::Mem::wWord(std::string_view ceas, uint16_t value)
 {
@@ -654,9 +641,9 @@ void ajanuw::Mem::wByteEx(HANDLE hProcess, std::string_view ceas, uint8_t byte)
 {
   ajanuw::Mem::wByteEx(hProcess, ajanuw::CEAS::getAddress(ceas, hProcess), byte);
 }
-void ajanuw::Mem::wBytesEx(HANDLE hProcess, std::string_view ceas, std::vector<uint8_t> bytes)
+void ajanuw::Mem::wBytesEx(HANDLE hProcess, std::string_view ceas, std::span<uint8_t> bytes, intptr_t max)
 {
-  ajanuw::Mem::wBytesEx(hProcess, ajanuw::CEAS::getAddress(ceas, hProcess), bytes);
+  ajanuw::Mem::wBytesEx(hProcess, ajanuw::CEAS::getAddress(ceas, hProcess), bytes, max);
 }
 void ajanuw::Mem::wWordEx(HANDLE hProcess, std::string_view ceas, uint16_t value)
 {
@@ -679,66 +666,66 @@ void ajanuw::Mem::wDoubleEx(HANDLE hProcess, std::string_view ceas, double value
   ajanuw::Mem::wDoubleEx(hProcess, ajanuw::CEAS::getAddress(ceas, hProcess), value);
 }
 
-void ajanuw::Mem::wRegionToFileEx(HANDLE hProcess, std::string_view filename, std::string_view ceas, uintptr_t size)
+void ajanuw::Mem::wRegionToFileEx(HANDLE hProcess, std::string_view filename, std::string_view ceas, size_t size)
 {
   ajanuw::Mem::wRegionToFileEx(hProcess, filename, ajanuw::CEAS::getAddress(ceas, hProcess), size);
 }
 
-std::string ajanuw::Mem::rStr(char *addr, uintptr_t max)
+std::string ajanuw::Mem::rStr(char *addr, size_t max)
 {
   return ajanuw::sstr::strFormMem(addr, max);
 }
-std::wstring ajanuw::Mem::rWstr(wchar_t *addr, uintptr_t max)
+std::wstring ajanuw::Mem::rWstr(wchar_t *addr, size_t max)
 {
   return ajanuw::sstr::wstrFormMem(addr, max);
 }
-std::u16string ajanuw::Mem::rUstr(char16_t *addr, uintptr_t max)
+std::u16string ajanuw::Mem::rUstr(char16_t *addr, size_t max)
 {
   return ajanuw::sstr::ustrFormMem(addr, max);
 }
 
-std::string ajanuw::Mem::rStrEx(HANDLE hProcess, char *addr, uintptr_t max)
+std::string ajanuw::Mem::rStrEx(HANDLE hProcess, char *addr, size_t max)
 {
   return ajanuw::sstr::strFormMemEx(hProcess, addr, max);
 }
 
-std::wstring ajanuw::Mem::rWstrEx(HANDLE hProcess, wchar_t *addr, uintptr_t max)
+std::wstring ajanuw::Mem::rWstrEx(HANDLE hProcess, wchar_t *addr, size_t max)
 {
   return ajanuw::sstr::wstrFormMemEx(hProcess, addr, max);
 }
 
-std::u16string ajanuw::Mem::rUstrEx(HANDLE hProcess, char16_t *addr, uintptr_t max)
+std::u16string ajanuw::Mem::rUstrEx(HANDLE hProcess, char16_t *addr, size_t max)
 {
   return ajanuw::sstr::ustrFormMemEx(hProcess, addr, max);
 }
 
-std::string ajanuw::Mem::rStr(std::string_view ceas, uintptr_t max)
+std::string ajanuw::Mem::rStr(std::string_view ceas, size_t max)
 {
   return ajanuw::Mem::rStr((char *)ajanuw::CEAS::getAddress(ceas), max);
 }
-std::wstring ajanuw::Mem::rWstr(std::string_view ceas, uintptr_t max)
+std::wstring ajanuw::Mem::rWstr(std::string_view ceas, size_t max)
 {
   return ajanuw::Mem::rWstr((wchar_t *)ajanuw::CEAS::getAddress(ceas), max);
 }
-std::u16string ajanuw::Mem::rUstr(std::string_view ceas, uintptr_t max)
+std::u16string ajanuw::Mem::rUstr(std::string_view ceas, size_t max)
 {
   return ajanuw::Mem::rUstr((char16_t *)ajanuw::CEAS::getAddress(ceas), max);
 }
 
-std::string ajanuw::Mem::rStrEx(HANDLE hProcess, std::string_view ceas, uintptr_t max)
+std::string ajanuw::Mem::rStrEx(HANDLE hProcess, std::string_view ceas, size_t max)
 {
   return ajanuw::Mem::rStrEx(hProcess, (char *)ajanuw::CEAS::getAddress(ceas, hProcess), max);
 }
-std::wstring ajanuw::Mem::rWstrEx(HANDLE hProcess, std::string_view ceas, uintptr_t max)
+std::wstring ajanuw::Mem::rWstrEx(HANDLE hProcess, std::string_view ceas, size_t max)
 {
   return ajanuw::Mem::rWstrEx(hProcess, (wchar_t *)ajanuw::CEAS::getAddress(ceas, hProcess), max);
 }
-std::u16string ajanuw::Mem::rUstrEx(HANDLE hProcess, std::string_view ceas, uintptr_t max)
+std::u16string ajanuw::Mem::rUstrEx(HANDLE hProcess, std::string_view ceas, size_t max)
 {
   return ajanuw::Mem::rUstrEx(hProcess, (char16_t *)ajanuw::CEAS::getAddress(ceas, hProcess), max);
 }
 
-std::vector<uint8_t> ajanuw::Mem::rBytes(void *addr, uintptr_t size)
+std::vector<uint8_t> ajanuw::Mem::rBytes(void *addr, size_t size)
 {
   std::vector<uint8_t> bytes(size);
   memcpy_s(bytes.data(), size, addr, size);
@@ -1157,9 +1144,7 @@ HWND ajanuw::Gui::Win32::select(std::unique_ptr<Win32CreateOption> opt)
 
 ajanuw::Mem::VAManage::VAManage(size_t size)
     : size(size),
-      position(0),
-      memory(ajanuw::Mem::alloc(size)),
-      hProcess(NULL)
+      memory(ajanuw::Mem::alloc(size))
 {
   if (!memory)
     throw std::exception("VAManage alloc fail.");
@@ -1167,14 +1152,11 @@ ajanuw::Mem::VAManage::VAManage(size_t size)
 
 ajanuw::Mem::VAManage::VAManage(size_t size, HANDLE hProcess)
     : size(size),
-      position(0),
-      memory(ajanuw::Mem::allocEx(hProcess, size)),
-      hProcess(hProcess)
+      hProcess(hProcess),
+      memory(!hProcess ? ajanuw::Mem::alloc(size) : ajanuw::Mem::allocEx(hProcess, size))
 {
-  if (memory == NULL)
-  {
+  if (!memory)
     throw std::exception("VAManage alloc fail.");
-  }
 }
 
 uint8_t *ajanuw::Mem::VAManage::ptr()
@@ -1232,12 +1214,10 @@ std::u16string ajanuw::Mem::VAManage::readUstr(size_t maxSize)
   return !hProcess ? ajanuw::Mem::rUstr((char16_t *)ptr(), maxSize) : ajanuw::Mem::rUstrEx(hProcess, (char16_t *)ptr(), maxSize);
 }
 
-void ajanuw::Mem::VAManage::write(std::vector<uint8_t> &table, size_t count)
+void ajanuw::Mem::VAManage::write(const std::span<uint8_t> &table, intptr_t max)
 {
-  if (count < table.size())
-    table.resize(count);
-  !hProcess ? ajanuw::Mem::wBytes(ptr(), table) : ajanuw::Mem::wBytesEx(hProcess, ptr(), table);
-  position += table.size();
+  !hProcess ? ajanuw::Mem::wBytes(ptr(), table, max) : ajanuw::Mem::wBytesEx(hProcess, ptr(), table, max);
+  position += max >= 0 ? max : table.size();
 }
 
 void ajanuw::Mem::VAManage::writeByte(uint8_t v)

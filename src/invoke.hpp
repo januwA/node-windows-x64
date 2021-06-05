@@ -44,7 +44,7 @@ size_t getStringsCount(const Napi::Array &args, bool isWideChar)
     auto it = args.Get(i);
     if (it.IsString())
     {
-      count += isWideChar ? ajanuw::sstr::count(nm_ustr(it)) : nm_str(it).length();
+      count += isWideChar ? ajanuw::sstr::count(nm_us(it)) : nm_s(it).length();
       count++;
     }
   }
@@ -56,38 +56,38 @@ extern "C" uintptr_t cccccc(std::vector<CallbackContext *> *vect_cc, void *index
   return vect_cc->at((size_t)index)->call(lpRcx, lpP5);
 }
 
-Napi::Value invoke(const Napi::CallbackInfo &info)
+nm_api(invoke)
 {
   using namespace asmjit;
   using namespace asmjit::x86;
 
   nm_init_cal(1);
   std::vector<CallbackContext *> vCC;
-  auto o = nmi_obj(0);
+  auto o = nmi_o(0);
   HMODULE hModule = NULL;
   uint8_t *lpMethod = nullptr;
   bool bWideChar = false;
 
-  if (nm_getis("method", num))
+  if (nmo_is("method", n))
   {
-    bWideChar = nm_getto("isWideChar", bool);
-    lpMethod = reinterpret_cast<uint8_t *>(nm_getto("method", qword));
+    bWideChar = nmo_get("isWideChar", b);
+    lpMethod = reinterpret_cast<uint8_t *>(nmo_get("method", ull));
   }
   else
   {
-    auto sMethod = nm_getto("method", str);
+    auto sMethod = nmo_get("method", s);
     bWideChar = ajanuw::sstr::endWith(sMethod, "W");
     auto js_isWideChar = o.Get("isWideChar");
-    if (!nm_is_nullish(js_isWideChar))
-      bWideChar = nm_bool(js_isWideChar);
+    if (!nm_is_un(js_isWideChar))
+      bWideChar = nm_b(js_isWideChar);
 
     if (o.Has("module"))
     {
-      auto sModule = nm_getto("module", str);
+      auto sModule = nmo_get("module", s);
       hModule = LoadLibraryA(sModule.data());
       if (hModule == NULL)
       {
-        nm_jserr(std::format("not find '{}' module.", sModule));
+        nm_err(std::format("not find '{}' module.", sModule));
         nm_retu;
       }
     }
@@ -101,7 +101,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
       }
       catch (const std::exception &e)
       {
-        nm_jserr(e.what());
+        nm_err(e.what());
         nm_retu;
       }
     }
@@ -109,12 +109,12 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
 
   if (lpMethod == NULL)
   {
-    nm_jserr("not find method.");
+    nm_err("not find method.");
     nm_retu;
   }
 
   // args: number | pointer | string | function
-  auto args = nm_is_nullishOr(o.Get("args"), nm_arr, Napi::Array::New(env));
+  auto args = nmo_is_und("args", a, Napi::Array::New(env));
 
   // save strings
   uint8_t *strMem = nullptr;
@@ -125,7 +125,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     strMem = (uint8_t *)ajanuw::Mem::alloc(strSizeCount);
     if (!strMem)
     {
-      nm_jserr("VirtualAlloc stringMem error.");
+      nm_err("VirtualAlloc stringMem error.");
       nm_retu;
     }
     ZeroMemory(strMem, strSizeCount);
@@ -146,13 +146,13 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
   {
     auto it = args.Get(i);
     uintptr_t value = NULL;
-    if (nm_is_fun(it))
+    if (nm_is_fu(it))
     {
       auto CC = new CallbackContext(env, it.As<Napi::Function>(), ajanuw::createCallback(&cccccc, i, &vCC));
       vCC.push_back(CC);
       value = (uintptr_t)CC->address;
     }
-    else if (nm_is_str(it))
+    else if (nm_is_s(it))
     {
       auto text = it.ToString();
       auto addr = strMem + strMemOffset;
@@ -173,7 +173,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
     else
     {
       // other value to number
-      value = nm_qword(it);
+      value = nm_ull(it);
     }
 
     if (i < 4)
@@ -215,7 +215,7 @@ Napi::Value invoke(const Napi::CallbackInfo &info)
       ajanuw::Mem::free(cc->address);
       delete cc;
     }
-    nm_jserr("asmjit error.");
+    nm_err("asmjit error.");
     nm_retu;
   }
   uintptr_t result = fn();

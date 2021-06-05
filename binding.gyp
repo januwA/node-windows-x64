@@ -27,6 +27,7 @@
                 "src/win32_gui.cpp",
                 "src/global_define.hpp",
                 "src/main.cpp",
+                "src/_util.hpp",
 
                 # Flex Bison
                 "src/ces/lexer.cc",

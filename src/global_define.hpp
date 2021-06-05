@@ -7,8 +7,8 @@ Napi::Value globalDefine(const Napi::CallbackInfo &info)
 {
   nm_init;
   Napi::Object g;
-  if (info.Length() && nmi_is_obj(0))
-    g = nmi_obj(0);
+  if (info.Length() && nmi_is_o(0))
+    g = nmi_o(0);
   else
     g = env.Global();
 

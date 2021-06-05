@@ -72,7 +72,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   __EXPORT("writeQword", memWriteQword);
   __EXPORT("writeFloat", memWriteFloat);
   __EXPORT("writeDouble", memWriteDouble);
-  __EXPORT("writeRegionToFile", memWriteRegionRoRile);
+  __EXPORT("writeRegionToFile", memWriteRegionToFile);
 
   __EXPORT("allocEx", memAllocEx);
   __EXPORT("freeEx", memFreeEx);

@@ -1,7 +1,7 @@
 #pragma once
 #pragma warning(disable : 4819)
 
-#include <ostream>
+#include <iostream>
 #include <algorithm>
 #include <regex>
 #include <fstream>
@@ -11,6 +11,7 @@
 #include <memory>
 #include <ranges>
 #include <format>
+#include <span>
 
 #include <Windows.h>
 #include <Windowsx.h>
@@ -21,8 +22,6 @@
 #include <asmtk/asmtk.h>
 
 #include "./ces/export.h"
-
-using namespace std::string_literals;
 
 namespace ajanuw
 {
@@ -133,17 +132,17 @@ namespace ajanuw
     * ajanuw::SSString::strFormNumber(255)       -> "255"
     * ajanuw::SSString::strFormNumber(255, true) -> "ff"
     */
-    std::string strFormNumber(uintptr_t number, bool isHex = false);
+    std::string formHex(size_t _hex);
 
     /*
     * ajanuw::SSString::tolower("ABC") -> "abc"
     * ajanuw::SSString::toupper("abc") -> "ABC"
     */
-    std::string tolower(std::string s);
-    std::string toupper(std::string s);
+    std::string tolower(std::string_view s);
+    std::string toupper(std::string_view s);
 
-    std::wstring tolower(std::wstring s);
-    std::wstring toupper(std::wstring s);
+    std::wstring tolower(std::wstring_view s);
+    std::wstring toupper(std::wstring_view s);
 
     /*
     * ajanuw::SSString::padStart("abc", 5, "^") -> "^^abc"
@@ -178,139 +177,136 @@ namespace ajanuw
 
   namespace Mem
   {
-    LPVOID alloc(SIZE_T dwSize, LPVOID lpAddress = 0, uint32_t flAllocationType = MEM_COMMIT | MEM_RESERVE, uint32_t flProtect = PAGE_EXECUTE_READWRITE);
-
-    LPVOID allocEx(HANDLE hProcess, SIZE_T dwSize, LPVOID lpAddress = 0, uint32_t flAllocationType = MEM_COMMIT | MEM_RESERVE, uint32_t flProtect = PAGE_EXECUTE_READWRITE);
-
-    BOOL free(LPVOID lpAddress);
-    BOOL free(std::string_view CEAddressString);
-
-    BOOL freeEx(HANDLE hProcess, LPVOID lpAddress);
-    BOOL freeEx(HANDLE hProcess, std::string_view CEAddressString);
+    LPVOID alloc(SIZE_T dwSize, LPVOID addr = 0, uint32_t flAllocationType = MEM_COMMIT | MEM_RESERVE, uint32_t flProtect = PAGE_EXECUTE_READWRITE);
+    LPVOID allocEx(HANDLE hProcess, SIZE_T dwSize, LPVOID addr = 0, uint32_t flAllocationType = MEM_COMMIT | MEM_RESERVE, uint32_t flProtect = PAGE_EXECUTE_READWRITE);
+    BOOL free(LPVOID addr);
+    BOOL free(std::string_view ceas);
+    BOOL freeEx(HANDLE hProcess, LPVOID addr);
+    BOOL freeEx(HANDLE hProcess, std::string_view ceas);
 
     // write
-    void wStr(void *lpAddress, std::string_view str);
-    void wWstr(void *lpAddress, std::wstring_view str);
-    void wUstr(void *lpAddress, std::u16string_view str);
+    void wStr(void *addr, std::string_view str);
+    void wWstr(void *addr, std::wstring_view str);
+    void wUstr(void *addr, std::u16string_view str);
 
-    void wStr(std::string_view CEAddressString, std::string_view str);
-    void wWstr(std::string_view CEAddressString, std::wstring_view str);
-    void wUstr(std::string_view CEAddressString, std::u16string_view str);
+    void wStr(std::string_view ceas, std::string_view str);
+    void wWstr(std::string_view ceas, std::wstring_view str);
+    void wUstr(std::string_view ceas, std::u16string_view str);
 
-    void wByte(void *lpAddress, uint8_t byte);
-    void wBytes(void *lpAddress, const std::vector<uint8_t> &bytes);
-    void wWord(void *lpAddress, WORD value);
-    void wDword(void *lpAddress, uint32_t value);
-    void wQword(void *lpAddress, uint64_t value);
-    void wFloat(void *lpAddress, float value);
-    void wDouble(void *lpAddress, double value);
-    void wRegionToFile(std::string_view filename, void *lpAddress, uintptr_t size);
+    void wByte(void *addr, uint8_t byte);
+    void wBytes(void *addr, const std::span<uint8_t> &bytes, intptr_t max = -1);
+    void wWord(void *addr, WORD value);
+    void wDword(void *addr, uint32_t value);
+    void wQword(void *addr, uint64_t value);
+    void wFloat(void *addr, float value);
+    void wDouble(void *addr, double value);
+    void wRegionToFile(std::string_view filename, void *addr, size_t size);
 
-    void wByte(std::string_view CEAddressString, uint8_t byte);
-    void wBytes(std::string_view CEAddressString, const std::vector<uint8_t> &bytes);
-    void wWord(std::string_view CEAddressString, uint16_t value);
-    void wDword(std::string_view CEAddressString, uint32_t value);
-    void wQword(std::string_view CEAddressString, uint64_t value);
-    void wFloat(std::string_view CEAddressString, float value);
-    void wDouble(std::string_view CEAddressString, double value);
-    void wRegionToFile(std::string_view filename, std::string_view CEAddressString, uintptr_t size);
+    void wByte(std::string_view ceas, uint8_t byte);
+    void wBytes(std::string_view ceas, const std::span<uint8_t> &bytes, intptr_t max = -1);
+    void wWord(std::string_view ceas, uint16_t value);
+    void wDword(std::string_view ceas, uint32_t value);
+    void wQword(std::string_view ceas, uint64_t value);
+    void wFloat(std::string_view ceas, float value);
+    void wDouble(std::string_view ceas, double value);
+    void wRegionToFile(std::string_view filename, std::string_view ceas, size_t size);
 
     // write ex
-    void wStrEx(HANDLE hProcess, void *lpAddress, std::string_view str);
-    void wWstrEx(HANDLE hProcess, void *lpAddress, std::wstring_view str);
-    void wUstrEx(HANDLE hProcess, void *lpAddress, std::u16string_view str);
+    void wStrEx(HANDLE hProcess, void *addr, std::string_view str);
+    void wWstrEx(HANDLE hProcess, void *addr, std::wstring_view str);
+    void wUstrEx(HANDLE hProcess, void *addr, std::u16string_view str);
 
-    void wStrEx(HANDLE hProcess, std::string_view CEAddressString, std::string_view str);
-    void wWstrEx(HANDLE hProcess, std::string_view CEAddressString, std::wstring_view str);
-    void wUstrEx(HANDLE hProcess, std::string_view CEAddressString, std::u16string_view str);
+    void wStrEx(HANDLE hProcess, std::string_view ceas, std::string_view str);
+    void wWstrEx(HANDLE hProcess, std::string_view ceas, std::wstring_view str);
+    void wUstrEx(HANDLE hProcess, std::string_view ceas, std::u16string_view str);
 
-    void wByteEx(HANDLE hProcess, void *lpAddress, uint8_t byte);
-    void wBytesEx(HANDLE hProcess, void *lpAddress, const std::vector<uint8_t> &bytes);
-    void wWordEx(HANDLE hProcess, void *lpAddress, uint16_t value);
-    void wDwordEx(HANDLE hProcess, void *lpAddress, uint32_t value);
-    void wQwordEx(HANDLE hProcess, void *lpAddress, uint64_t value);
-    void wFloatEx(HANDLE hProcess, void *lpAddress, float value);
-    void wDoubleEx(HANDLE hProcess, void *lpAddress, double value);
-    void wRegionToFileEx(HANDLE hProcess, std::string_view filename, void *lpAddress, uintptr_t size);
+    void wByteEx(HANDLE hProcess, void *addr, uint8_t byte);
+    void wBytesEx(HANDLE hProcess, void *addr, const std::span<uint8_t> &bytes, intptr_t max = -1);
+    void wWordEx(HANDLE hProcess, void *addr, uint16_t value);
+    void wDwordEx(HANDLE hProcess, void *addr, uint32_t value);
+    void wQwordEx(HANDLE hProcess, void *addr, uint64_t value);
+    void wFloatEx(HANDLE hProcess, void *addr, float value);
+    void wDoubleEx(HANDLE hProcess, void *addr, double value);
+    void wRegionToFileEx(HANDLE hProcess, std::string_view filename, void *addr, size_t size);
 
-    void wByteEx(HANDLE hProcess, std::string_view CEAddressString, uint8_t byte);
-    void wBytesEx(HANDLE hProcess, std::string_view CEAddressString, std::vector<uint8_t> bytes);
-    void wWordEx(HANDLE hProcess, std::string_view CEAddressString, uint16_t value);
-    void wDwordEx(HANDLE hProcess, std::string_view CEAddressString, uint32_t value);
-    void wQwordEx(HANDLE hProcess, std::string_view CEAddressString, uint64_t value);
-    void wFloatEx(HANDLE hProcess, std::string_view CEAddressString, float value);
-    void wDoubleEx(HANDLE hProcess, std::string_view CEAddressString, double value);
-    void wRegionToFileEx(HANDLE hProcess, std::string_view filename, std::string_view CEAddressString, uintptr_t size);
+    void wByteEx(HANDLE hProcess, std::string_view ceas, uint8_t byte);
+    void wBytesEx(HANDLE hProcess, std::string_view ceas, std::span<uint8_t> bytes, intptr_t max = -1);
+    void wWordEx(HANDLE hProcess, std::string_view ceas, uint16_t value);
+    void wDwordEx(HANDLE hProcess, std::string_view ceas, uint32_t value);
+    void wQwordEx(HANDLE hProcess, std::string_view ceas, uint64_t value);
+    void wFloatEx(HANDLE hProcess, std::string_view ceas, float value);
+    void wDoubleEx(HANDLE hProcess, std::string_view ceas, double value);
+    void wRegionToFileEx(HANDLE hProcess, std::string_view filename, std::string_view ceas, size_t size);
 
     // read
-    std::string rStr(char *lpAddress, uintptr_t max);
-    std::wstring rWstr(wchar_t *lpAddress, uintptr_t max);
-    std::u16string rUstr(char16_t *lpAddress, uintptr_t max);
+    std::string rStr(char *addr, size_t max);
+    std::wstring rWstr(wchar_t *addr, size_t max);
+    std::u16string rUstr(char16_t *addr, size_t max);
 
-    std::string rStr(std::string_view CEAddressString, uintptr_t max);
-    std::wstring rWstr(std::string_view CEAddressString, uintptr_t max);
-    std::u16string rUstr(std::string_view CEAddressString, uintptr_t max);
+    std::string rStr(std::string_view ceas, size_t max);
+    std::wstring rWstr(std::string_view ceas, size_t max);
+    std::u16string rUstr(std::string_view ceas, size_t max);
 
-    std::vector<uint8_t> rBytes(void *lpAddress, uintptr_t size);
-    uint8_t rByte(void *lpAddress);
-    uint16_t rWord(void *lpAddress);
-    uint32_t rDword(void *lpAddress);
-    uint64_t rQword(void *lpAddress);
-    uintptr_t rPointer(void *lpAddress);
-    float rFloat(void *lpAddress);
-    double rDouble(void *lpAddress);
-    void rRegionFromFile(std::string_view fileame, void *lpAddress);
-    void rRegionFromFile(std::string_view fileame, void *lpAddress, size_t *fileSize);
+    std::vector<uint8_t> rBytes(void *addr, size_t size);
+    uint8_t rByte(void *addr);
+    uint16_t rWord(void *addr);
+    uint32_t rDword(void *addr);
+    uint64_t rQword(void *addr);
+    uintptr_t rPointer(void *addr);
+    float rFloat(void *addr);
+    double rDouble(void *addr);
+    void rRegionFromFile(std::string_view fileame, void *addr);
+    void rRegionFromFile(std::string_view fileame, void *addr, size_t *fileSize);
 
-    std::vector<uint8_t> rBytes(std::string_view CEAddressString, uintptr_t size);
-    uint8_t rByte(std::string_view CEAddressString);
-    uint16_t rWord(std::string_view CEAddressString);
-    uint32_t rDword(std::string_view CEAddressString);
-    uint64_t rQword(std::string_view CEAddressString);
-    uintptr_t rPointer(std::string_view CEAddressString);
-    float rFloat(std::string_view CEAddressString);
-    double rDouble(std::string_view CEAddressString);
-    void rRegionFromFile(std::string_view fileame, std::string_view CEAddressString);
-    void rRegionFromFile(std::string_view fileame, std::string_view CEAddressString, size_t *fileSize);
+    std::vector<uint8_t> rBytes(std::string_view ceas, size_t size);
+    uint8_t rByte(std::string_view ceas);
+    uint16_t rWord(std::string_view ceas);
+    uint32_t rDword(std::string_view ceas);
+    uint64_t rQword(std::string_view ceas);
+    uintptr_t rPointer(std::string_view ceas);
+    float rFloat(std::string_view ceas);
+    double rDouble(std::string_view ceas);
+    void rRegionFromFile(std::string_view fileame, std::string_view ceas);
+    void rRegionFromFile(std::string_view fileame, std::string_view ceas, size_t *fileSize);
 
     // read ex
-    std::string rStrEx(HANDLE hProcess, char *lpAddress, uintptr_t max);
-    std::wstring rWstrEx(HANDLE hProcess, wchar_t *lpAddress, uintptr_t max);
-    std::u16string rUstrEx(HANDLE hProcess, char16_t *lpAddress, uintptr_t max);
+    std::string rStrEx(HANDLE hProcess, char *addr, size_t max);
+    std::wstring rWstrEx(HANDLE hProcess, wchar_t *addr, size_t max);
+    std::u16string rUstrEx(HANDLE hProcess, char16_t *addr, size_t max);
 
-    std::string rStrEx(HANDLE hProcess, std::string_view CEAddressString, uintptr_t max);
-    std::wstring rWstrEx(HANDLE hProcess, std::string_view CEAddressString, uintptr_t max);
-    std::u16string rUstrEx(HANDLE hProcess, std::string_view CEAddressString, uintptr_t max);
+    std::string rStrEx(HANDLE hProcess, std::string_view ceas, size_t max);
+    std::wstring rWstrEx(HANDLE hProcess, std::string_view ceas, size_t max);
+    std::u16string rUstrEx(HANDLE hProcess, std::string_view ceas, size_t max);
 
-    std::vector<uint8_t> rBytesEx(HANDLE hProcess, void *lpAddress, uintptr_t size);
-    uint8_t rByteEx(HANDLE hProcess, void *lpAddress);
-    uint16_t rWordEx(HANDLE hProcess, void *lpAddress);
-    uint32_t rDwordEx(HANDLE hProcess, void *lpAddress);
-    uint64_t rQwordEx(HANDLE hProcess, void *lpAddress);
-    uintptr_t rPointerEx(HANDLE hProcess, void *lpAddress);
-    float rFloatEx(HANDLE hProcess, void *lpAddress);
-    double rDoubleEx(HANDLE hProcess, void *lpAddress);
-    void rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, void *lpAddress);
-    void rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, void *lpAddress, size_t *fileSize);
+    std::vector<uint8_t> rBytesEx(HANDLE hProcess, void *addr, size_t size);
+    uint8_t rByteEx(HANDLE hProcess, void *addr);
+    uint16_t rWordEx(HANDLE hProcess, void *addr);
+    uint32_t rDwordEx(HANDLE hProcess, void *addr);
+    uint64_t rQwordEx(HANDLE hProcess, void *addr);
+    uintptr_t rPointerEx(HANDLE hProcess, void *addr);
+    float rFloatEx(HANDLE hProcess, void *addr);
+    double rDoubleEx(HANDLE hProcess, void *addr);
+    void rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, void *addr);
+    void rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, void *addr, size_t *fileSize);
 
-    std::vector<uint8_t> rBytesEx(HANDLE hProcess, std::string_view CEAddressString, uintptr_t size);
-    uint8_t rByteEx(HANDLE hProcess, std::string_view CEAddressString);
-    uint16_t rWordEx(HANDLE hProcess, std::string_view CEAddressString);
-    uint32_t rDwordEx(HANDLE hProcess, std::string_view CEAddressString);
-    uint64_t rQwordEx(HANDLE hProcess, std::string_view CEAddressString);
-    uintptr_t rPointerEx(HANDLE hProcess, std::string_view CEAddressString);
-    float rFloatEx(HANDLE hProcess, std::string_view CEAddressString);
-    double rDoubleEx(HANDLE hProcess, std::string_view CEAddressString);
-    void rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, std::string_view CEAddressString);
-    void rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, std::string_view CEAddressString, size_t *fileSize);
+    std::vector<uint8_t> rBytesEx(HANDLE hProcess, std::string_view ceas, size_t size);
+    uint8_t rByteEx(HANDLE hProcess, std::string_view ceas);
+    uint16_t rWordEx(HANDLE hProcess, std::string_view ceas);
+    uint32_t rDwordEx(HANDLE hProcess, std::string_view ceas);
+    uint64_t rQwordEx(HANDLE hProcess, std::string_view ceas);
+    uintptr_t rPointerEx(HANDLE hProcess, std::string_view ceas);
+    float rFloatEx(HANDLE hProcess, std::string_view ceas);
+    double rDoubleEx(HANDLE hProcess, std::string_view ceas);
+    void rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, std::string_view ceas);
+    void rRegionFromFileEx(HANDLE hProcess, std::string_view fileame, std::string_view ceas, size_t *fileSize);
 
     class VAManage
     {
     public:
-      HANDLE hProcess;
-      const uintptr_t size;
-      LPVOID memory;
-      size_t position;
+      HANDLE hProcess{NULL};
+      size_t size{1024};
+      LPVOID memory{nullptr};
+      size_t position{0};
       VAManage(size_t size);
       VAManage(size_t size, HANDLE hProcess);
       ~VAManage(){};
@@ -331,7 +327,7 @@ namespace ajanuw
       std::u16string readUstr(size_t maxSize);
 
       // write bytes
-      void write(std::vector<uint8_t> &table, size_t count);
+      void write(const std::span<uint8_t> &table, intptr_t max = -1);
       void writeByte(uint8_t v);
       void writeWord(uint16_t v);
       void writeDword(uint32_t v);
@@ -474,7 +470,7 @@ namespace ajanuw
     static std::string GetModuleName(std::string_view moduleName);
   };
 
-  // CEAddressString
+  // ceas
   class CEAS
   {
   public:
@@ -652,7 +648,7 @@ namespace ajanuw
       }
       else
       {
-        throw std::exception(("GetPID error: "s + std::to_string(GetLastError())).data());
+        throw std::exception(std::format("GetPID error: {}", GetLastError()).data());
       }
     }
 
@@ -670,7 +666,7 @@ namespace ajanuw
       }
       else
       {
-        throw std::exception(("OpenProcess error: "s + std::to_string(GetLastError())).data());
+        throw std::exception(std::format("OpenProcess error: {}", GetLastError()).data());
       }
     }
 

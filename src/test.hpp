@@ -10,15 +10,17 @@
 #include <asmjit/asmjit.h>
 #include <asmtk/asmtk.h>
 
+#include "./_util.hpp"
+
 #define O(v) std::cout << v << std::endl
 #define WO(v) std::wcout << v << std::endl
 
 typedef int (*Func)();
 
-Napi::Value test(const Napi::CallbackInfo &info)
+nm_api(test)
 {
   nm_init;
-  
 
+  auto va = ajanuw::Mem::VAManage(10, 0);
   nm_retu;
 }
