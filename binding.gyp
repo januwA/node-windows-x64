@@ -10,7 +10,8 @@
                 "VCCLCompilerTool": {
                     'WarningLevel': '4',
                     "AdditionalOptions": [
-                       "/EHsc", "/std:c++latest",
+                       "/EHsc",
+                       "/std:c++latest",
                     ],
                 }
             },

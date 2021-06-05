@@ -312,7 +312,9 @@ namespace ajanuw
       ~VAManage(){};
 
       // memory +  position
-      uint8_t *ptr();
+      uint8_t *ptr() const {
+        return (uint8_t *)memory + position;
+      }
 
       // read bytes
       std::vector<uint8_t> read(size_t size);
@@ -470,7 +472,6 @@ namespace ajanuw
     static std::string GetModuleName(std::string_view moduleName);
   };
 
-  // ceas
   class CEAS
   {
   public:
@@ -499,7 +500,7 @@ namespace ajanuw
   class Target
   {
 #define JMP_BYTE 0xE9
-#define CALL_BYTE 0xE9
+#define CALL_BYTE 0xE8
 #define NOP_BYTE 0x90
 
   public:

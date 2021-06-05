@@ -4,8 +4,7 @@
 #include <regex>
 #include <string>
 #include "ajanuw.h"
-#include <chrono>
-#include <cstring>
+#include <memory>
 
 #include <asmjit/asmjit.h>
 #include <asmtk/asmtk.h>
@@ -15,12 +14,9 @@
 #define O(v) std::cout << v << std::endl
 #define WO(v) std::wcout << v << std::endl
 
-typedef int (*Func)();
-
 nm_api(test)
 {
   nm_init;
 
-  auto va = ajanuw::Mem::VAManage(10, 0);
   nm_retu;
 }

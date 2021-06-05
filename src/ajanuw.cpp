@@ -1018,6 +1018,8 @@ LRESULT ajanuw::Gui::Win32::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wPa
 
 ATOM ajanuw::Gui::Win32::initRegisterClass()
 {
+  if (_hWnd)
+    return 0;
   WNDCLASSEXA wcex{0};
   wcex.cbSize = sizeof(WNDCLASSEX);
   wcex.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
@@ -1035,6 +1037,8 @@ ATOM ajanuw::Gui::Win32::initRegisterClass()
 
 BOOL ajanuw::Gui::Win32::initWindow()
 {
+  if (_hWnd)
+    return 0;
   _hWnd = CreateWindowA(
       className.c_str(),
       windowName.c_str(),
@@ -1157,11 +1161,6 @@ ajanuw::Mem::VAManage::VAManage(size_t size, HANDLE hProcess)
 {
   if (!memory)
     throw std::exception("VAManage alloc fail.");
-}
-
-uint8_t *ajanuw::Mem::VAManage::ptr()
-{
-  return (uint8_t *)memory + position;
 }
 
 std::vector<uint8_t> ajanuw::Mem::VAManage::read(size_t _size)

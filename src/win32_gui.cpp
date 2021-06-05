@@ -12,7 +12,7 @@ Win32GuiEvent::Win32GuiEvent(const Napi::Object &o)
 
 LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  const std::initializer_list<napi_value> args = {
+  std::initializer_list<napi_value> args = {
       Napi::Number::New(_env, (uintptr_t)hWnd),
       Napi::Number::New(_env, (uintptr_t)message),
       Napi::Number::New(_env, (uintptr_t)wParam),
@@ -22,10 +22,10 @@ LRESULT Win32Gui::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARA
   {
   case WM_COMMAND:
   {
-    HMENU id = (HMENU)LOWORD(wParam);
-    if (eventMap.count(id))
+    HMENU winId = (HMENU)LOWORD(wParam);
+    if (eventMap.count(winId))
     {
-      Win32GuiEvent *e = eventMap.at(id);
+      auto e = eventMap.at(winId);
       if (e->click)
         e->click.Call(args);
     }
