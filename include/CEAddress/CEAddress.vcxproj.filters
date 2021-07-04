@@ -15,19 +15,45 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ces.cpp">
+    <ClInclude Include="framework.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CEAddress.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="parser.h">
+      <Filter>资源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="error.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseNode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Interpreter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CEAddress.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="lexer.cc">
+    <ClCompile Include="pch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="lexer.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
-    <ClCompile Include="parser.cc">
+    <ClCompile Include="parser.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
     <ClCompile Include="BaseNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="export.cpp">
+    <ClCompile Include="Interpreter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,19 +64,5 @@
     <CustomBuild Include="parser.y">
       <Filter>源文件</Filter>
     </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="parser.h">
-      <Filter>资源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseNode.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="export.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="error.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

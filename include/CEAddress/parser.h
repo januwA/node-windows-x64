@@ -46,8 +46,8 @@
 # define YY_CES_PARSER_H_INCLUDED
 // "%code requires" blocks.
 
-	#include "BaseNode.h"
-  #include "error.hpp"
+#include "BaseNode.h"
+#include "error.hpp"
 
 
 
@@ -385,7 +385,7 @@ namespace ces {
       // "ident"
       char dummy2[sizeof (std::string)];
 
-      // identList
+      // idents
       char dummy3[sizeof (std::vector<std::string>*)];
     };
 
@@ -481,7 +481,7 @@ namespace ces {
         S_binaryExpr = 15,                       // binaryExpr
         S_unaryExpr = 16,                        // unaryExpr
         S_atom = 17,                             // atom
-        S_identList = 18                         // identList
+        S_idents = 18                            // idents
       };
     };
 
@@ -530,7 +530,7 @@ namespace ces {
         value.move< std::string > (std::move (that.value));
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         value.move< std::vector<std::string>* > (std::move (that.value));
         break;
 
@@ -633,7 +633,7 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         value.template destroy< std::vector<std::string>* > ();
         break;
 
@@ -1374,7 +1374,7 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         value.copy< std::vector<std::string>* > (YY_MOVE (that.value));
         break;
 
@@ -1419,7 +1419,7 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         value.move< std::vector<std::string>* > (YY_MOVE (s.value));
         break;
 

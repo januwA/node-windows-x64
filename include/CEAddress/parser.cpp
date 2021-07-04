@@ -34,6 +34,10 @@
 // especially those whose name start with YY_ or yy_.  They are
 // private implementation details that can be changed or removed.
 
+// "%code top" blocks.
+
+#include "pch.h"
+
 
 // Take the name prefix into account.
 #define yylex   ceslex
@@ -45,10 +49,10 @@
 
 // Unqualified %code blocks.
 
-	#include <iostream>
-	#include "BaseNode.h"
+#include <iostream>
+#include "BaseNode.h"
 
-	extern ces::parser::symbol_type yylex (std::string_view source);
+extern ces::parser::symbol_type yylex (std::string_view source);
 
 
 
@@ -221,7 +225,7 @@ namespace ces {
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         value.YY_MOVE_OR_COPY< std::vector<std::string>* > (YY_MOVE (that.value));
         break;
 
@@ -252,7 +256,7 @@ namespace ces {
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         value.move< std::vector<std::string>* > (YY_MOVE (that.value));
         break;
 
@@ -283,7 +287,7 @@ namespace ces {
         value.copy< std::string > (that.value);
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         value.copy< std::vector<std::string>* > (that.value);
         break;
 
@@ -313,7 +317,7 @@ namespace ces {
         value.move< std::string > (that.value);
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         value.move< std::vector<std::string>* > (that.value);
         break;
 
@@ -588,7 +592,7 @@ namespace ces {
         yylhs.value.emplace< std::string > ();
         break;
 
-      case symbol_kind::S_identList: // identList
+      case symbol_kind::S_idents: // idents
         yylhs.value.emplace< std::vector<std::string>* > ();
         break;
 
@@ -613,63 +617,63 @@ namespace ces {
           switch (yyn)
             {
   case 2: // CEAddressString: binaryExpr $end
-                                  { *result = yystack_[1].value.as < BaseNode* > (); yylhs.value.as < BaseNode* > () = yystack_[1].value.as < BaseNode* > (); }
+                                  { *result = yystack_[1].value.as < BaseNode* > (); yylhs.value.as < BaseNode* > () = yystack_[1].value.as < BaseNode* > ();                                }
     break;
 
   case 3: // binaryExpr: atom
-                 { yylhs.value.as < BaseNode* > () = yystack_[0].value.as < BaseNode* > (); }
+                                  { yylhs.value.as < BaseNode* > () = yystack_[0].value.as < BaseNode* > ();                                              }
     break;
 
   case 4: // binaryExpr: unaryExpr
-            { yylhs.value.as < BaseNode* > () = yystack_[0].value.as < BaseNode* > (); }
+                                  { yylhs.value.as < BaseNode* > () = yystack_[0].value.as < BaseNode* > ();                                              }
     break;
 
   case 5: // binaryExpr: binaryExpr "+" binaryExpr
-                             { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::PLUS, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location); }
+                                  { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::PLUS, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location);   }
     break;
 
   case 6: // binaryExpr: binaryExpr "-" binaryExpr
-                              { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::MINUS, yystack_[0].value.as < BaseNode* > (),yystack_[2].location += yystack_[0].location); }
+                                  { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::MINUS, yystack_[0].value.as < BaseNode* > (),yystack_[2].location += yystack_[0].location);   }
     break;
 
   case 7: // binaryExpr: binaryExpr "*" binaryExpr
-                            { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::MUL, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location); }
+                                  { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::MUL, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location);    }
     break;
 
   case 8: // binaryExpr: binaryExpr "/" binaryExpr
-                            { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::DIV, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location); }
+                                  { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::DIV, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location);    }
     break;
 
   case 9: // binaryExpr: binaryExpr "**" binaryExpr
-                            { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::POW, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location); }
+                                  { yylhs.value.as < BaseNode* > () = new BinaryNode(yystack_[2].value.as < BaseNode* > (), token::POW, yystack_[0].value.as < BaseNode* > (), yystack_[2].location += yystack_[0].location);    }
     break;
 
   case 10: // unaryExpr: "+" atom
-                     { yylhs.value.as < BaseNode* > () = new UnaryNode(token::PLUS, yystack_[0].value.as < BaseNode* > (), yystack_[1].location+yystack_[0].location); }
+                                  { yylhs.value.as < BaseNode* > () = new UnaryNode(token::PLUS, yystack_[0].value.as < BaseNode* > (), yystack_[1].location+yystack_[0].location);           }
     break;
 
   case 11: // unaryExpr: "-" atom
-             { yylhs.value.as < BaseNode* > () = new UnaryNode(token::MINUS, yystack_[0].value.as < BaseNode* > (), yystack_[1].location+yystack_[0].location); }
+                                  { yylhs.value.as < BaseNode* > () = new UnaryNode(token::MINUS, yystack_[0].value.as < BaseNode* > (), yystack_[1].location+yystack_[0].location);          }
     break;
 
   case 12: // atom: "hex"
-                { yylhs.value.as < BaseNode* > () = new HexNode(yystack_[0].value.as < std::string > (), yystack_[0].location); }
+                                    { yylhs.value.as < BaseNode* > () = new HexNode(yystack_[0].value.as < std::string > (), yystack_[0].location);                             }
     break;
 
   case 13: // atom: "[" binaryExpr "]"
-                     { yylhs.value.as < BaseNode* > () = new PointerNode(yystack_[1].value.as < BaseNode* > (), yystack_[2].location+yystack_[0].location); }
+                                  { yylhs.value.as < BaseNode* > () = new PointerNode(yystack_[1].value.as < BaseNode* > (), yystack_[2].location+yystack_[0].location);                      }
     break;
 
-  case 14: // atom: identList
-                { yylhs.value.as < BaseNode* > () = new IdentsNode(yystack_[0].value.as < std::vector<std::string>* > (), yystack_[0].location);}
+  case 14: // atom: idents
+                                  { yylhs.value.as < BaseNode* > () = new IdentsNode(yystack_[0].value.as < std::vector<std::string>* > (), yystack_[0].location);                          }
     break;
 
-  case 15: // identList: "ident"
-                 { yylhs.value.as < std::vector<std::string>* > () = new std::vector<std::string>{yystack_[0].value.as < std::string > ()}; }
+  case 15: // idents: "ident"
+                                  { yylhs.value.as < std::vector<std::string>* > () = new std::vector<std::string>{yystack_[0].value.as < std::string > ()};                }
     break;
 
-  case 16: // identList: identList "." "ident"
-                        { yylhs.value.as < std::vector<std::string>* > () = yystack_[2].value.as < std::vector<std::string>* > (); yylhs.value.as < std::vector<std::string>* > ()->push_back(yystack_[0].value.as < std::string > ()); }
+  case 16: // idents: idents "." "ident"
+                                  { yylhs.value.as < std::vector<std::string>* > () = yystack_[2].value.as < std::vector<std::string>* > (); yylhs.value.as < std::vector<std::string>* > ()->push_back(yystack_[0].value.as < std::string > ());                           }
     break;
 
 
@@ -943,7 +947,7 @@ namespace ces {
   "\"end of file\"", "error", "\"invalid token\"", "\"hex\"", "\"ident\"",
   "\"+\"", "\"-\"", "\"*\"", "\"/\"", "\"**\"", "\"[\"", "\"]\"", "\".\"",
   "$accept", "CEAddressString", "binaryExpr", "unaryExpr", "atom",
-  "identList", YY_NULLPTR
+  "idents", YY_NULLPTR
   };
 #endif
 
@@ -952,8 +956,8 @@ namespace ces {
   const signed char
   parser::yyrline_[] =
   {
-       0,    39,    39,    42,    43,    44,    45,    46,    47,    48,
-      51,    52,    55,    56,    57,    60,    61
+       0,    43,    43,    46,    47,    48,    49,    50,    51,    52,
+      55,    56,    59,    60,    61,    64,    65
   };
 
   void

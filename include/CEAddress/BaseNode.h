@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include "location.hh"
 
@@ -19,7 +18,7 @@ namespace ces
   {
   public:
     ces::location loc;
-    BaseNode(ces::location loc) : loc(loc){};
+    BaseNode(ces::location loc) : loc(loc) {};
     virtual ~BaseNode() = default;
     virtual NT id() const = 0;
   };
@@ -27,8 +26,8 @@ namespace ces
   class IdentsNode : public BaseNode
   {
   public:
-    std::vector<std::string> *idents;
-    IdentsNode(std::vector<std::string> *idents, const ces::location &loc) : BaseNode(loc), idents(idents)
+    std::vector<std::string>* idents;
+    IdentsNode(std::vector<std::string>* idents, const ces::location& loc) : BaseNode(loc), idents(idents)
     {
     }
 
@@ -47,7 +46,7 @@ namespace ces
   {
   public:
     std::string value;
-    HexNode(std::string value, const ces::location &loc) : BaseNode(loc), value(value) {}
+    HexNode(std::string value, const ces::location& loc) : BaseNode(loc), value(value) {}
     ~HexNode()
     {
     }
@@ -61,8 +60,8 @@ namespace ces
   {
   public:
     int op;
-    BaseNode *node;
-    UnaryNode(int op, BaseNode *node, const ces::location &loc) : BaseNode(loc), op(op), node(node) {}
+    BaseNode* node;
+    UnaryNode(int op, BaseNode* node, const ces::location& loc) : BaseNode(loc), op(op), node(node) {}
 
     ~UnaryNode()
     {
@@ -78,11 +77,11 @@ namespace ces
   class BinaryNode : public BaseNode
   {
   public:
-    BaseNode *left;
+    BaseNode* left;
     int op;
-    BaseNode *right;
-    BinaryNode(BaseNode *left, int op, BaseNode *right, const ces::location &loc)
-        : BaseNode(loc), left(left), op(op), right(right) {}
+    BaseNode* right;
+    BinaryNode(BaseNode* left, int op, BaseNode* right, const ces::location& loc)
+      : BaseNode(loc), left(left), op(op), right(right) {}
     ~BinaryNode()
     {
       delete left;
@@ -98,8 +97,8 @@ namespace ces
   class PointerNode : public BaseNode
   {
   public:
-    BaseNode *node;
-    PointerNode(BaseNode *node, const ces::location &loc) : BaseNode(loc), node(node) {}
+    BaseNode* node;
+    PointerNode(BaseNode* node, const ces::location& loc) : BaseNode(loc), node(node) {}
     ~PointerNode()
     {
       delete node;

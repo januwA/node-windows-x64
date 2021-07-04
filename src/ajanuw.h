@@ -21,7 +21,7 @@
 #include <asmjit/asmjit.h>
 #include <asmtk/asmtk.h>
 
-#include "./ces/export.h"
+#include <CEAddress/CEAddress.h>
 
 namespace ajanuw
 {
@@ -442,8 +442,6 @@ namespace ajanuw
     static void unregisterSymbol(std::string_view symbolname);
     static LPVOID get(std::string_view symbolname);
     static bool has(std::string_view symbolname);
-
-  private:
     static std::map<std::string, LPVOID> symbols;
   };
 
@@ -476,25 +474,6 @@ namespace ajanuw
   {
   public:
     static LPVOID getAddress(std::string_view address, HANDLE hProcess = NULL);
-
-  private:
-    class Interpreter
-    {
-    public:
-      std::string_view source;
-      HANDLE hProcess;
-      uint32_t pid{NULL};
-      bool isX86;
-      Interpreter(HANDLE hProcess, std::string_view source);
-      uintptr_t visit(ces::BaseNode *node);
-
-    private:
-      uintptr_t visitHex(ces::HexNode *node);
-      uintptr_t visitIdent(ces::IdentsNode *node);
-      uintptr_t visitUnary(ces::UnaryNode *node);
-      uintptr_t visitPointer(ces::PointerNode *node);
-      uintptr_t visitBinary(ces::BinaryNode *node);
-    };
   };
 
   class Target
