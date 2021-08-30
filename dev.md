@@ -6,8 +6,14 @@ $ npm run c
 $ npm run bt
 ```
 
-要是已经安装了vs2019和python没必要安装windows-build-tools
+> 要是已经安装了vs2019和python没必要安装windows-build-tools
 
+
+## 自定义配置
+```
+$ npm config set python D:\Program\Miniconda3
+$ npm config set msvs_version 2019
+```
 
 ## 去函数体
 
@@ -34,9 +40,6 @@ module_root_dir   -> <project-dir>
 ## vs2019 组件
 
 ![](./images/2021-02-22-16-56-15.png)
-
-![](./images/2021-02-22-16-56-34.png)
-
 
 ## api函数使用宏替换
 ```
