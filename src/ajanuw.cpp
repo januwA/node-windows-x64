@@ -1515,9 +1515,9 @@ std::map<std::string, uintptr_t> ajanuw::PE::exports(uint32_t pid, HMODULE hModu
   ReadProcessMemory(hProcess, src, &exportDes, sizeof(IMAGE_EXPORT_DIRECTORY), NULL);
 
   // 以函数名称导出数量,指针列表
-  uint32_t *AddressOfNames = (uint32_t *)RVA2VA(exportDes.AddressOfNames);               // 函数名称表
-  uint32_t *AddressOfFunctions = (uint32_t *)RVA2VA(exportDes.AddressOfFunctions);       // 函数地址表
-  uint16_t *AddressOfNameOrdinals = (uint16_t *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
+  uint32_t *AddressOfNames = reinterpret_cast<uint32_t *>(RVA2VA(exportDes.AddressOfNames));               // 函数名称表
+  uint32_t *AddressOfFunctions = reinterpret_cast<uint32_t *>(RVA2VA(exportDes.AddressOfFunctions));       // 函数地址表
+  uint16_t *AddressOfNameOrdinals = reinterpret_cast<uint16_t *>(RVA2VA(exportDes.AddressOfNameOrdinals)); // 函数地址index表
 
   size_t i = 0;
   uint32_t namePtrRVA = 0;
@@ -1537,7 +1537,7 @@ std::map<std::string, uintptr_t> ajanuw::PE::exports(uint32_t pid, HMODULE hModu
 
     uint8_t *funPtr = RVA2VA(funAddrRVA);
     result[funme] = (uintptr_t)funPtr;
-    //printf("name: %s-%p\n", funme, funPtr);
+    // printf("name: %s-%p\n", funme, funPtr);
     i++;
   }
 
@@ -1586,9 +1586,9 @@ uint8_t *ajanuw::PE::GetProcAddress(uint32_t pid, HMODULE hModule, std::string_v
   ReadProcessMemory(hProcess, src, &exportDes, sizeof(IMAGE_EXPORT_DIRECTORY), NULL);
 
   // 以函数名称导出数量,指针列表
-  uint32_t *AddressOfNames = (uint32_t *)RVA2VA(exportDes.AddressOfNames);               // 函数名称表
-  uint32_t *AddressOfFunctions = (uint32_t *)RVA2VA(exportDes.AddressOfFunctions);       // 函数地址表
-  uint16_t *AddressOfNameOrdinals = (uint16_t *)RVA2VA(exportDes.AddressOfNameOrdinals); // 函数地址index表
+  uint32_t *AddressOfNames = reinterpret_cast<uint32_t *>(RVA2VA(exportDes.AddressOfNames));               // 函数名称表
+  uint32_t *AddressOfFunctions = reinterpret_cast<uint32_t *>(RVA2VA(exportDes.AddressOfFunctions));       // 函数地址表
+  uint16_t *AddressOfNameOrdinals = reinterpret_cast<uint16_t *>(RVA2VA(exportDes.AddressOfNameOrdinals)); // 函数地址index表
 
   size_t i = 0;
   uint32_t namePtrRVA = 0;
