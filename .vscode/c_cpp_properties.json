@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include/**",
-                "C:/Users/16418/AppData/Local/node-gyp/Cache/16.14.0/include/node"
+                "C:/Users/16418/AppData/Local/node-gyp/Cache/18.16.0/include/node"
             ],
             "defines": [
                 "_DEBUG",
@@ -13,7 +13,6 @@
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.18362.0",
-            "compilerPath": "D:/Program/vs2019/IDE/VC/Tools/MSVC/14.31.31103/bin/Hostx64/x64/cl.exe",
             "cStandard": "c17",
             "cppStandard": "c++20",
             "intelliSenseMode": "windows-msvc-x64"

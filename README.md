@@ -113,20 +113,3 @@ if (t.pid && t.hProcess) {
 
 
 > There are more examples under the "examples" file
-
-## vs2022
-
-```sh
-$ node --version
-v16.13.1
-
-$ npm config set msvs_version 2022
-
-$ npm config list|grep msvs
-msvs_version = "2022"
-
-$ node-gyp --version
-v8.4.1
-
-$ npm i node-windows-x64
-```

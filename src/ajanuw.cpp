@@ -209,7 +209,7 @@ size_t ajanuw::sstr::count(std::u16string_view str)
   return str.length() * sizeof(char16_t);
 }
 
-LPVOID ajanuw::createCallback(void *lpCallback, size_t index, void *vCC)
+LPVOID ajanuw::createCallback(void *lpCallback, size_t vcc_index, void *vCC)
 {
   using namespace asmjit;
   using namespace asmjit::x86;
@@ -220,20 +220,20 @@ LPVOID ajanuw::createCallback(void *lpCallback, size_t index, void *vCC)
   x86::Assembler a(&code);
 
   a.push(rbp);
-  a.mov(rbp, rsp);
-  a.sub(rsp, 32);
+  a.mov(rbp, rsp); // 存栈指针
+  a.sub(rsp, 32); // 4个8字节大小
 
-  a.mov(ptr(rsp), rcx);
-  a.mov(ptr(rsp, 8), rdx);
-  a.mov(ptr(rsp, 0x10), r8);
-  a.mov(ptr(rsp, 0x18), r9);
+  a.mov(ptr(rsp), rcx); // 存第一个参数
+  a.mov(ptr(rsp, 8), rdx); // 存第二个参数
+  a.mov(ptr(rsp, 0x10), r8); // 存第三个参数
+  a.mov(ptr(rsp, 0x18), r9); // 存第四个参数
 
-  a.sub(rsp, 32);
+  a.sub(rsp, 32); // 再来 4个8字节大小
 
   a.mov(rcx, vCC);           // callback 列表
-  a.mov(rdx, imm(index));    // callback index
-  a.lea(r8, ptr(rsp, 32));   // 前4个参数指针
-  a.lea(r9, ptr(rbp, 0x30)); // 之后的参数指针
+  a.mov(rdx, imm(vcc_index));    // callback index
+  a.lea(r8, ptr(rsp, 32));   // 前4个参数指针 rsp + 32
+  a.lea(r9, ptr(rbp, 0x30)); // 之后的参数指针 rsp + 32 + 8(上面push的rpb) + 8(函数ret指针)
   a.mov(rax, lpCallback);
   a.call(rax);
 

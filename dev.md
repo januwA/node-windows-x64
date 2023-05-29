@@ -9,10 +9,13 @@ $ npm run bt
 > 要是已经安装了vs2019和python没必要安装windows-build-tools
 
 
-## 自定义配置
+## 必须配置python和msvs_version
 ```
 $ npm config set python D:\Program\Miniconda3
 $ npm config set msvs_version 2019
+
+$ npm config get python
+$ npm config get msvs_version
 ```
 
 ## 去函数体

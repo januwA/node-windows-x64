@@ -1,3 +1,6 @@
+## 0.0.11 [2023-5-29]
+- BUG: https://github.com/januwA/node-windows-x64/issues/4
+
 ## 0.0.10 [2021-5-19]
 
 - *test version*

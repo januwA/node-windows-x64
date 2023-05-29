@@ -82,5 +82,6 @@
     "span": "cpp"
   },
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
-  "python.formatting.provider": "yapf"
+  "python.formatting.provider": "yapf",
+  "C_Cpp.default.compilerPath": "c:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\bin\\Hostx64\\x64\\cl.exe"
 }

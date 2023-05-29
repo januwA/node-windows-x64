@@ -10,6 +10,7 @@
                 "VCCLCompilerTool": {
                     'WarningLevel': '4',
                     "AdditionalOptions": [
+                        "/utf-8",
                         "/EHsc",
                         "/std:c++latest",
                     ],

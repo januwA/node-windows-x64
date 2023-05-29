@@ -51,13 +51,15 @@ size_t getStringsCount(const Napi::Array &args, bool isWideChar)
   return count;
 }
 
-extern "C" uintptr_t cccccc(std::vector<CallbackContext *> *vect_cc, void *index, uintptr_t *lpRcx, uintptr_t *lpP5)
+extern "C" uintptr_t cccccc(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
 {
-  return vect_cc->at((size_t)index)->call(lpRcx, lpP5);
+  return vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5);
 }
 
 nm_api(invoke)
 {
+  SetConsoleOutputCP(CP_UTF8);
+
   using namespace asmjit;
   using namespace asmjit::x86;
 
@@ -76,6 +78,7 @@ nm_api(invoke)
   else
   {
     auto sMethod = nmo_get("method", s);
+
     bWideChar = ajanuw::sstr::endWith(sMethod, "W");
     auto js_isWideChar = o.Get("isWideChar");
     if (!nm_is_un(js_isWideChar))
@@ -91,16 +94,17 @@ nm_api(invoke)
         nm_retu;
       }
     }
+
     if (hModule != NULL)
+    {
       lpMethod = (uint8_t *)GetProcAddress(hModule, sMethod.c_str());
+    }
     else
     {
       try
       {
         lpMethod = (uint8_t *)ajanuw::CEAS::getAddress(sMethod);
-      }
-      catch (const std::exception &e)
-      {
+      } catch (const std::exception &e) {
         nm_err(e.what());
         nm_retu;
       }
@@ -148,7 +152,7 @@ nm_api(invoke)
     uintptr_t value = NULL;
     if (nm_is_fu(it))
     {
-      auto CC = new CallbackContext(env, it.As<Napi::Function>(), ajanuw::createCallback(&cccccc, i, &vCC));
+      auto CC = new CallbackContext(env, it.As<Napi::Function>(), ajanuw::createCallback(&cccccc, vCC.size(), &vCC));
       vCC.push_back(CC);
       value = (uintptr_t)CC->address;
     }

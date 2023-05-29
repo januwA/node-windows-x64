@@ -1,6 +1,6 @@
 {
   "name": "node-windows-x64",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "node windows x64",
   "private": false,
   "main": "./index.js",
@@ -10,7 +10,8 @@
     "b": "node-gyp build --release",
     "bt": "npm run b && npm t",
     "test": "ts-node --log-error test/test.ts",
-    "install": "node-gyp rebuild"
+    "install": "node-gyp rebuild",
+    "t2": "node-gyp rebuild && node-gyp build --release && node test/test.js"
   },
   "keywords": [
     "windows",
@@ -33,7 +34,7 @@
   },
   "dependencies": {
     "bindings": "^1.5.0",
-    "node-addon-api": "^4.3.0"
+    "node-addon-api": "^6.1.0"
   },
   "devDependencies": {
     "@types/node": "^17.0.18"
