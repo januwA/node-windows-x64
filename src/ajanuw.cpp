@@ -221,12 +221,19 @@ LPVOID ajanuw::createCallback(void *lpCallback, size_t vcc_index, void *vCC)
 
   a.push(rbp);
   a.mov(rbp, rsp); // 存栈指针
-  a.sub(rsp, 32);  // 4个8字节大小
+  a.sub(rsp, 32*2);  // 四个整数或指针 + 四个浮点参数
 
-  a.mov(ptr(rsp), rcx);      // 存第一个参数
-  a.mov(ptr(rsp, 8), rdx);   // 存第二个参数
-  a.mov(ptr(rsp, 0x10), r8); // 存第三个参数
-  a.mov(ptr(rsp, 0x18), r9); // 存第四个参数
+  // 前四个整数或指针
+  a.mov(ptr(rsp), rcx);
+  a.mov(ptr(rsp, 8), rdx);
+  a.mov(ptr(rsp, 0x10), r8);
+  a.mov(ptr(rsp, 0x18), r9);
+
+  // 前四个浮点参数
+  a.movsd(ptr(rsp, 0x20), xmm0);
+  a.movsd(ptr(rsp, 0x28), xmm1);
+  a.movsd(ptr(rsp, 0x30), xmm2);
+  a.movsd(ptr(rsp, 0x38), xmm3);
 
   a.sub(rsp, 32); // 再来 4个8字节大小
 
@@ -237,7 +244,7 @@ LPVOID ajanuw::createCallback(void *lpCallback, size_t vcc_index, void *vCC)
   a.mov(rax, lpCallback);
   a.call(rax);
 
-  a.add(rsp, 32 * 2);
+  a.add(rsp, 32 * 2 + 32);
   a.mov(rsp, rbp);
   a.pop(rbp);
   a.ret();

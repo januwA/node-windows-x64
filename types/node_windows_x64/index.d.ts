@@ -43,7 +43,7 @@ export declare function invoke<T>(option: {
 
   /**
    * 默认会猜测args中每个参数的类型，但是不能分辨整数和浮点数
-   * 
+   *
    * 使用 argsType 明确每个参数的类型
    */
   argsType?: (
@@ -55,7 +55,7 @@ export declare function invoke<T>(option: {
     | "double"
     | "str"
     | "wstr"
-    | "fn"
+    | `fn${string}`
   )[];
 
   /**
