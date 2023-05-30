@@ -269,3 +269,48 @@ console.log(nw.invoke({
   retType: 'int'
 }));
 ```
+
+## 设置参数类型
+```js
+// double fndll7(double p1, double p2);
+nw.invoke({
+  method: 'dll1.fndll7',
+  args: [4.67, 9.12],
+  argsType: ['double', 'double'],
+  retType: 'double'
+});
+
+// float fndll8(float p1, float p2);
+nw.invoke({
+  method: 'dll1.fndll8',
+  args: [4.67, 9.12],
+  argsType: ['float', 'float'],
+  retType: 'float'
+});
+
+// int fndll9(float p1, int p2)
+nw.invoke({
+  method: 'dll1.fndll9',
+  args: [4.67, 10],
+  argsType: ['float', 'int'],
+  retType: 'int'
+});
+
+nw.invoke({
+  method: 'MessageBoxA',
+  args: [0, "content", "title", 1],
+  argsType: ['int', 'str', 'str', 'int'],
+  retType: 'int'
+});
+
+nw.invoke({
+  method: 'MessageBoxW',
+  args: [0, "content", "title", 1],
+  argsType: ['int', 'wstr', 'wstr', 'int'],
+  retType: 'int'
+});
+
+nw['MessageBoxA'](0, "content", "title", 1);
+
+nw['MessageBoxW'](0, "content", "title", 1);
+```

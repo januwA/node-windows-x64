@@ -1,3 +1,9 @@
+## 0.0.12 [2023-5-30]
+
+- feat: Set the return value type of the invoke function
+- feat: The invoke function supports floating point numbers
+- show examples/invoke.md
+
 ## 0.0.11 [2023-5-29]
 - BUG: https://github.com/januwA/node-windows-x64/issues/4
 

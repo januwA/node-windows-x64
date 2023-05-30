@@ -40,25 +40,62 @@ struct CallbackContext
   }
 };
 
-size_t getStringsCount(const Napi::Array &args, bool isWideChar)
-{
-  size_t count = 0;
-  for (size_t i = 0; i < args.Length(); i++)
-  {
-    auto it = args.Get(i);
-    if (it.IsString())
-    {
-      count += isWideChar ? ajanuw::sstr::count(nm_us(it)) : nm_s(it).length();
-      count++;
-    }
-  }
-  return count;
-}
-
 extern "C" uintptr_t cccccc(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
 {
   return vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5);
 }
+
+/**s
+ * 保存整数和指针
+ */
+void push_r64(asmjit::x86::Assembler &a, auto value, size_t i)
+{
+  using namespace asmjit;
+  using namespace asmjit::x86;
+
+  if (i == 0)
+    a.mov(rcx, value);
+  else if (i == 1)
+    a.mov(rdx, value);
+  else if (i == 2)
+    a.mov(r8, value);
+  else if (i == 3)
+    a.mov(r9, value);
+  else
+  {
+    a.mov(rax, value);
+    size_t param_offset = 0x20 + ((i - 4) * 8);
+    a.mov(ptr(rsp, param_offset), rax);
+  }
+};
+
+/**
+ * 保存浮点数
+ */
+void push_r128(asmjit::x86::Assembler &a, auto *value, size_t i)
+{
+  using namespace asmjit;
+  using namespace asmjit::x86;
+
+  a.push(rax);
+  a.mov(rax, value);
+
+  if (i == 0)
+    a.movsd(xmm0, ptr(rax));
+  else if (i == 1)
+    a.movsd(xmm1, ptr(rax));
+  else if (i == 2)
+    a.movsd(xmm2, ptr(rax));
+  else if (i == 3)
+    a.movsd(xmm3, ptr(rax));
+  else
+  {
+    a.movsd(xmm0, ptr(rax));
+    size_t param_offset = 0x20 + ((i - 4) * 8);
+    a.movsd(ptr(rsp, param_offset), xmm0);
+  }
+  a.pop(rax);
+};
 
 nm_api(invoke)
 {
@@ -66,32 +103,83 @@ nm_api(invoke)
   using namespace asmjit::x86;
 
   nm_init_cal(1);
-  std::vector<CallbackContext *> vCC;
+
+  std::vector<CallbackContext *> v_cc; // 储存函数指针
+  auto v_cc_push = [&](const Napi::Value &jsVal) -> LPVOID
+  {
+    auto CC = new CallbackContext(env, jsVal.As<Napi::Function>(), ajanuw::createCallback(&cccccc, v_cc.size(), &v_cc));
+    v_cc.push_back(CC);
+    return CC->address;
+  };
+
+  std::vector<float> v_f; // 储存浮点数
+  auto v_f_push = [&](const Napi::Value &jsVal) -> float *
+  {
+    v_f.push_back(jsVal.ToNumber().FloatValue());
+    return v_f.data() + (v_f.size() - 1);
+  };
+
+  std::vector<double> v_d; // 储存双浮点数
+  auto v_d_push = [&](const Napi::Value &jsVal) -> double *
+  {
+    v_d.push_back(jsVal.ToNumber().DoubleValue());
+    return v_d.data() + (v_d.size() - 1);
+  };
+
+  std::vector<char>
+      v_str; // 储存utf-8字符串
+  auto v_str_push = [&](const Napi::Value &jsVal) -> char *
+  {
+    auto v = jsVal.ToString().Utf8Value();
+    auto offset = v_str.size();
+    std::copy(v.begin(), v.end(), std::back_inserter(v_str));
+    v_str.push_back('\0');
+    return v_str.data() + offset;
+  };
+
+  std::vector<wchar_t> v_wstr; // 储存宽字符串
+  auto v_wstr_push = [&](const Napi::Value &jsVal) -> wchar_t *
+  {
+    auto v = jsVal.ToString().Utf16Value();
+    auto offset = v_wstr.size();
+    std::wstring ws{v.begin(), v.end()};
+
+    std::copy(ws.begin(), ws.end(), std::back_inserter(v_wstr));
+    v_wstr.push_back('\0');
+
+    return v_wstr.data() + offset;
+  };
+
   auto o = nmi_o(0);
+
   HMODULE hModule = NULL;
   uint8_t *lpMethod = nullptr;
+  Napi::Array args = nmo_is_und("args", a, Napi::Array::New(env));
+  Napi::Array argsType;
   bool bWideChar = false;
-  std::string retType{"uintptr"}; // 函数返回的类型 "uintptr" | "int" | "int64" | "float" | "double"
 
-  if (o.Has("retType"))
-  {
-    retType = o.Get("retType").ToString().Utf8Value();
-  }
+  // 函数返回的类型 "uintptr" | "int" | "int64" | "float" | "double"
+  std::string retType = nmo_is_und("retType", s, "uintptr");
 
-  if (nmo_is("method", n))
+  // 传入的函数指针，而不是函数名
+  if (o.Get("method").IsNumber())
   {
     bWideChar = nmo_get("isWideChar", b);
     lpMethod = reinterpret_cast<uint8_t *>(nmo_get("method", ull));
   }
   else
   {
-    auto sMethod = nmo_get("method", s);
+    std::string sMethod = nmo_get("method", s);
 
+    // 猜测宽字符串
     bWideChar = ajanuw::sstr::endWith(sMethod, "W");
+
+    // 调用者明确了宽字符串
     auto js_isWideChar = o.Get("isWideChar");
     if (!nm_is_un(js_isWideChar))
       bWideChar = nm_b(js_isWideChar);
 
+    // 指定模块名
     if (o.Has("module"))
     {
       auto sModule = nmo_get("module", s);
@@ -127,24 +215,6 @@ nm_api(invoke)
     nm_retu;
   }
 
-  // args: number | pointer | string | function
-  Napi::Array args = nmo_is_und("args", a, Napi::Array::New(env));
-
-  // save strings
-  uint8_t *strMem = nullptr;
-  auto strSizeCount = getStringsCount(args, bWideChar);
-  size_t strMemOffset = 0;
-  if (strSizeCount)
-  {
-    strMem = (uint8_t *)ajanuw::Mem::alloc(strSizeCount);
-    if (!strMem)
-    {
-      nm_err("VirtualAlloc stringMem error.");
-      nm_retu;
-    }
-    ZeroMemory(strMem, strSizeCount);
-  }
-
   auto argsStackSize = max(args.Length() * sizeof(uintptr_t), Globals::kMaxPhysRegs);
 
   JitRuntime rt;
@@ -154,64 +224,98 @@ nm_api(invoke)
 
   a.push(rbp);
   a.mov(rbp, rsp);
-  a.sub(rsp, argsStackSize);
+  a.sub(rsp, argsStackSize); // 能够使用的堆栈空间
 
-  for (size_t i = 0, l = args.Length(); i < l; i++)
+  if (o.Has("argsType") && args.Length() > 0)
   {
-    Napi::Value it = args.Get(i);
-    uintptr_t value = NULL;
-    if (nm_is_fu(it))
+    argsType = o.Get("argsType").As<Napi::Array>();
+
+    // 如果给了 argsType 则要明确每个参数
+    if (argsType.Length() != args.Length())
     {
-      auto CC = new CallbackContext(env, it.As<Napi::Function>(), ajanuw::createCallback(&cccccc, vCC.size(), &vCC));
-      vCC.push_back(CC);
-      value = (uintptr_t)CC->address;
-    }
-    else if (nm_is_s(it))
-    {
-      auto text = it.ToString();
-      auto addr = strMem + strMemOffset;
-      value = (uintptr_t)addr;
-      if (bWideChar)
-      {
-        auto str = text.Utf16Value();
-        ajanuw::Mem::wUstr(addr, str);
-        strMemOffset += ajanuw::sstr::count(str) + sizeof(char16_t);
-      }
-      else
-      {
-        auto str = text.Utf8Value();
-        ajanuw::Mem::wStr(addr, str);
-        strMemOffset += str.length() + sizeof(char);
-      }
-    }
-    else
-    {
-      // other value to number
-      value = nm_ull(it);
+      nm_err("argsType length != args length");
+      nm_retu;
     }
 
-    if (i < 4)
+    int i = args.Length() - 1;
+    for (; i >= 0; i--)
     {
+      Napi::Value it = args.Get(i);
+      std::string itTyle = argsType.Get(i).ToString().Utf8Value();
+
+      if (itTyle == "int")
+        push_r64(a, it.ToNumber().Int32Value(), i);
+      else if (itTyle == "uint")
+        push_r64(a, it.ToNumber().Uint32Value(), i);
+      else if (itTyle == "int64")
+        push_r64(a, it.ToNumber().Int64Value(), i);
+      else if (itTyle == "uintptr")
+        push_r64(a, (uintptr_t)it.ToNumber().Int64Value(), i);
+      else if (itTyle == "float")
+        push_r128(a, v_f_push(it), i);
+      else if (itTyle == "double")
+        push_r128(a, v_d_push(it), i);
+      else if (itTyle == "str")
+        push_r64(a, v_str_push(it), i);
+      else if (itTyle == "wstr")
+        push_r64(a, v_wstr_push(it), i);
+      else if (itTyle == "fn")
+        push_r64(a, (uintptr_t)v_cc_push(it), i);
+    }
+  }
+  // 猜测
+  else
+  {
+    for (int i = args.Length() - 1; i >= 0; i--)
+    {
+      Napi::Value it = args.Get(i);
+      uintptr_t value = NULL;
+
+      // js函数 => 函数指针
+      if (nm_is_fu(it))
+        value = (uintptr_t)v_cc_push(it);
+      // js字符串 => 字符串指针
+      else if (nm_is_s(it))
+        value = bWideChar ? (uintptr_t)v_wstr_push(it)
+                          : (uintptr_t)v_str_push(it);
+      // 其它类型统一当作数字
+      else
+        value = nm_ull(it);
+
+      // 前四个整数或指针参数在 rcx、 rdx、 r8 和 r9 寄存器中传递。
+      // 前四个浮点参数在前四个 SSE 寄存器 xmm0-xmm3 中传递
       if (i == 0)
         a.mov(rcx, value);
-      if (i == 1)
+      else if (i == 1)
         a.mov(rdx, value);
-      if (i == 2)
+      else if (i == 2)
         a.mov(r8, value);
-      if (i == 3)
+      else if (i == 3)
         a.mov(r9, value);
-    }
-    else
-    {
-      a.mov(rax, value);
-      size_t param_offset = 0x20 + ((i - 4) * 8);
-      a.mov(ptr(rsp, param_offset), rax);
+
+      // 任何其他参数都在堆栈上传递
+      else
+      {
+        // value存入寄存器避免被截断
+        a.mov(rax, value);
+
+        // 0x20 = 32 避免被调用的函数覆盖, 调用方在堆栈上为传入寄存器的参数保留空间。 被调用的函数可以使用此空间将寄存器的内容溢出到堆栈
+        // 4 前4个参数被放在了寄存器
+        // 8 x64固定的指针大小
+        size_t param_offset = 0x20 + ((i - 4) * 8);
+
+        // 将value写入栈中
+        // mov [rsp + param_offset] rax
+        a.mov(ptr(rsp, param_offset), rax);
+      }
     }
   }
 
+  // 将函数指针放入寄存器，避免被截断
   a.mov(rax, lpMethod);
   a.call(rax);
 
+  // 释放堆栈
   a.add(rsp, argsStackSize);
   a.mov(rsp, rbp);
   a.pop(rbp);
@@ -250,10 +354,7 @@ nm_api(invoke)
 
   if (err)
   {
-    if (strMem)
-      ajanuw::Mem::free(strMem);
-
-    for (auto cc : vCC)
+    for (auto cc : v_cc)
     {
       ajanuw::Mem::free(cc->address);
       delete cc;
@@ -297,10 +398,7 @@ nm_api(invoke)
   }
   /* #endregion */
 
-  if (strMem)
-    ajanuw::Mem::free(strMem);
-
-  for (auto cc : vCC)
+  for (auto cc : v_cc)
   {
     ajanuw::Mem::free(cc->address);
     delete cc;

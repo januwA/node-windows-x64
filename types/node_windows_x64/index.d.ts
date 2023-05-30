@@ -42,6 +42,23 @@ export declare function invoke<T>(option: {
   isWideChar?: boolean;
 
   /**
+   * 默认会猜测args中每个参数的类型，但是不能分辨整数和浮点数
+   * 
+   * 使用 argsType 明确每个参数的类型
+   */
+  argsType?: (
+    | "int"
+    | "uint"
+    | "int64"
+    | "uintptr"
+    | "float"
+    | "double"
+    | "str"
+    | "wstr"
+    | "fn"
+  )[];
+
+  /**
    * 函数返回的类型, 默认 uintptr, 无符号整数就用 uintptr
    */
   retType?: "uintptr" | "int" | "int64" | "float" | "double";

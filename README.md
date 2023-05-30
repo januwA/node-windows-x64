@@ -110,6 +110,30 @@ if (t.pid && t.hProcess) {
 }
 ```
 
+## Parameter types and return value types
+```js
+nw.invoke({
+  method: 'dll1.fndll9',
+  args: [4.67, 10],
+  argsType: ['float', 'int'],
+  retType: 'int'
+});
+
+nw.invoke({
+  method: 'MessageBoxA',
+  args: [0, "content", "title", 1],
+  argsType: ['int', 'str', 'str', 'int'],
+  retType: 'int'
+});
+
+nw.invoke({
+  method: 'MessageBoxW',
+  args: [0, "content", "title", 1],
+  argsType: ['int', 'wstr', 'wstr', 'int'],
+  retType: 'int'
+});
+```
+
 
 
 > There are more examples under the "examples" file
