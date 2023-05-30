@@ -1,4 +1,3 @@
-#pragma warning(disable : 26451 26812 6328)
 #pragma once
 
 #include <ostream>

@@ -40,6 +40,11 @@ export declare function invoke<T>(option: {
    * invoke会自动检查method是否包含有W的后缀，如果包含则自动保存为wchar_t, 如果出现意外，将isWideChar设置为false
    */
   isWideChar?: boolean;
+
+  /**
+   * 函数返回的类型, 默认 uintptr, 无符号整数就用 uintptr
+   */
+  retType?: "uintptr" | "int" | "int64" | "float" | "double";
 }): T;
 
 export declare function test(...args: any[]): any;

@@ -1,20 +1,33 @@
 const { node_windows_x64: nw } = require("../");
 
-function findChildWindow(hWndParent) {
-  let hwinList = [];
+nw['LoadLibraryA']('C:\\Users\\16418\\Desktop\\dll1\\x64\\Release\\dll1.dll');
 
-  const res = nw['user32.EnumChildWindows'](hWndParent,
-    (hwnd, lParam) => {
-      console.log("EnumChildWindows:", hwnd, lParam);
-      hwinList.push(hwnd);
-      return true;
-    },
-    1);
+// int fndll2();
+console.log(nw.invoke({
+  method: 'dll1.fndll2',
+  retType: 'int'
+}));
 
-  console.log("res", res);
+// float fndll3();
+console.log(nw.invoke({
+  method: 'dll1.fndll3',
+  retType: 'float'
+}));
 
-  return hwinList;
-}
+// double fndll4();
+console.log(nw.invoke({
+  method: 'dll1.fndll4',
+  retType: 'double'
+}));
 
-const hwinList = findChildWindow(0x0003004a);
-console.log(hwinList);
+// INT64 fndll5();
+console.log(nw.invoke({
+  method: 'dll1.fndll5',
+  retType: 'int64'
+}));
+
+// short fndll6();
+console.log(nw.invoke({
+  method: 'dll1.fndll6',
+  retType: 'int'
+}));

@@ -167,25 +167,29 @@ nw.invoke({
 ```
 
 ## use dll
-```ts
-nw['LoadLibraryA']('C:\\Users\\ajanuw\\Desktop\\Dll1\\x64\\Release\\Dll1.dll');
-
-const r = nw['Dll1.hello']();
-console.log(r); // 100
+```js
+nw['LoadLibraryA']('dll1.dll');
+const r = nw['Dll1.fndll1'](1, "p2", (p3) => p3, 4, "p5", (p6) => p6);
+console.log(r);
 ```
 ```c++
-extern "C"
-{
-  int __declspec(dllexport) hello()
+extern "C" {
+  __declspec(dllexport) int fndll1(int p1, char* p2, int (*p3)(int), int p4, char* p5, int (*p6)(int))
   {
-    return 100;
+      printf("p1: %d\n", p1);
+      printf("p2: %s\n", p2);
+      printf("p3: %d\n", p3(3));
+      printf("p4: %d\n", p4);
+      printf("p5: %s\n", p5);
+      printf("p6: %d\n", p6(6));
+      return p1 + p4;
   }
 }
 ```
 
-处理浮点数
+## 处理浮点数
 ```ts
-nw["LoadLibraryA"]("C:\\Users\\ajanuw\\Desktop\\Dll1\\x64\\Release\\Dll1.dll");
+nw["LoadLibraryA"]("Dll1.dll");
 
 const pHello = nw.getAddress("Dll1.hello");
 
@@ -228,4 +232,40 @@ extern "C"
     return x + y;
   }
 }
+```
+
+
+## 返回值类型
+```js
+nw['LoadLibraryA']('dll1.dll');
+
+// int fndll2();
+console.log(nw.invoke({
+  method: 'dll1.fndll2',
+  retType: 'int'
+}));
+
+// float fndll3();
+console.log(nw.invoke({
+  method: 'dll1.fndll3',
+  retType: 'float'
+}));
+
+// double fndll4();
+console.log(nw.invoke({
+  method: 'dll1.fndll4',
+  retType: 'double'
+}));
+
+// INT64 fndll5();
+console.log(nw.invoke({
+  method: 'dll1.fndll5',
+  retType: 'int64'
+}));
+
+// short fndll6();
+console.log(nw.invoke({
+  method: 'dll1.fndll6',
+  retType: 'int'
+}));
 ```

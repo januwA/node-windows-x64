@@ -221,19 +221,19 @@ LPVOID ajanuw::createCallback(void *lpCallback, size_t vcc_index, void *vCC)
 
   a.push(rbp);
   a.mov(rbp, rsp); // 存栈指针
-  a.sub(rsp, 32); // 4个8字节大小
+  a.sub(rsp, 32);  // 4个8字节大小
 
-  a.mov(ptr(rsp), rcx); // 存第一个参数
-  a.mov(ptr(rsp, 8), rdx); // 存第二个参数
+  a.mov(ptr(rsp), rcx);      // 存第一个参数
+  a.mov(ptr(rsp, 8), rdx);   // 存第二个参数
   a.mov(ptr(rsp, 0x10), r8); // 存第三个参数
   a.mov(ptr(rsp, 0x18), r9); // 存第四个参数
 
   a.sub(rsp, 32); // 再来 4个8字节大小
 
-  a.mov(rcx, vCC);           // callback 列表
-  a.mov(rdx, imm(vcc_index));    // callback index
-  a.lea(r8, ptr(rsp, 32));   // 前4个参数指针 rsp + 32
-  a.lea(r9, ptr(rbp, 0x30)); // 之后的参数指针 rsp + 32 + 8(上面push的rpb) + 8(函数ret指针)
+  a.mov(rcx, vCC);            // callback 列表
+  a.mov(rdx, imm(vcc_index)); // callback index
+  a.lea(r8, ptr(rsp, 32));    // 前4个参数指针 rsp + 32
+  a.lea(r9, ptr(rbp, 0x30));  // 之后的参数指针 rsp + 32 + 8(上面push的rpb) + 8(函数ret指针)
   a.mov(rax, lpCallback);
   a.call(rax);
 
@@ -1011,7 +1011,7 @@ LRESULT ajanuw::Gui::Win32::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
   return r;
 }
 
-LRESULT ajanuw::Gui::Win32::OnReceiveMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT ajanuw::Gui::Win32::OnReceiveMessage(HWND, UINT, WPARAM, LPARAM)
 {
   return 0;
 }
@@ -1293,7 +1293,7 @@ BOOL ajanuw::Mem::VAManage::destroy()
   if (err)              \
     throw std::exception(std::format("AsmParser ERROR: {:08x} ({})", err, DebugUtils::errorAsString(err)).data());
 
-uintptr_t ajanuw::Asm::AAScript::aa(std::string_view asmString, uintptr_t rcx = 0)
+uintptr_t ajanuw::Asm::AAScript::aa(std::string_view asmString, uintptr_t rcx_ = 0)
 {
   asmjit::Error err;
   JitRuntime rt;
@@ -1308,7 +1308,7 @@ uintptr_t ajanuw::Asm::AAScript::aa(std::string_view asmString, uintptr_t rcx = 
   Func fn;
   EXCE_CODE(rt.add(&fn, &code));
 
-  uintptr_t r = fn(rcx);
+  uintptr_t r = fn(rcx_);
   EXCE_CODE(rt.release(fn));
 
   return r;

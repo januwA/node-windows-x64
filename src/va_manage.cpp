@@ -75,8 +75,8 @@ VAManage::~VAManage()
 nm_api(VAManage::read)
 {
   nm_init;
-  auto size = nmi_ull(0);
-  auto table = _Mybase::read(size);
+  auto size_ = nmi_ull(0);
+  auto table = _Mybase::read(size_);
   return span_to_array<uint8_t>(env, table);
 }
 

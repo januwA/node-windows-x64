@@ -4,7 +4,11 @@
 #include "_napi_macro.h"
 #include <asmjit/asmjit.h>
 
-extern "C" typedef uintptr_t (*asm_fun_t)();
+extern "C" typedef uintptr_t (*asm_fn_uintptr_t)();
+extern "C" typedef int (*asm_fn_int_t)();
+extern "C" typedef signed long long (*asm_fn_int64_t)();
+extern "C" typedef float (*asm_fn_float_t)();
+extern "C" typedef double (*asm_fn_double_t)();
 
 struct CallbackContext
 {
@@ -58,8 +62,6 @@ extern "C" uintptr_t cccccc(std::vector<CallbackContext *> *vect_cc, void *vcc_i
 
 nm_api(invoke)
 {
-  SetConsoleOutputCP(CP_UTF8);
-
   using namespace asmjit;
   using namespace asmjit::x86;
 
@@ -69,6 +71,12 @@ nm_api(invoke)
   HMODULE hModule = NULL;
   uint8_t *lpMethod = nullptr;
   bool bWideChar = false;
+  std::string retType{"uintptr"}; // 函数返回的类型 "uintptr" | "int" | "int64" | "float" | "double"
+
+  if (o.Has("retType"))
+  {
+    retType = o.Get("retType").ToString().Utf8Value();
+  }
 
   if (nmo_is("method", n))
   {
@@ -104,7 +112,9 @@ nm_api(invoke)
       try
       {
         lpMethod = (uint8_t *)ajanuw::CEAS::getAddress(sMethod);
-      } catch (const std::exception &e) {
+      }
+      catch (const std::exception &e)
+      {
         nm_err(e.what());
         nm_retu;
       }
@@ -118,7 +128,7 @@ nm_api(invoke)
   }
 
   // args: number | pointer | string | function
-  auto args = nmo_is_und("args", a, Napi::Array::New(env));
+  Napi::Array args = nmo_is_und("args", a, Napi::Array::New(env));
 
   // save strings
   uint8_t *strMem = nullptr;
@@ -148,7 +158,7 @@ nm_api(invoke)
 
   for (size_t i = 0, l = args.Length(); i < l; i++)
   {
-    auto it = args.Get(i);
+    Napi::Value it = args.Get(i);
     uintptr_t value = NULL;
     if (nm_is_fu(it))
     {
@@ -207,8 +217,37 @@ nm_api(invoke)
   a.pop(rbp);
   a.ret();
 
-  asm_fun_t fn;
-  auto err = rt.add(&fn, &code);
+  asmjit::Error err;
+
+  /* #region 对应函数返回类型 */
+  asm_fn_uintptr_t fn_uintptr;
+  asm_fn_int_t fn_int;
+  asm_fn_int64_t fn_int64;
+  asm_fn_float_t fn_float;
+  asm_fn_double_t fn_double;
+
+  if (retType == "int")
+  {
+    err = rt.add(&fn_int, &code);
+  }
+  else if (retType == "int64")
+  {
+    err = rt.add(&fn_int64, &code);
+  }
+  else if (retType == "float")
+  {
+    err = rt.add(&fn_float, &code);
+  }
+  else if (retType == "double")
+  {
+    err = rt.add(&fn_double, &code);
+  }
+  else
+  {
+    err = rt.add(&fn_uintptr, &code);
+  }
+  /* #endregion */
+
   if (err)
   {
     if (strMem)
@@ -222,9 +261,42 @@ nm_api(invoke)
     nm_err("asmjit error.");
     nm_retu;
   }
-  uintptr_t result = fn();
 
-  rt.release(fn);
+  Napi::Number result;
+
+  /* #region 对应函数返回类型 */
+  if (retType == "int")
+  {
+    int res = fn_int();
+    result = Napi::Number::New(env, res);
+    rt.release(fn_int);
+  }
+  else if (retType == "int64")
+  {
+    signed long long res = fn_int64();
+    result = Napi::Number::New(env, res);
+    rt.release(fn_int64);
+  }
+  else if (retType == "float")
+  {
+    float res = fn_float();
+    result = Napi::Number::New(env, res);
+    rt.release(fn_float);
+  }
+  else if (retType == "double")
+  {
+    double res = fn_double();
+    result = Napi::Number::New(env, res);
+    rt.release(fn_double);
+  }
+  else
+  {
+    uintptr_t res = fn_uintptr();
+    result = Napi::Number::New(env, res);
+    rt.release(fn_uintptr);
+  }
+  /* #endregion */
+
   if (strMem)
     ajanuw::Mem::free(strMem);
 
@@ -233,5 +305,6 @@ nm_api(invoke)
     ajanuw::Mem::free(cc->address);
     delete cc;
   }
-  nm_ret(result);
+
+  return result;
 }

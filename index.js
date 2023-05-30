@@ -7,6 +7,7 @@ exports.node_windows_x64 = new Proxy(node_windows_x64, {
       return target.invoke({
         method: key,
         args: args,
+        retType: 'uintptr',
       });
     };
   },

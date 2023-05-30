@@ -35,7 +35,7 @@ nm_api(createThread)
       0,      // Max queue size (0 = unlimited).
       1,      // Initial thread count
       ctx,    // Context,
-      [](const Napi::Env &env, void *finalizeData, TsfnContext *context)
+      [](const Napi::Env &, void *, TsfnContext *context)
       {
         CloseHandle(context->hThread);
         delete context;

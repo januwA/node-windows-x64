@@ -1,5 +1,7 @@
 #pragma once
-#include "Interpreter.h"
+#include <windows.h>
+#include <string>
+#include <map>
 
 namespace ces
 {

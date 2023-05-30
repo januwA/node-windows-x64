@@ -1,5 +1,3 @@
-#pragma warning(disable : 4100)
-
 #pragma once
 #include <iostream>
 #include <Windows.h>
@@ -73,22 +71,22 @@ public:
     auto result = Napi::Object::New(env);
 
     result.Set("enable", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info)
+                             env, [=](const Napi::CallbackInfo &)
                              { r->enable(); },
                              "enable"));
 
     result.Set("disable", Napi::Function::New(
-                              env, [=](const Napi::CallbackInfo &info)
+                              env, [=](const Napi::CallbackInfo &)
                               { r->disable(); },
                               "disable"));
 
     result.Set("toggle", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info)
+                             env, [=](const Napi::CallbackInfo &)
                              { r->toggle(); },
                              "toggle"));
 
     result.Set("delete", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info)
+                             env, [=](const Napi::CallbackInfo &)
                              { delete r; },
                              "delete"));
 
@@ -123,22 +121,22 @@ public:
     Napi::Object result = Napi::Object::New(env);
 
     result.Set("enable", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info)
+                             env, [=](const Napi::CallbackInfo&)
                              { r->enable(); },
                              "enable"));
 
     result.Set("disable", Napi::Function::New(
-                              env, [=](const Napi::CallbackInfo &info)
+                              env, [=](const Napi::CallbackInfo &)
                               { r->disable(); },
                               "disable"));
 
     result.Set("toggle", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info)
+                             env, [=](const Napi::CallbackInfo &)
                              { r->toggle(); },
                              "toggle"));
 
     result.Set("delete", Napi::Function::New(
-                             env, [=](const Napi::CallbackInfo &info)
+                             env, [=](const Napi::CallbackInfo &)
                              {
                                ajanuw::Mem::freeEx(hProcess, r->newmem);
                                delete r;

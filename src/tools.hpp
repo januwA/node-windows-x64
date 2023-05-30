@@ -1,6 +1,4 @@
 #pragma once
-#pragma warning(disable : 4996)
-
 #include <iostream>
 #include <Windows.h>
 #include <napi.h>
