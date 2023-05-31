@@ -14,6 +14,8 @@ export function writeStr(
   isWideChar?: boolean
 ): any;
 export function writeBytes(lpAddress: number | string, table: number[]): any;
+export function writeSmallInteger(lpAddress: number | string, smallInteger: number): any;
+export function writeInteger(lpAddress: number | string, integer: number): any;
 export function writeWord(lpAddress: number | string, word: number): any;
 export function writeDword(lpAddress: number | string, dword: number): any;
 export function writeQword(lpAddress: number | string, qword: number): any;
@@ -31,6 +33,8 @@ export function readStr(
   isWideChar?: boolean
 ): string;
 export function readBytes(lpAddress: number | string, size: number): number[];
+export function readSmallInteger(lpAddress: number | string): number;
+export function readInteger(lpAddress: number | string): number;
 export function readWord(lpAddress: number | string): number;
 export function readDword(lpAddress: number | string): number;
 export function readQword(lpAddress: number | string): number;
@@ -66,6 +70,16 @@ export function writeBytesEx(
   hProcess: number,
   lpAddress: number | string,
   table: number[]
+): any;
+export function writeSmallIntegerEx(
+  hProcess: number,
+  lpAddress: number | string,
+  smallInteger: number
+): any;
+export function writeIntegerEx(
+  hProcess: number,
+  lpAddress: number | string,
+  integer: number
 ): any;
 export function writeWordEx(
   hProcess: number,
@@ -110,6 +124,14 @@ export function readBytesEx(
   lpAddress: number | string,
   size: number
 ): number[];
+export function readSmallIntegerEx(
+  hProcess: number,
+  lpAddress: number | string
+): number;
+export function readIntegerEx(
+  hProcess: number,
+  lpAddress: number | string
+): number;
 export function readWordEx(
   hProcess: number,
   lpAddress: number | string

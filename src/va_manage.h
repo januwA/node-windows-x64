@@ -23,6 +23,8 @@ public:
 
   nm_api(read);
   nm_api(readByte);
+  nm_api(readSmallInteger);
+  nm_api(readInteger);
   nm_api(readWord);
   nm_api(readDword);
   nm_api(readQword);
@@ -33,6 +35,8 @@ public:
 
   nm_api(write);
   nm_api(writeByte);
+  nm_api(writeSmallInteger);
+  nm_api(writeInteger);
   nm_api(writeWord);
   nm_api(writeDword);
   nm_api(writeQword);

@@ -144,3 +144,37 @@ nw.getAddress(` (1 + 2) * 3 `);  // 9
 
 nw.getAddress(` "2 * 2" + 1  `) // 5
 ```
+
+## 有符号位整数
+```js
+nw.readSmallInteger
+nw.readSmallIntegerEx
+
+nw.readInteger
+nw.readIntegerEx
+
+nw.writeSmallInteger
+nw.writeSmallIntegerEx
+
+nw.writeInteger
+nw.writeIntegerEx
+```
+
+```js
+const newmem = nw.alloc(1024)
+
+nw.writeInteger(newmem, -10);
+nw.writeInteger(newmem + 4, -20); // 4 bytes
+
+nw.writeSmallInteger(newmem + 8, -30);
+nw.writeSmallInteger(newmem + 10, -40); // 2 bytes
+
+
+l(nw.readInteger(newmem)); // -10
+l(nw.readInteger(newmem + 4)); // -20
+
+l(nw.readSmallInteger(newmem + 8)); // -30
+l(nw.readSmallInteger(newmem + 10)); // -40
+
+nw.free(newmem);
+```

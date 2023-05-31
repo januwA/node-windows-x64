@@ -26,6 +26,9 @@ export class VAManage {
 
   read(size: number): number;
   readByte(): number;
+  readSmallInteger(): number;
+  readInteger(): number;
+  readWord(): number;
   readWord(): number;
   readDword(): number;
   readQword(): number;
@@ -36,6 +39,8 @@ export class VAManage {
 
   write(table: number[], count?: number): any;
   writeByte(byte: number): any;
+  writeSmallInteger(smallInteger: number): any;
+  writeInteger(integer: number): any;
   writeWord(word: number): any;
   writeDword(dword: number): any;
   writeQword(qword: number): any;

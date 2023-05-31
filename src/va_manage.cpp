@@ -11,6 +11,8 @@ Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
 
                                         InstanceMethod<&VAManage::read>("read"),
                                         InstanceMethod<&VAManage::readByte>("readByte"),
+                                        InstanceMethod<&VAManage::readSmallInteger>("readSmallInteger"),
+                                        InstanceMethod<&VAManage::readInteger>("readInteger"),
                                         InstanceMethod<&VAManage::readWord>("readWord"),
                                         InstanceMethod<&VAManage::readDword>("readDword"),
                                         InstanceMethod<&VAManage::readQword>("readQword"),
@@ -21,6 +23,8 @@ Napi::Object VAManage::Init(Napi::Env env, Napi::Object exports)
 
                                         InstanceMethod<&VAManage::write>("write"),
                                         InstanceMethod<&VAManage::writeByte>("writeByte"),
+                                        InstanceMethod<&VAManage::writeSmallInteger>("writeSmallInteger"),
+                                        InstanceMethod<&VAManage::writeInteger>("writeInteger"),
                                         InstanceMethod<&VAManage::writeWord>("writeWord"),
                                         InstanceMethod<&VAManage::writeDword>("writeDword"),
                                         InstanceMethod<&VAManage::writeQword>("writeQword"),
@@ -89,6 +93,16 @@ nm_api(VAManage::readByte)
   WRITE_TYPE_FORM(Byte);
 }
 
+nm_api(VAManage::readSmallInteger)
+{
+  WRITE_TYPE_FORM(SmallInteger);
+}
+
+nm_api(VAManage::readInteger)
+{
+  WRITE_TYPE_FORM(Integer);
+}
+
 nm_api(VAManage::readWord)
 {
   WRITE_TYPE_FORM(Word);
@@ -143,6 +157,20 @@ nm_api(VAManage::writeByte)
 {
   nm_init_cal(1);
   _Mybase::writeByte(nmi_ui(0));
+  nm_retu;
+}
+
+nm_api(VAManage::writeSmallInteger)
+{
+  nm_init_cal(1);
+  _Mybase::writeSmallInteger(nmi_ui(0));
+  nm_retu;
+}
+
+nm_api(VAManage::writeInteger)
+{
+  nm_init_cal(1);
+  _Mybase::writeInteger(nmi_ui(0));
   nm_retu;
 }
 

@@ -63,3 +63,28 @@ assert(mem.ptr === (mem.memory + mem.position) )
 
 mem.destroy();
 ```
+
+## 有符号位整数
+```js
+const l = console.log;
+const m = new nw.VAManage(100);
+
+m.writeInteger(-10);
+m.writeInteger(-20);
+m.writeSmallInteger(-30);
+m.writeSmallInteger(-40);
+
+m.position = 0;
+l(m.readInteger()) // -10
+
+m.position += 4;
+l(m.readInteger()) // -20
+
+m.position += 4;
+l(m.readSmallInteger()) // -30
+
+m.position += 2;
+l(m.readSmallInteger()) // -40
+
+m.destroy();
+```

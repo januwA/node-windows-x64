@@ -67,6 +67,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   __EXPORT("free", memFree);
   __EXPORT("writeStr", memWriteStr);
   __EXPORT("writeBytes", memWriteBytes);
+  __EXPORT("writeSmallInteger", memWriteSmallInteger);
+  __EXPORT("writeInteger", memWriteInteger);
   __EXPORT("writeWord", memWriteWord);
   __EXPORT("writeDword", memWriteDword);
   __EXPORT("writeQword", memWriteQword);
@@ -78,6 +80,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
   __EXPORT("freeEx", memFreeEx);
   __EXPORT("writeStrEx", memWriteStrEx);
   __EXPORT("writeBytesEx", memWriteBytesEx);
+  __EXPORT("writeSmallIntegerEx", memWriteSmallIntegerEx);
+  __EXPORT("writeIntegerEx", memWriteIntegerEx);
   __EXPORT("writeWordEx", memWriteWordEx);
   __EXPORT("writeDwordEx", memWriteDwordEx);
   __EXPORT("writeQwordEx", memWriteQwordEx);
@@ -87,6 +91,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
 
   __EXPORT("readStr", memReadStr);
   __EXPORT("readBytes", memReadBytes);
+  __EXPORT("readSmallInteger", memReadSmallInteger);
+  __EXPORT("readInteger", memReadInteger);
   __EXPORT("readWord", memReadWord);
   __EXPORT("readDword", memReadDword);
   __EXPORT("readQword", memReadQword);
@@ -98,6 +104,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
 
   __EXPORT("readStrEx", memReadStrEx);
   __EXPORT("readBytesEx", memReadBytesEx);
+  __EXPORT("readSmallIntegerEx", memReadSmallIntegerEx);
+  __EXPORT("readIntegerEx", memReadIntegerEx);
   __EXPORT("readWordEx", memReadWordEx);
   __EXPORT("readDwordEx", memReadDwordEx);
   __EXPORT("readQwordEx", memReadQwordEx);

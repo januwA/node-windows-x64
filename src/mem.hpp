@@ -167,6 +167,48 @@ nm_api(memWriteWord)
   nm_retbt;
 }
 
+nm_api(memWriteSmallInteger)
+{
+  nm_init_cal(2);
+  if (nmi_is_s(0))
+    ajanuw::Mem::wSmallInteger(nmi_s(0), (int16_t)nmi_i(0));
+  else
+    ajanuw::Mem::wSmallInteger((void *)nmi_ull(0), (int16_t)nmi_i(1));
+  nm_retbt;
+}
+
+nm_api(memWriteInteger)
+{
+  nm_init_cal(2);
+  if (nmi_is_s(0))
+    ajanuw::Mem::wInteger(nmi_s(0), nmi_i(0));
+  else
+    ajanuw::Mem::wInteger((void *)nmi_ull(0), nmi_i(1));
+  nm_retbt;
+}
+
+nm_api(memWriteSmallIntegerEx)
+{
+  nm_init_cal(3);
+  EX_PROCESS;
+  if (nmi_is_s(1))
+    ajanuw::Mem::wSmallIntegerEx(hProcess, nmi_s(1), (int16_t)nmi_i(2));
+  else
+    ajanuw::Mem::wSmallIntegerEx(hProcess, (void *)nmi_ull(1), (int16_t)nmi_i(2));
+  nm_retbt;
+}
+
+nm_api(memWriteIntegerEx)
+{
+  nm_init_cal(3);
+  EX_PROCESS;
+  if (nmi_is_s(1))
+    ajanuw::Mem::wIntegerEx(hProcess, nmi_s(1), nmi_i(2));
+  else
+    ajanuw::Mem::wIntegerEx(hProcess, (void *)nmi_ull(1), nmi_i(2));
+  nm_retbt;
+}
+
 nm_api(memWriteWordEx)
 {
   nm_init_cal(3);
@@ -363,6 +405,24 @@ nm_api(memReadBytesEx)
   return span_to_array<uint8_t>(env, result);
 }
 
+nm_api(memReadSmallInteger)
+{
+  nm_init_cal(1);
+  if (nmi_is_s(0))
+    nm_ret(ajanuw::Mem::rSmallInteger(nmi_s(0)));
+  else
+    nm_ret(ajanuw::Mem::rSmallInteger((void *)nmi_ull(0)));
+}
+
+nm_api(memReadInteger)
+{
+  nm_init_cal(1);
+  if (nmi_is_s(0))
+    nm_ret(ajanuw::Mem::rInteger(nmi_s(0)));
+  else
+    nm_ret(ajanuw::Mem::rInteger((void *)nmi_ull(0)));
+}
+
 nm_api(memReadWord)
 {
   nm_init_cal(1);
@@ -371,6 +431,27 @@ nm_api(memReadWord)
   else
     nm_ret(ajanuw::Mem::rWord((void *)nmi_ull(0)));
 }
+
+nm_api(memReadSmallIntegerEx)
+{
+  nm_init_cal(2);
+  EX_PROCESS;
+  if (nmi_is_s(1))
+    nm_ret(ajanuw::Mem::rSmallIntegerEx(hProcess, nmi_s(1)));
+  else
+    nm_ret(ajanuw::Mem::rSmallIntegerEx(hProcess, (void *)nmi_ull(1)));
+}
+
+nm_api(memReadIntegerEx)
+{
+  nm_init_cal(2);
+  EX_PROCESS;
+  if (nmi_is_s(1))
+    nm_ret(ajanuw::Mem::rIntegerEx(hProcess, nmi_s(1)));
+  else
+    nm_ret(ajanuw::Mem::rIntegerEx(hProcess, (void *)nmi_ull(1)));
+}
+
 nm_api(memReadWordEx)
 {
   nm_init_cal(2);

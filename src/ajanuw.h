@@ -55,17 +55,17 @@ namespace ajanuw
     std::u16string ustrFormMemEx(HANDLE hProcess, void *src, size_t max);
 
     /*
-    * ajanuw::SSString::startWith("123", "12")   -> true
-    * ajanuw::SSString::startWith("123", "2")    -> false
-    * ajanuw::SSString::startWith("123", "2", 1) -> true
-    */
+     * ajanuw::SSString::startWith("123", "12")   -> true
+     * ajanuw::SSString::startWith("123", "2")    -> false
+     * ajanuw::SSString::startWith("123", "2", 1) -> true
+     */
     bool startWith(std::string_view str, std::string_view s2, size_t index = 0);
 
     /*
-    * ajanuw::SSString::endWith("123", "23")     -> true
-    * ajanuw::SSString::endWith("123", "2")      -> false
-    * ajanuw::SSString::endWith("12333", "2", 2) -> true
-    */
+     * ajanuw::SSString::endWith("123", "23")     -> true
+     * ajanuw::SSString::endWith("123", "2")      -> false
+     * ajanuw::SSString::endWith("12333", "2", 2) -> true
+     */
     bool endWith(std::string_view str, const char *s2);
     bool endWith(std::string_view, const char *s2, size_t length);
 
@@ -73,70 +73,70 @@ namespace ajanuw
     bool search(std::wstring_view str, const std::regex &reg);
 
     /*
-    * ajanuw::SSString::trim("  abc  ")      -> "abc"
-    * ajanuw::SSString::trimStart("  abc  ") -> "abc  "
-    * ajanuw::SSString::trimEnd("  abc  ")   -> "  abc"
-    */
+     * ajanuw::SSString::trim("  abc  ")      -> "abc"
+     * ajanuw::SSString::trimStart("  abc  ") -> "abc  "
+     * ajanuw::SSString::trimEnd("  abc  ")   -> "  abc"
+     */
     std::string trim(std::string_view str);
     std::string trimStart(std::string_view str);
     std::string trimEnd(std::string_view str);
 
     /*
-    * ajanuw::SSString::split("a,b-c", std::regex("[,\\-]")) -> ["a", "b", "c"]
-    */
+     * ajanuw::SSString::split("a,b-c", std::regex("[,\\-]")) -> ["a", "b", "c"]
+     */
     std::vector<std::string> split(const std::string &str, const std::regex &reg);
 
     /*
-    * ajanuw::SSString::toBytes("00 01 02") -> [1,2,3]
-    */
+     * ajanuw::SSString::toBytes("00 01 02") -> [1,2,3]
+     */
     std::vector<uint8_t> toBytes(std::string_view byteStr);
 
     /*
-    * ajanuw::SSString::cmp("abc", "abc") -> true
-    * ajanuw::SSString::cmp("abc", "abx") -> false
-    */
+     * ajanuw::SSString::cmp("abc", "abc") -> true
+     * ajanuw::SSString::cmp("abc", "abx") -> false
+     */
     BOOL cmp(std::string_view s1, std::string_view s2);
     BOOL cmp(std::wstring_view s1, std::wstring_view s2);
     BOOL cmp(std::u16string_view s1, std::u16string_view s2);
 
     /*
-    * ajanuw::SSString::icmp("abc", "ABc")   -> true
-    * ajanuw::SSString::icmp("abc", "ABx")   -> false
-    * ajanuw::SSString::icmp(L"abc", L"ABc") -> true
-    * ajanuw::SSString::icmp(L"abc", L"ABx") -> false
-    */
+     * ajanuw::SSString::icmp("abc", "ABc")   -> true
+     * ajanuw::SSString::icmp("abc", "ABx")   -> false
+     * ajanuw::SSString::icmp(L"abc", L"ABc") -> true
+     * ajanuw::SSString::icmp(L"abc", L"ABx") -> false
+     */
     BOOL icmp(std::string_view s1, std::string_view s2);
     BOOL icmp(std::wstring_view s1, std::wstring_view s2);
     BOOL icmp(std::u16string_view s1, std::u16string_view s2);
 
     /*
-    * ignore \0
-    * ajanuw::SSString::len("abc")  -> 3
-    * ajanuw::SSString::len(L"abc") -> 3
-    */
+     * ignore \0
+     * ajanuw::SSString::len("abc")  -> 3
+     * ajanuw::SSString::len(L"abc") -> 3
+     */
     size_t len(std::string_view str);
     size_t len(std::wstring_view str);
     size_t len(std::u16string_view str);
 
     /*
-    * ignore \0
-    * ajanuw::SSString::count("abc")  -> 3
-    * ajanuw::SSString::count(L"abc") -> 6
-    */
+     * ignore \0
+     * ajanuw::SSString::count("abc")  -> 3
+     * ajanuw::SSString::count(L"abc") -> 6
+     */
     size_t count(std::string_view str);
     size_t count(std::wstring_view str);
     size_t count(std::u16string_view str);
 
     /*
-    * ajanuw::SSString::strFormNumber(255)       -> "255"
-    * ajanuw::SSString::strFormNumber(255, true) -> "ff"
-    */
+     * ajanuw::SSString::strFormNumber(255)       -> "255"
+     * ajanuw::SSString::strFormNumber(255, true) -> "ff"
+     */
     std::string formHex(size_t _hex);
 
     /*
-    * ajanuw::SSString::tolower("ABC") -> "abc"
-    * ajanuw::SSString::toupper("abc") -> "ABC"
-    */
+     * ajanuw::SSString::tolower("ABC") -> "abc"
+     * ajanuw::SSString::toupper("abc") -> "ABC"
+     */
     std::string tolower(std::string_view s);
     std::string toupper(std::string_view s);
 
@@ -144,21 +144,21 @@ namespace ajanuw
     std::wstring toupper(std::wstring_view s);
 
     /*
-    * ajanuw::SSString::padStart("abc", 5, "^") -> "^^abc"
-    * ajanuw::SSString::padEnd("abc", 5, "^")   -> "abc^^"
-    */
+     * ajanuw::SSString::padStart("abc", 5, "^") -> "^^abc"
+     * ajanuw::SSString::padEnd("abc", 5, "^")   -> "abc^^"
+     */
     std::string pad(std::string_view str, size_t size, std::string_view padStr, bool isStart);
     std::string padStart(std::string_view str, size_t size, std::string_view padStr);
     std::string padEnd(std::string_view str, size_t size, std::string_view padStr);
 
     /*
-    * ajanuw::SSString::repeat("abc", 3) -> "abcabcabc"
-    */
+     * ajanuw::SSString::repeat("abc", 3) -> "abcabcabc"
+     */
     std::string repeat(std::string_view str, size_t len);
 
     /*
-    * join<MyStruct*>(vct, "--", [](MyStruct* item) { return item->name; })
-    */
+     * join<MyStruct*>(vct, "--", [](MyStruct* item) { return item->name; })
+     */
     std::string join(const std::vector<std::string> &v, std::string_view p);
 
     template <class T>
@@ -192,9 +192,11 @@ namespace ajanuw
     void wWstr(std::string_view ceas, std::wstring_view str);
     void wUstr(std::string_view ceas, std::u16string_view str);
 
-    void wByte(void *addr, uint8_t byte);
     void wBytes(void *addr, const std::span<uint8_t> &bytes, intptr_t max = -1);
-    void wWord(void *addr, WORD value);
+    void wByte(void *addr, uint8_t byte);
+    void wSmallInteger(void *addr, int16_t value);
+    void wInteger(void *addr, int32_t value);
+    void wWord(void *addr, uint16_t value);
     void wDword(void *addr, uint32_t value);
     void wQword(void *addr, uint64_t value);
     void wFloat(void *addr, float value);
@@ -203,6 +205,8 @@ namespace ajanuw
 
     void wByte(std::string_view ceas, uint8_t byte);
     void wBytes(std::string_view ceas, const std::span<uint8_t> &bytes, intptr_t max = -1);
+    void wSmallInteger(std::string_view ceas, int16_t value);
+    void wInteger(std::string_view ceas, int32_t value);
     void wWord(std::string_view ceas, uint16_t value);
     void wDword(std::string_view ceas, uint32_t value);
     void wQword(std::string_view ceas, uint64_t value);
@@ -221,6 +225,8 @@ namespace ajanuw
 
     void wByteEx(HANDLE hProcess, void *addr, uint8_t byte);
     void wBytesEx(HANDLE hProcess, void *addr, const std::span<uint8_t> &bytes, intptr_t max = -1);
+    void wSmallIntegerEx(HANDLE hProcess, void *addr, int16_t value);
+    void wIntegerEx(HANDLE hProcess, void *addr, int32_t value);
     void wWordEx(HANDLE hProcess, void *addr, uint16_t value);
     void wDwordEx(HANDLE hProcess, void *addr, uint32_t value);
     void wQwordEx(HANDLE hProcess, void *addr, uint64_t value);
@@ -230,6 +236,8 @@ namespace ajanuw
 
     void wByteEx(HANDLE hProcess, std::string_view ceas, uint8_t byte);
     void wBytesEx(HANDLE hProcess, std::string_view ceas, std::span<uint8_t> bytes, intptr_t max = -1);
+    void wSmallIntegerEx(HANDLE hProcess, std::string_view ceas, int16_t value);
+    void wIntegerEx(HANDLE hProcess, std::string_view ceas, int32_t value);
     void wWordEx(HANDLE hProcess, std::string_view ceas, uint16_t value);
     void wDwordEx(HANDLE hProcess, std::string_view ceas, uint32_t value);
     void wQwordEx(HANDLE hProcess, std::string_view ceas, uint64_t value);
@@ -247,6 +255,8 @@ namespace ajanuw
     std::u16string rUstr(std::string_view ceas, size_t max);
 
     std::vector<uint8_t> rBytes(void *addr, size_t size);
+    int16_t rSmallInteger(void *addr);
+    int32_t rInteger(void *addr);
     uint8_t rByte(void *addr);
     uint16_t rWord(void *addr);
     uint32_t rDword(void *addr);
@@ -258,6 +268,8 @@ namespace ajanuw
     void rRegionFromFile(std::string_view fileame, void *addr, size_t *fileSize);
 
     std::vector<uint8_t> rBytes(std::string_view ceas, size_t size);
+    int16_t rSmallInteger(std::string_view ceas);
+    int32_t rInteger(std::string_view ceas);
     uint8_t rByte(std::string_view ceas);
     uint16_t rWord(std::string_view ceas);
     uint32_t rDword(std::string_view ceas);
@@ -279,6 +291,8 @@ namespace ajanuw
 
     std::vector<uint8_t> rBytesEx(HANDLE hProcess, void *addr, size_t size);
     uint8_t rByteEx(HANDLE hProcess, void *addr);
+    int16_t rSmallIntegerEx(HANDLE hProcess, void *addr);
+    int32_t rIntegerEx(HANDLE hProcess, void *addr);
     uint16_t rWordEx(HANDLE hProcess, void *addr);
     uint32_t rDwordEx(HANDLE hProcess, void *addr);
     uint64_t rQwordEx(HANDLE hProcess, void *addr);
@@ -290,6 +304,8 @@ namespace ajanuw
 
     std::vector<uint8_t> rBytesEx(HANDLE hProcess, std::string_view ceas, size_t size);
     uint8_t rByteEx(HANDLE hProcess, std::string_view ceas);
+    int16_t rSmallIntegerEx(HANDLE hProcess, std::string_view ceas);
+    int32_t rIntegerEx(HANDLE hProcess, std::string_view ceas);
     uint16_t rWordEx(HANDLE hProcess, std::string_view ceas);
     uint32_t rDwordEx(HANDLE hProcess, std::string_view ceas);
     uint64_t rQwordEx(HANDLE hProcess, std::string_view ceas);
@@ -311,13 +327,16 @@ namespace ajanuw
       ~VAManage(){};
 
       // memory +  position
-      uint8_t *ptr() const {
+      uint8_t *ptr() const
+      {
         return (uint8_t *)memory + position;
       }
 
       // read bytes
       std::vector<uint8_t> read(size_t size);
       uint8_t readByte();
+      int16_t readSmallInteger();
+      int32_t readInteger();
       uint16_t readWord();
       uint32_t readDword();
       uint64_t readQword();
@@ -330,6 +349,8 @@ namespace ajanuw
       // write bytes
       void write(const std::span<uint8_t> &table, intptr_t max = -1);
       void writeByte(uint8_t v);
+      void writeSmallInteger(int16_t v);
+      void writeInteger(int32_t v);
       void writeWord(uint16_t v);
       void writeDword(uint32_t v);
       void writeQword(uintptr_t v);
