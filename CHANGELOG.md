@@ -1,3 +1,8 @@
+## 0.0.13 [2023-5-31]
+
+- feat: Support integer memory read and write
+- feat: Callback function signature
+
 ## 0.0.12 [2023-5-30]
 
 - feat: Set the return value type of the invoke function

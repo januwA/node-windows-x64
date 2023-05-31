@@ -26,6 +26,12 @@ namespace ajanuw
 {
   LPVOID createCallback(void *lpCallback, size_t index, void *vCC);
 
+  int parseFnHeader(std::string_view, std::vector<std::string> *, std::string *);
+
+  char *strCachePush(std::vector<char> &, std::string_view);
+
+  wchar_t *wstrCachePush(std::vector<wchar_t> &, std::u16string_view);
+
   namespace sstr
   {
     char *setLocale(int _Category = LC_ALL, const char *_Locale = "chs");

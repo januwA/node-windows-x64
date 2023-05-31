@@ -12,37 +12,315 @@ extern "C" typedef double (*asm_fn_double_t)();
 
 struct CallbackContext
 {
-  CallbackContext(const Napi::Env &env, const Napi::Function &cb, const LPVOID &address)
-      : cb(cb), env(env), address(address){};
+  CallbackContext(
+      const Napi::Env &env,
+      const Napi::Function &cb,
+      LPVOID address,
+      std::vector<std::string> args,
+      std::string ret)
+      : cb(cb), env(env), address(address), _args(args), _ret(ret){};
   Napi::Function cb;
   Napi::Env env;
   LPVOID address;
-  int64_t call(uintptr_t *lpRcx, uintptr_t *lpP5)
+
+  std::vector<std::string> _args;
+  std::string _ret;
+  std::vector<char> _v_str;     // 储存utf-8字符串
+  std::vector<wchar_t> _v_wstr; // 储存宽字符串
+
+  Napi::Number call(uintptr_t *lpRcx, uintptr_t *lpP5)
   {
-    uintptr_t *rcx = (lpRcx + 0);
-    uintptr_t *rdx = (lpRcx + 1);
-    uintptr_t *r8 = (lpRcx + 2);
-    uintptr_t *r9 = (lpRcx + 3);
+    auto xmm0Ptr = (lpRcx + 4);
+    std::vector<napi_value> jsFuncArgs{};
 
-    std::vector<napi_value> args{
-        Napi::Number::New(env, *rcx),
-        Napi::Number::New(env, *rdx),
-        Napi::Number::New(env, *r8),
-        Napi::Number::New(env, *r9),
+    // 空参数，无法猜测浮点参数返回指针
+    if (_args.empty())
+    {
+      uintptr_t *rcx = (lpRcx + 0);
+      uintptr_t *rdx = (lpRcx + 1);
+      uintptr_t *r8 = (lpRcx + 2);
+      uintptr_t *r9 = (lpRcx + 3);
+      jsFuncArgs.push_back(Napi::Number::New(env, *rcx));
+      jsFuncArgs.push_back(Napi::Number::New(env, *rdx));
+      jsFuncArgs.push_back(Napi::Number::New(env, *r8));
+      jsFuncArgs.push_back(Napi::Number::New(env, *r9));
 
-        // 第五个参数返回其他参数指针，需要自己做指针运算读数据,如:
-        // readDword(lpP5)
-        // readStr(readPointer(lpP5+8)) x64指针大小为8字节
-        Napi::Number::New(env, (uintptr_t)lpP5),
-    };
+      jsFuncArgs.push_back(Napi::Number::New(env, (uintptr_t)lpRcx));   // 整数和指针
+      jsFuncArgs.push_back(Napi::Number::New(env, (uintptr_t)xmm0Ptr)); // 浮点参数指针
+      jsFuncArgs.push_back(Napi::Number::New(env, (uintptr_t)lpP5));    // 堆栈上的参数指针
+    }
+    else
+    {
+      for (size_t i = 0; i < _args.size(); i++)
+      {
+        auto argtype = _args.at(i);
 
-    return cb.Call(args).ToNumber().Int64Value();
+        if (argtype == "int")
+        {
+          if (i == 0)
+          {
+            auto v = *(int *)(lpRcx + 0);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 1)
+          {
+            auto v = *(int *)(lpRcx + 1);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 2)
+          {
+            auto v = *(int *)(lpRcx + 2);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 3)
+          {
+            auto v = *(int *)(lpRcx + 3);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else
+          {
+            auto v = *(int *)(lpP5 + (i - 4));
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+        }
+        else if (argtype == "uint")
+        {
+          if (i == 0)
+          {
+            auto v = *(uint32_t *)(lpRcx + 0);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 1)
+          {
+            auto v = *(uint32_t *)(lpRcx + 1);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 2)
+          {
+            auto v = *(uint32_t *)(lpRcx + 2);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 3)
+          {
+            auto v = *(uint32_t *)(lpRcx + 3);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else
+          {
+            auto v = *(uint32_t *)(lpP5 + (i - 4));
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+        }
+        else if (argtype == "int64")
+        {
+          if (i == 0)
+          {
+            auto v = *(int64_t *)(lpRcx + 0);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 1)
+          {
+            auto v = *(int64_t *)(lpRcx + 1);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 2)
+          {
+            auto v = *(int64_t *)(lpRcx + 2);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 3)
+          {
+            auto v = *(int64_t *)(lpRcx + 3);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else
+          {
+            auto v = *(int64_t *)(lpP5 + (i - 4));
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+        }
+        else if (argtype == "float")
+        {
+          if (i == 0)
+          {
+            auto v = *(float *)(xmm0Ptr + 0);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 1)
+          {
+            auto v = *(float *)(xmm0Ptr + 1);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 2)
+          {
+            auto v = *(float *)(xmm0Ptr + 2);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 3)
+          {
+            auto v = *(float *)(xmm0Ptr + 3);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else
+          {
+            auto v = *(float *)(lpP5 + (i - 4));
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+        }
+        else if (argtype == "double")
+        {
+          if (i == 0)
+          {
+            auto v = *(double *)(xmm0Ptr + 0);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 1)
+          {
+            auto v = *(double *)(xmm0Ptr + 1);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 2)
+          {
+            auto v = *(double *)(xmm0Ptr + 2);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 3)
+          {
+            auto v = *(double *)(xmm0Ptr + 3);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else
+          {
+            auto v = *(double *)(lpP5 + (i - 4));
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+        }
+        else if (argtype == "str")
+        {
+          char *v;
+          if (i == 0)
+          {
+            v = (char *)*(lpRcx + 0);
+          }
+          else if (i == 1)
+          {
+            v = (char *)*(lpRcx + 1);
+          }
+          else if (i == 2)
+          {
+            v = (char *)*(lpRcx + 2);
+          }
+          else if (i == 3)
+          {
+            v = (char *)*(lpRcx + 3);
+          }
+          else
+          {
+            v = (char *)*(lpP5 + (i - 4));
+          }
+          jsFuncArgs.push_back(Napi::String::New(env, v));
+        }
+        else if (argtype == "wstr")
+        {
+          wchar_t *v;
+          if (i == 0)
+          {
+            v = (wchar_t *)*(lpRcx + 0);
+          }
+          else if (i == 1)
+          {
+            v = (wchar_t *)*(lpRcx + 1);
+          }
+          else if (i == 2)
+          {
+            v = (wchar_t *)*(lpRcx + 2);
+          }
+          else if (i == 3)
+          {
+            v = (wchar_t *)*(lpRcx + 3);
+          }
+          else
+          {
+            v = (wchar_t *)*(lpP5 + (i - 4));
+          }
+          jsFuncArgs.push_back(Napi::String::New(env, ajanuw::sstr::wstrToStr(std::wstring{v})));
+        }
+        else
+        {
+          if (i == 0)
+          {
+            auto v = *(lpRcx + 0);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 1)
+          {
+            auto v = *(lpRcx + 1);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 2)
+          {
+            auto v = *(lpRcx + 2);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else if (i == 3)
+          {
+            auto v = *(lpRcx + 3);
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+          else
+          {
+            auto v = *(lpP5 + (i - 4));
+            jsFuncArgs.push_back(Napi::Number::New(env, v));
+          }
+        }
+      }
+    }
+
+    if (_ret == "str")
+    {
+      auto str_ptr = ajanuw::strCachePush(_v_str, cb.Call(jsFuncArgs).ToString().Utf8Value());
+      return Napi::Number::New(env, (uintptr_t)str_ptr).ToNumber();
+    }
+    else if (_ret == "wstr")
+    {
+      auto wstr_ptr = ajanuw::wstrCachePush(_v_wstr, cb.Call(jsFuncArgs).ToString().Utf16Value());
+      return Napi::Number::New(env, (uintptr_t)wstr_ptr).ToNumber();
+    }
+    else
+    {
+      return cb.Call(jsFuncArgs).ToNumber();
+    }
   }
 };
 
-extern "C" uintptr_t cccccc(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
+extern "C" int cb_int(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
 {
-  return vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5);
+  return vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5).Int32Value();
+}
+
+extern "C" uint32_t cb_uint(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
+{
+  return vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5).Uint32Value();
+}
+
+extern "C" int64_t cb_int64(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
+{
+  return vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5).Int64Value();
+}
+
+extern "C" float cb_float(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
+{
+  return vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5).FloatValue();
+}
+
+extern "C" double cb_double(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
+{
+  return vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5).DoubleValue();
+}
+
+extern "C" uintptr_t cb_ptr(std::vector<CallbackContext *> *vect_cc, void *vcc_index, uintptr_t *lpRcx, uintptr_t *lpP5)
+{
+  return (uintptr_t)vect_cc->at((size_t)vcc_index)->call(lpRcx, lpP5).Int64Value();
 }
 
 /**s
@@ -97,6 +375,13 @@ void push_r128(asmjit::x86::Assembler &a, auto *value, size_t i)
   a.pop(rax);
 };
 
+#define DEL_VCC                     \
+  for (auto cc : v_cc)              \
+  {                                 \
+    ajanuw::Mem::free(cc->address); \
+    delete cc;                      \
+  }
+
 nm_api(invoke)
 {
   using namespace asmjit;
@@ -105,49 +390,74 @@ nm_api(invoke)
   nm_init_cal(1);
 
   std::vector<CallbackContext *> v_cc; // 储存函数指针
-  auto v_cc_push = [&](const Napi::Value &jsVal) -> LPVOID
+  std::vector<float> v_f;              // 储存浮点数
+  std::vector<double> v_d;             // 储存双浮点数
+  std::vector<char> v_str;             // 储存utf-8字符串
+  std::vector<wchar_t> v_wstr;         // 储存宽字符串
+
+  auto v_cc_push = [&](
+                       const Napi::Value &jsVal,
+                       std::vector<std::string> args,
+                       std::string ret) -> LPVOID
   {
-    auto CC = new CallbackContext(env, jsVal.As<Napi::Function>(), ajanuw::createCallback(&cccccc, v_cc.size(), &v_cc));
+    LPVOID address;
+
+    // 现在立即确定返回值类型
+
+    if (ret == "int")
+    {
+      address = ajanuw::createCallback(&cb_int, v_cc.size(), &v_cc);
+    }
+    else if (ret == "uint")
+    {
+      address = ajanuw::createCallback(&cb_uint, v_cc.size(), &v_cc);
+    }
+    else if (ret == "int64")
+    {
+      address = ajanuw::createCallback(&cb_int64, v_cc.size(), &v_cc);
+    }
+    else if (ret == "float")
+    {
+      address = ajanuw::createCallback(&cb_float, v_cc.size(), &v_cc);
+    }
+    else if (ret == "double")
+    {
+      address = ajanuw::createCallback(&cb_double, v_cc.size(), &v_cc);
+    }
+    else if (ret == "str")
+    {
+      // js函数会返回字符串，将字符串指针个给abi函数
+      address = ajanuw::createCallback(&cb_ptr, v_cc.size(), &v_cc);
+    }
+    else if (ret == "wstr")
+    {
+      // js函数会返回字符串，将宽字符串指针个给abi函数
+      address = ajanuw::createCallback(&cb_ptr, v_cc.size(), &v_cc);
+    }
+    else
+    {
+      // 全当作指针处理
+      address = ajanuw::createCallback(&cb_ptr, v_cc.size(), &v_cc);
+    }
+    auto CC = new CallbackContext(
+        env,
+        jsVal.As<Napi::Function>(),
+        address, args, ret);
+
     v_cc.push_back(CC);
     return CC->address;
   };
 
-  std::vector<float> v_f; // 储存浮点数
   auto v_f_push = [&](const Napi::Value &jsVal) -> float *
   {
     v_f.push_back(jsVal.ToNumber().FloatValue());
     return v_f.data() + (v_f.size() - 1);
   };
 
-  std::vector<double> v_d; // 储存双浮点数
   auto v_d_push = [&](const Napi::Value &jsVal) -> double *
   {
     v_d.push_back(jsVal.ToNumber().DoubleValue());
     return v_d.data() + (v_d.size() - 1);
-  };
-
-  std::vector<char>
-      v_str; // 储存utf-8字符串
-  auto v_str_push = [&](const Napi::Value &jsVal) -> char *
-  {
-    auto v = jsVal.ToString().Utf8Value();
-    auto offset = v_str.size();
-    std::copy(v.begin(), v.end(), std::back_inserter(v_str));
-    v_str.push_back('\0');
-    return v_str.data() + offset;
-  };
-
-  std::vector<wchar_t> v_wstr; // 储存宽字符串
-  auto v_wstr_push = [&](const Napi::Value &jsVal) -> wchar_t *
-  {
-    auto v = jsVal.ToString().Utf16Value();
-    auto offset = v_wstr.size();
-    std::wstring ws{v.begin(), v.end()};
-
-    std::copy(ws.begin(), ws.end(), std::back_inserter(v_wstr));
-    v_wstr.push_back('\0');
-
-    return v_wstr.data() + offset;
   };
 
   auto o = nmi_o(0);
@@ -256,11 +566,34 @@ nm_api(invoke)
       else if (itTyle == "double")
         push_r128(a, v_d_push(it), i);
       else if (itTyle == "str")
-        push_r64(a, v_str_push(it), i);
+        push_r64(a, ajanuw::strCachePush(v_str, it.ToString().Utf8Value()), i);
+
       else if (itTyle == "wstr")
-        push_r64(a, v_wstr_push(it), i);
-      else if (itTyle == "fn")
-        push_r64(a, (uintptr_t)v_cc_push(it), i);
+        push_r64(a, ajanuw::wstrCachePush(v_wstr, it.ToString().Utf16Value()), i);
+      else
+      {
+        if (itTyle.starts_with("fn"))
+        {
+          std::vector<std::string> args{};
+          std::string ret{};
+          if (!ajanuw::parseFnHeader(itTyle, &args, &ret))
+          {
+            push_r64(a, (uintptr_t)v_cc_push(it, args, ret), i);
+          }
+          else
+          {
+            DEL_VCC
+            nm_err("fn arg type error.");
+            nm_retu;
+          }
+        }
+        else
+        {
+          DEL_VCC
+          nm_err("arg type error.");
+          nm_retu;
+        }
+      }
     }
   }
   // 猜测
@@ -273,11 +606,11 @@ nm_api(invoke)
 
       // js函数 => 函数指针
       if (nm_is_fu(it))
-        value = (uintptr_t)v_cc_push(it);
+        value = (uintptr_t)v_cc_push(it, std::vector<std::string>{}, std::string{"void"});
       // js字符串 => 字符串指针
       else if (nm_is_s(it))
-        value = bWideChar ? (uintptr_t)v_wstr_push(it)
-                          : (uintptr_t)v_str_push(it);
+        value = bWideChar ? (uintptr_t)ajanuw::wstrCachePush(v_wstr, it.ToString().Utf16Value())
+                          : (uintptr_t)ajanuw::strCachePush(v_str, it.ToString().Utf8Value());
       // 其它类型统一当作数字
       else
         value = nm_ull(it);
@@ -354,11 +687,7 @@ nm_api(invoke)
 
   if (err)
   {
-    for (auto cc : v_cc)
-    {
-      ajanuw::Mem::free(cc->address);
-      delete cc;
-    }
+    DEL_VCC
     nm_err("asmjit error.");
     nm_retu;
   }
@@ -398,11 +727,6 @@ nm_api(invoke)
   }
   /* #endregion */
 
-  for (auto cc : v_cc)
-  {
-    ajanuw::Mem::free(cc->address);
-    delete cc;
-  }
-
+  DEL_VCC
   return result;
 }

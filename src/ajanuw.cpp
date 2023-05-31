@@ -1,5 +1,103 @@
 #include "ajanuw.h"
 
+int ajanuw::parseFnHeader(std::string_view tmp, std::vector<std::string> *args, std::string *ret)
+{
+
+  if (!tmp.starts_with("fn"))
+    return -1;
+
+  if (tmp.size() == 2)
+  {
+    // 标准的fn
+    *ret = "void";
+    return 0;
+  }
+
+  size_t i = 2;
+
+  // fn2
+  if (tmp.at(i) == '2')
+    i += 1;
+
+  char c = '\n';
+
+  std::string keyword{};
+  uint8_t status = 0;
+
+  while (true)
+  {
+    if (i >= tmp.size())
+    {
+      if (status == 4)
+        *ret = keyword;
+      else
+        return 1;
+      break;
+    }
+
+    c = tmp.at(i);
+
+    switch (c)
+    {
+    case '(':
+    {
+      if (status == 0)
+        status = 1;
+      else
+        return 2;
+      break;
+    }
+    case ')':
+    {
+      if (status == 1)
+      {
+        if (!keyword.empty())
+          args->push_back(keyword);
+        keyword.clear();
+      }
+      else
+        return 3;
+      status = 2;
+    }
+    break;
+
+    case ',':
+    {
+      if (status == 1)
+      {
+        if (!keyword.empty())
+          args->push_back(keyword);
+        keyword.clear();
+      }
+      else
+        return 4;
+    }
+    break;
+
+    case ':':
+    {
+      if (status == 2)
+        status = 4;
+      else
+        return 5;
+    }
+    break;
+    case '\r':
+    case '\n':
+    case '\t':
+    case ' ':
+      break;
+    default:
+      keyword.push_back(c);
+      break;
+    }
+
+    i++;
+  }
+
+  return 0;
+}
+
 std::string ajanuw::sstr::formHex(uintptr_t _hex)
 {
   std::stringstream stream;
@@ -254,6 +352,23 @@ LPVOID ajanuw::createCallback(void *lpCallback, size_t vcc_index, void *vCC)
   code.relocateToBase((uint64_t)p);
   code.copyFlattenedData(p, codeSize, CodeHolder::kCopyPadSectionBuffer);
   return p;
+}
+
+char *ajanuw::strCachePush(std::vector<char> &dst, std::string_view src)
+{
+  auto offset = dst.size();
+  std::copy(src.begin(), src.end(), std::back_inserter(dst));
+  dst.push_back('\0');
+  return dst.data() + offset;
+}
+
+wchar_t *ajanuw::wstrCachePush(std::vector<wchar_t> &dst, std::u16string_view src)
+{
+  auto offset = dst.size();
+  std::wstring ws{src.begin(), src.end()};
+  std::copy(ws.begin(), ws.end(), std::back_inserter(dst));
+  dst.push_back('\0');
+  return dst.data() + offset;
 }
 
 std::wstring ajanuw::sstr::strToWstr(std::string_view str)

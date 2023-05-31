@@ -314,3 +314,40 @@ nw['MessageBoxA'](0, "content", "title", 1);
 
 nw['MessageBoxW'](0, "content", "title", 1);
 ```
+
+## 给函数参数定义类型
+
+`fndll1`函数接收一个回调函数，并向这个回调函数提供数据
+
+```c++
+extern "C" __declspec(dllexport)  float fndll1(
+  float (*cb)(int, uint32_t, int64_t, uintptr_t, float, double,const char*, const wchar_t*)
+) 
+{
+	return cb(-100, 100, -233, 10, 1.22, 7.334, "char*", L"wchar*");
+}
+```
+
+在js中调用`fndll1`函数
+
+```js
+nw['LoadLibraryA']('dll1.dll');
+
+const result = nw.invoke({
+
+  method: 'dll1.fndll1',
+
+  args: [(...args) => {
+    console.log(args); // [ -100, 100, -233, 10, 1.2200000286102295, 7.334, 'char*', 'wchar*' ]
+    return 99.99;
+  }],
+
+  argsType: [
+    'fn2(int,uint,int64,uintptr,float,double,str,wstr):float', // 定义一个个函数参数的类型和返回值
+  ],
+
+  retType: 'float', // 定义 fndll1 函数的返回类型
+});
+
+console.log(result); // 99.98999786376953
+```

@@ -6,6 +6,18 @@ export * from "./tools";
 export * from "./va_manage";
 export * from "./win32_gui";
 
+type nt_t =
+  | "int"
+  | "uint"
+  | "int64"
+  | "uintptr"
+  | "float"
+  | "double"
+  | "str"
+  | "wstr";
+
+type rnt_t = nt_t | "void";
+
 export declare function invoke<T>(option: {
   /**
    * 模块名
@@ -47,15 +59,15 @@ export declare function invoke<T>(option: {
    * 使用 argsType 明确每个参数的类型
    */
   argsType?: (
-    | "int"
-    | "uint"
-    | "int64"
-    | "uintptr"
-    | "float"
-    | "double"
-    | "str"
-    | "wstr"
-    | `fn${string}`
+    | nt_t
+    | "fn"
+    | `fn():${rnt_t}`
+    | `fn(${nt_t}):${rnt_t}`
+    | `fn(${nt_t},${nt_t}):${rnt_t}`
+    | `fn(${nt_t},${nt_t},${nt_t}):${rnt_t}`
+
+    // 更多的参数，按照fn的参数方式发送，ts不检查，函数运行时还是会检查
+    | `fn2(${string}):${string}`
   )[];
 
   /**

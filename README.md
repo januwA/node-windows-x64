@@ -2,7 +2,7 @@
 
  Provides some low-level APIs
 
- > Only tested on Windows 10 and Intel 64-bit cpu and vs2019
+ > Only tested on Windows 10 and Intel 64-bit cpu and vs2019/vs2022
 
  ## Install
  ```sh
@@ -134,6 +134,26 @@ nw.invoke({
 });
 ```
 
+## Callback function signature
+```js
+const result = nw.invoke({
+  method: 'dll1.fndll1',
+  args: [(...args) => {
+    console.log(args); // [ -100, 100, -233, 10, 1.2200000286102295, 7.334, 'char*', 'wchar*' ]
+    return 99.99;
+  }],
+  argsType: ['fn2(int,uint,int64,uintptr,float,double,str,wstr):float'],
+  retType: 'float'
+});
+```
+```c++
+extern "C" __declspec(dllexport)  float fndll1(
+  float (*cb)(int, uint32_t, int64_t, uintptr_t, float, double,const char*, const wchar_t*)
+) 
+{
+	return cb(-100, 100, -233, 10, 1.22, 7.334, "char*", L"wchar*");
+}
+```
 
 
 > There are more examples under the "examples" file
